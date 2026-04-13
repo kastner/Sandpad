@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Pitch Detective</title>
+  <style>
+    :root {
+      --bg: #060612;
+      --surface: #0e0e28;
+      --surface2: #161636;
+      --cyan: #00f5ff;
+      --purple: #bf5af2;
+      --pink: #ff2d78;
+      --green: #30d158;
+      --yellow: #ffd60a;
+      --orange: #ff9500;
+      --text: #e8e8ff;
+      --subtext: #8888bb;
+      --border: rgba(0,245,255,0.15);
+      --glow-cyan: 0 0 20px rgba(0,245,255,0.5), 0 0 60px rgba(0,245,255,0.2);
+      --glow-purple: 0 0 20px rgba(191,90,242,0.5), 0 0 60px rgba(191,90,242,0.2);
+      --glow-pink: 0 0 20px rgba(255,45,120,0.5), 0 0 60px rgba(255,45,120,0.2);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Animated starfield background */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 16px 32px;
+      gap: 16px;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-icon {
+      font-size: 22px;
+      filter: drop-shadow(0 0 8px var(--cyan));
+    }
+
+    .logo-text {
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-badge {
+      font-size: 11px;
+      color: var(--subtext);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 10px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Visualizer */
+    .visualizer-card {
+      width: 100%;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      position: relative;
+    }
+
+    #viz-canvas {
+      width: 100%;
+      height: 120px;
+      display: block;
+    }
+
+    .viz-label {
+      position: absolute;
+      top: 10px;
+      left: 14px;
+      font-size: 10px;
+      color: var(--subtext);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Main note display */
+    .note-card {
+      width: 100%;
+      border-radius: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s ease;
+    }
+
+    .note-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,245,255,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .note-card.active {
+      border-color: rgba(0,245,255,0.4);
+    }
+
+    .note-card.active::before {
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,245,255,0.12) 0%, transparent 70%);
+    }
+
+    .note-label {
+      font-size: 11px;
+      color: var(--subtext);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .note-name {
+      font-size: 88px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -4px;
+      background: linear-gradient(160deg, #ffffff 0%, var(--cyan) 60%, var(--purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: all 0.15s ease;
+      min-height: 88px;
+      display: flex;
+      align-items: center;
+    }
+
+    .note-name.flash {
+      filter: drop-shadow(0 0 20px rgba(0,245,255,0.8));
+    }
+
+    .note-octave {
+      font-size: 36px;
+      letter-spacing: 0;
+      opacity: 0.6;
+    }
+
+    .freq-display {
+      font-size: 13px;
+      color: var(--subtext);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.5px;
+    }
+
+    .freq-display span {
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    /* Tuner meter */
+    .tuner-row {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tuner-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 10px;
+      position: relative;
+      overflow: visible;
+    }
+
+    .tuner-center {
+      position: absolute;
+      left: 50%;
+      top: -3px;
+      width: 2px;
+      height: 12px;
+      background: var(--subtext);
+      border-radius: 2px;
+      transform: translateX(-50%);
+    }
+
+    .tuner-needle {
+      position: absolute;
+      top: -4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: var(--glow-cyan);
+      transform: translateX(-50%);
+      left: 50%;
+      transition: left 0.1s ease, background 0.2s ease;
+    }
+
+    .tuner-needle.sharp { background: var(--pink); box-shadow: var(--glow-pink); }
+    .tuner-needle.flat { background: var(--purple); box-shadow: var(--glow-purple); }
+    .tuner-needle.in-tune { background: var(--green); box-shadow: 0 0 20px rgba(48,209,88,0.5); }
+
+    .cents-label {
+      font-size: 11px;
+      color: var(--subtext);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Scale detection */
+    .scale-card {
+      width: 100%;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .scale-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .scale-title {
+      font-size: 11px;
+      color: var(--subtext);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .scale-confidence {
+      font-size: 11px;
+      color: var(--subtext);
+    }
+
+    .scale-confidence span {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .scale-name {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .scale-name .root { color: var(--cyan); }
+    .scale-name .type { color: var(--text); opacity: 0.8; }
+
+    .degree-display {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .degree-badge {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--yellow);
+      text-shadow: 0 0 20px rgba(255,214,10,0.5);
+      min-width: 48px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .degree-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .degree-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .degree-roman {
+      font-size: 12px;
+      color: var(--subtext);
+    }
+
+    /* Scale piano roll */
+    .scale-notes {
+      display: flex;
+      gap: 4px;
+      align-items: flex-end;
+    }
+
+    .scale-note-pip {
+      flex: 1;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--surface2);
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--subtext);
+      transition: all 0.2s ease;
+      font-weight: 600;
+    }
+
+    .scale-note-pip.in-scale {
+      background: rgba(0,245,255,0.1);
+      border-color: rgba(0,245,255,0.3);
+      color: var(--cyan);
+    }
+
+    .scale-note-pip.current {
+      background: var(--cyan);
+      border-color: var(--cyan);
+      color: var(--bg);
+      box-shadow: var(--glow-cyan);
+      height: 36px;
+    }
+
+    /* Note history */
+    .history-card {
+      width: 100%;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .history-title {
+      font-size: 11px;
+      color: var(--subtext);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .history-notes {
+      display: flex;
+      gap: 6px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+
+    .history-notes::-webkit-scrollbar { display: none; }
+
+    .history-note {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      transition: all 0.3s ease;
+    }
+
+    .history-note:nth-child(1) { background: rgba(0,245,255,0.2); color: var(--cyan); border: 1px solid rgba(0,245,255,0.4); }
+    .history-note:nth-child(2) { background: rgba(0,245,255,0.15); color: rgba(0,245,255,0.85); border: 1px solid rgba(0,245,255,0.25); }
+    .history-note:nth-child(3) { background: rgba(0,245,255,0.1); color: rgba(0,245,255,0.7); border: 1px solid rgba(0,245,255,0.15); }
+    .history-note:nth-child(n+4) { background: rgba(255,255,255,0.05); color: var(--subtext); border: 1px solid rgba(255,255,255,0.08); }
+
+    /* Controls */
+    .controls {
+      width: 100%;
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-start {
+      flex: 1;
+      padding: 18px;
+      border-radius: 18px;
+      border: none;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      letter-spacing: -0.2px;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      color: var(--bg);
+      box-shadow: 0 4px 24px rgba(0,245,255,0.25);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-start:active {
+      transform: scale(0.97);
+    }
+
+    .btn-start.listening {
+      background: linear-gradient(135deg, var(--pink), var(--orange));
+      box-shadow: 0 4px 24px rgba(255,45,120,0.25);
+      animation: pulse-btn 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-btn {
+      0%, 100% { box-shadow: 0 4px 24px rgba(255,45,120,0.25); }
+      50% { box-shadow: 0 4px 36px rgba(255,45,120,0.5); }
+    }
+
+    .btn-clear {
+      padding: 18px 20px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--subtext);
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-clear:active {
+      transform: scale(0.97);
+      border-color: rgba(0,245,255,0.3);
+      color: var(--cyan);
+    }
+
+    /* Permission error */
+    .error-msg {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: 16px;
+      background: rgba(255,45,120,0.1);
+      border: 1px solid rgba(255,45,120,0.3);
+      color: var(--pink);
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+
+    /* Status dot */
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--subtext);
+      display: inline-block;
+    }
+
+    .status-dot.active {
+      background: var(--green);
+      box-shadow: 0 0 8px rgba(48,209,88,0.6);
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Silence indicator */
+    .silence-msg {
+      font-size: 13px;
+      color: var(--subtext);
+      text-align: center;
+      padding: 4px 0;
+      min-height: 20px;
+      transition: opacity 0.3s;
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 360px) {
+      .note-name { font-size: 72px; }
+    }
+
+    @media (min-height: 800px) {
+      .app { padding-top: 24px; gap: 18px; }
+    }
+
+    /* Smooth hidden state */
+    .idle-state { opacity: 0.35; transition: opacity 0.4s; }
+    .active-state { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div class="app">
+
+  <header>
+    <div class="logo">
+      <span class="logo-icon">🎵</span>
+      <span class="logo-text">Pitch Detective</span>
+    </div>
+    <div class="header-badge">
+      <span class="status-dot" id="status-dot"></span>
+      &nbsp;<span id="status-text">Ready</span>
+    </div>
+  </header>
+
+  <!-- Waveform visualizer -->
+  <div class="visualizer-card">
+    <canvas id="viz-canvas"></canvas>
+    <div class="viz-label">Waveform</div>
+  </div>
+
+  <!-- Main note display -->
+  <div class="note-card idle-state" id="note-card">
+    <div class="note-label">Detected Note</div>
+    <div class="note-name" id="note-name">—</div>
+    <div class="freq-display" id="freq-display">
+      Frequency: <span id="freq-hz">—</span>
+    </div>
+    <div class="tuner-row" style="width:100%">
+      <div class="tuner-bar">
+        <div class="tuner-center"></div>
+        <div class="tuner-needle" id="tuner-needle"></div>
+      </div>
+      <div class="cents-label" id="cents-label">— cents</div>
+    </div>
+    <div class="silence-msg" id="silence-msg">Whistle or sing to begin…</div>
+  </div>
+
+  <!-- Scale detection -->
+  <div class="scale-card idle-state" id="scale-card">
+    <div class="scale-header">
+      <div class="scale-title">Detected Scale</div>
+      <div class="scale-confidence">Confidence: <span id="confidence">—</span></div>
+    </div>
+    <div class="scale-name">
+      <span class="root" id="scale-root">?</span>
+      <span class="type" id="scale-type">&nbsp;Major</span>
+    </div>
+    <div class="degree-display">
+      <div class="degree-badge" id="degree-badge">—</div>
+      <div class="degree-info">
+        <div class="degree-name" id="degree-name">—</div>
+        <div class="degree-roman" id="degree-roman">—</div>
+      </div>
+    </div>
+    <div class="scale-notes" id="scale-notes">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+
+  <!-- Note history -->
+  <div class="history-card">
+    <div class="history-title">Note History</div>
+    <div class="history-notes" id="history-notes">
+      <span style="color:var(--subtext); font-size:13px">No notes yet</span>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn-start" id="btn-start" onclick="toggleListening()">
+      <span id="btn-icon">🎤</span>
+      <span id="btn-text">Start Listening</span>
+    </button>
+    <button class="btn-clear" onclick="clearHistory()" title="Clear">🗑</button>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// PITCH DETECTION ENGINE
+// ─────────────────────────────────────────────────────────────────────────────
+
+const NOTE_NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const NOTE_NAMES_FLAT = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+
+// Scales: intervals from root
+const SCALES = {
+  'Major':           [0,2,4,5,7,9,11],
+  'Natural Minor':   [0,2,3,5,7,8,10],
+  'Harmonic Minor':  [0,2,3,5,7,8,11],
+  'Dorian':          [0,2,3,5,7,9,10],
+  'Mixolydian':      [0,2,4,5,7,9,10],
+  'Lydian':          [0,2,4,6,7,9,11],
+  'Phrygian':        [0,1,3,5,7,8,10],
+  'Pentatonic Maj':  [0,2,4,7,9],
+  'Pentatonic Min':  [0,3,5,7,10],
+  'Blues':           [0,3,5,6,7,10],
+  'Whole Tone':      [0,2,4,6,8,10],
+  'Diminished':      [0,2,3,5,6,8,9,11],
+};
+
+const DEGREE_NAMES = {
+  0:'Root',1:'♭2nd',2:'2nd',3:'♭3rd',4:'3rd',5:'4th',
+  6:'♭5th',7:'5th',8:'♭6th',9:'6th',10:'♭7th',11:'7th'
+};
+const DEGREE_ROMAN = {
+  0:'I',1:'♭II',2:'II',3:'♭III',4:'III',5:'IV',
+  6:'♭V',7:'V',8:'♭VI',9:'VI',10:'♭VII',11:'VII'
+};
+
+function freqToMidi(freq) {
+  return 12 * Math.log2(freq / 440) + 69;
+}
+
+function midiToFreq(midi) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function freqToNote(freq) {
+  const midi = freqToMidi(freq);
+  const rounded = Math.round(midi);
+  const cents = (midi - rounded) * 100;
+  const noteIndex = ((rounded % 12) + 12) % 12;
+  const octave = Math.floor(rounded / 12) - 1;
+  return {
+    name: NOTE_NAMES[noteIndex],
+    nameFlat: NOTE_NAMES_FLAT[noteIndex],
+    octave,
+    midi: rounded,
+    pitchClass: noteIndex,
+    cents: Math.round(cents),
+  };
+}
+
+// Autocorrelation pitch detection (YIN-inspired)
+function detectPitch(buffer, sampleRate) {
+  const SIZE = buffer.length;
+  let rms = 0;
+  for (let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
+  rms = Math.sqrt(rms / SIZE);
+  if (rms < 0.005) return -1; // silence threshold (lower = more sensitive)
+
+  // Clip leading/trailing silence: find first sample ABOVE threshold (where signal starts)
+  let r1 = 0, r2 = SIZE - 1;
+  const thres = 0.2;
+  for (let i = 0; i < SIZE / 2; i++) {
+    if (Math.abs(buffer[i]) > thres) { r1 = i; break; }
+  }
+  for (let i = 1; i < SIZE / 2; i++) {
+    if (Math.abs(buffer[SIZE - i]) > thres) { r2 = SIZE - i; break; }
+  }
+
+  const buf = buffer.slice(r1, r2 + 1);
+  const N = buf.length;
+
+  // Autocorrelation
+  const c = new Float32Array(N);
+  for (let lag = 0; lag < N; lag++) {
+    for (let i = 0; i < N - lag; i++) {
+      c[lag] += buf[i] * buf[i + lag];
+    }
+  }
+
+  // Find first zero crossing, then first peak
+  let d = 0;
+  while (d < N - 1 && c[d] > c[d + 1]) d++;
+  if (d >= N - 2) return -1;
+
+  let maxVal = -Infinity, maxPos = d;
+  for (let i = d; i < N; i++) {
+    if (c[i] > maxVal) { maxVal = c[i]; maxPos = i; }
+  }
+
+  if (maxPos === 0 || maxPos === N - 1) return -1;
+  if (maxVal < 0.01) return -1;
+
+  // Parabolic interpolation for better accuracy
+  const prev = c[maxPos - 1], curr = c[maxPos], next = c[maxPos + 1];
+  const denom = 2 * (2 * curr - prev - next);
+  let refined = maxPos;
+  if (Math.abs(denom) > 1e-6) {
+    refined = maxPos - (next - prev) / denom;
+  }
+
+  const freq = sampleRate / refined;
+
+  // Sanity check: whistling is roughly 500–4000 Hz, singing 80–1200 Hz
+  if (freq < 60 || freq > 4200) return -1;
+
+  return freq;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCALE DETECTION
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Rolling pitch class histogram (last ~5 seconds of notes)
+const pitchHistory = []; // {pitchClass, time}
+const HISTORY_WINDOW_MS = 5000;
+
+function updatePitchHistory(pitchClass) {
+  const now = Date.now();
+  pitchHistory.push({ pitchClass, time: now });
+  // Prune old entries
+  const cutoff = now - HISTORY_WINDOW_MS;
+  while (pitchHistory.length > 0 && pitchHistory[0].time < cutoff) {
+    pitchHistory.shift();
+  }
+}
+
+function detectScale() {
+  if (pitchHistory.length < 3) return null;
+
+  // Count pitch classes
+  const counts = new Array(12).fill(0);
+  for (const { pitchClass } of pitchHistory) counts[pitchClass]++;
+
+  const totalNotes = pitchHistory.length;
+  let bestScore = -1, bestScale = null, bestRoot = 0;
+
+  for (let root = 0; root < 12; root++) {
+    for (const [scaleName, intervals] of Object.entries(SCALES)) {
+      // How many notes fall in this scale?
+      let inScale = 0;
+      let weightedScore = 0;
+      for (let pc = 0; pc < 12; pc++) {
+        const interval = ((pc - root) + 12) % 12;
+        if (intervals.includes(interval)) {
+          inScale += counts[pc];
+          // Weight root and fifth higher
+          const bonus = (interval === 0) ? 2 : (interval === 7 ? 1.3 : 1);
+          weightedScore += counts[pc] * bonus;
+        }
+      }
+      const coverage = inScale / totalNotes;
+      // Prefer scales with higher coverage and penalize overly large scales
+      const lengthPenalty = 1 - (intervals.length - 5) * 0.03;
+      const score = coverage * weightedScore * lengthPenalty;
+
+      if (score > bestScore && coverage > 0.5) {
+        bestScore = score;
+        bestScale = scaleName;
+        bestRoot = root;
+      }
+    }
+  }
+
+  if (!bestScale) return null;
+
+  const confidence = Math.min(100, Math.round((bestScore / (totalNotes * 2)) * 100 + 40));
+  return { root: bestRoot, scale: bestScale, intervals: SCALES[bestScale], confidence };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIO ENGINE
+// ─────────────────────────────────────────────────────────────────────────────
+
+let audioCtx = null;
+let analyser = null;
+let source = null;
+let stream = null;
+let rafId = null;
+let isListening = false;
+let timeDomainBuffer = null;
+let freqBuffer = null;
+
+// Smoothing for pitch display
+let smoothedFreq = -1;
+const SMOOTH_FACTOR = 0.25;
+
+// Note history for display (UI list)
+const noteDisplayHistory = [];
+const MAX_DISPLAY_HISTORY = 20;
+let lastPitchClass = -1;
+
+async function startListening() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+      }
+    });
+
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 4096;
+    analyser.smoothingTimeConstant = 0.1;
+
+    source = audioCtx.createMediaStreamSource(stream);
+    source.connect(analyser);
+
+    timeDomainBuffer = new Float32Array(analyser.fftSize);
+    freqBuffer = new Uint8Array(analyser.frequencyBinCount);
+
+    isListening = true;
+    processAudio();
+    updateListeningUI(true);
+  } catch (err) {
+    showError('Microphone access denied. Please allow mic access and try again.');
+    console.error(err);
+  }
+}
+
+function stopListening() {
+  isListening = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  if (source) source.disconnect();
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  audioCtx = analyser = source = stream = null;
+  smoothedFreq = -1;
+  updateListeningUI(false);
+  setNoteDisplay(null);
+  drawIdleViz();
+}
+
+function toggleListening() {
+  if (isListening) stopListening();
+  else startListening();
+}
+
+let silenceTimer = null;
+let lastDetectedNote = null;
+
+function processAudio() {
+  if (!isListening) return;
+  rafId = requestAnimationFrame(processAudio);
+
+  analyser.getFloatTimeDomainData(timeDomainBuffer);
+  analyser.getByteFrequencyData(freqBuffer);
+
+  drawViz(timeDomainBuffer, freqBuffer);
+
+  const rawFreq = detectPitch(timeDomainBuffer, audioCtx.sampleRate);
+
+  if (rawFreq > 0) {
+    // Smooth frequency
+    if (smoothedFreq < 0) {
+      smoothedFreq = rawFreq;
+    } else {
+      smoothedFreq = smoothedFreq * (1 - SMOOTH_FACTOR) + rawFreq * SMOOTH_FACTOR;
+    }
+
+    const note = freqToNote(smoothedFreq);
+    setNoteDisplay(note, smoothedFreq);
+
+    // Only add to history when pitch class changes
+    if (note.pitchClass !== lastPitchClass) {
+      updatePitchHistory(note.pitchClass);
+      addToNoteHistory(note);
+      lastPitchClass = note.pitchClass;
+    }
+
+    clearTimeout(silenceTimer);
+    silenceTimer = null;
+    lastDetectedNote = note;
+    document.getElementById('silence-msg').style.opacity = '0';
+    document.getElementById('note-card').classList.add('active');
+    document.getElementById('note-card').classList.remove('idle-state');
+    document.getElementById('note-card').classList.add('active-state');
+
+    updateScaleDisplay(note);
+  } else {
+    // Fade out after silence
+    if (!silenceTimer) {
+      silenceTimer = setTimeout(() => {
+        smoothedFreq = -1;
+        lastPitchClass = -1;
+        setNoteDisplay(null);
+        document.getElementById('silence-msg').style.opacity = '1';
+        document.getElementById('note-card').classList.remove('active');
+      }, 300);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI UPDATES
+// ─────────────────────────────────────────────────────────────────────────────
+
+function setNoteDisplay(note, freq) {
+  const nameEl = document.getElementById('note-name');
+  const freqEl = document.getElementById('freq-hz');
+  const centsEl = document.getElementById('cents-label');
+  const needle = document.getElementById('tuner-needle');
+
+  if (!note) {
+    nameEl.innerHTML = '<span style="opacity:0.3">—</span>';
+    freqEl.textContent = '—';
+    centsEl.textContent = '— cents';
+    needle.style.left = '50%';
+    needle.className = 'tuner-needle';
+    return;
+  }
+
+  // Note name with octave
+  nameEl.innerHTML = `${note.name}<span class="note-octave">${note.octave}</span>`;
+
+  // Flash
+  nameEl.classList.add('flash');
+  setTimeout(() => nameEl.classList.remove('flash'), 100);
+
+  // Frequency
+  freqEl.textContent = freq ? freq.toFixed(1) + ' Hz' : '—';
+
+  // Cents & tuner needle
+  const cents = note.cents;
+  centsEl.textContent = `${cents > 0 ? '+' : ''}${cents} cents`;
+
+  // Map cents (-50 to +50) to position (5% to 95%)
+  const pos = 50 + (cents / 50) * 45;
+  needle.style.left = `${Math.max(5, Math.min(95, pos))}%`;
+
+  if (Math.abs(cents) < 8) {
+    needle.className = 'tuner-needle in-tune';
+  } else if (cents > 0) {
+    needle.className = 'tuner-needle sharp';
+  } else {
+    needle.className = 'tuner-needle flat';
+  }
+}
+
+function addToNoteHistory(note) {
+  noteDisplayHistory.unshift(note);
+  if (noteDisplayHistory.length > MAX_DISPLAY_HISTORY) noteDisplayHistory.pop();
+
+  const container = document.getElementById('history-notes');
+  container.innerHTML = noteDisplayHistory
+    .map(n => `<div class="history-note">${n.name}${n.octave}</div>`)
+    .join('');
+}
+
+function updateScaleDisplay(currentNote) {
+  const result = detectScale();
+  const scaleCard = document.getElementById('scale-card');
+  scaleCard.classList.remove('idle-state');
+  scaleCard.classList.add('active-state');
+
+  if (!result) {
+    document.getElementById('scale-root').textContent = '?';
+    document.getElementById('scale-type').textContent = ' — detecting…';
+    document.getElementById('degree-badge').textContent = '—';
+    document.getElementById('degree-name').textContent = 'Keep playing!';
+    document.getElementById('degree-roman').textContent = 'Need more notes';
+    document.getElementById('confidence').textContent = '—';
+    renderScaleNotes([], -1, currentNote?.pitchClass ?? -1);
+    return;
+  }
+
+  const rootName = NOTE_NAMES[result.root];
+  document.getElementById('scale-root').textContent = rootName;
+  document.getElementById('scale-type').textContent = ' ' + result.scale;
+  document.getElementById('confidence').textContent = result.confidence + '%';
+
+  // Current note's degree in this scale
+  if (currentNote) {
+    const interval = ((currentNote.pitchClass - result.root) + 12) % 12;
+    const inScale = result.intervals.includes(interval);
+    const degIdx = result.intervals.indexOf(interval);
+
+    if (inScale) {
+      document.getElementById('degree-badge').textContent = ordinal(degIdx + 1);
+      document.getElementById('degree-name').textContent = DEGREE_NAMES[interval];
+      document.getElementById('degree-roman').textContent = DEGREE_ROMAN[interval];
+    } else {
+      document.getElementById('degree-badge').textContent = '⚠';
+      document.getElementById('degree-name').textContent = 'Outside scale';
+      document.getElementById('degree-roman').textContent = DEGREE_NAMES[interval] + ' (chromatic)';
+    }
+  }
+
+  renderScaleNotes(result, result.root, currentNote?.pitchClass ?? -1);
+}
+
+function renderScaleNotes(result, root, currentPc) {
+  const container = document.getElementById('scale-notes');
+  if (!result || !result.intervals) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = result.intervals.map((interval, i) => {
+    const pc = (root + interval) % 12;
+    const isCurrent = pc === currentPc;
+    const name = NOTE_NAMES[pc];
+    return `<div class="scale-note-pip ${isCurrent ? 'current' : 'in-scale'}">${name}</div>`;
+  }).join('');
+}
+
+function ordinal(n) {
+  const s = ['th','st','nd','rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function clearHistory() {
+  noteDisplayHistory.length = 0;
+  pitchHistory.length = 0;
+  lastPitchClass = -1;
+  document.getElementById('history-notes').innerHTML =
+    '<span style="color:var(--subtext); font-size:13px">No notes yet</span>';
+  document.getElementById('scale-root').textContent = '?';
+  document.getElementById('scale-type').textContent = ' Major';
+  document.getElementById('degree-badge').textContent = '—';
+  document.getElementById('degree-name').textContent = '—';
+  document.getElementById('degree-roman').textContent = '—';
+  document.getElementById('confidence').textContent = '—';
+  document.getElementById('scale-notes').innerHTML = '';
+}
+
+function updateListeningUI(active) {
+  const btn = document.getElementById('btn-start');
+  const dot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+  const icon = document.getElementById('btn-icon');
+  const text = document.getElementById('btn-text');
+
+  if (active) {
+    btn.classList.add('listening');
+    dot.classList.add('active');
+    statusText.textContent = 'Listening';
+    icon.textContent = '⏹';
+    text.textContent = 'Stop Listening';
+  } else {
+    btn.classList.remove('listening');
+    dot.classList.remove('active');
+    statusText.textContent = 'Ready';
+    icon.textContent = '🎤';
+    text.textContent = 'Start Listening';
+    document.getElementById('note-card').classList.add('idle-state');
+    document.getElementById('note-card').classList.remove('active-state');
+    document.getElementById('scale-card').classList.add('idle-state');
+    document.getElementById('scale-card').classList.remove('active-state');
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CANVAS VISUALIZATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+const vizCanvas = document.getElementById('viz-canvas');
+const vizCtx = vizCanvas.getContext('2d');
+
+function resizeViz() {
+  vizCanvas.width = vizCanvas.offsetWidth * devicePixelRatio;
+  vizCanvas.height = vizCanvas.offsetHeight * devicePixelRatio;
+}
+
+window.addEventListener('resize', resizeViz);
+resizeViz();
+
+function drawViz(timeDomain, freqData) {
+  const W = vizCanvas.width;
+  const H = vizCanvas.height;
+  vizCtx.clearRect(0, 0, W, H);
+
+  // Background
+  vizCtx.fillStyle = 'rgba(14,14,40,0.3)';
+  vizCtx.fillRect(0, 0, W, H);
+
+  const bufLen = timeDomain.length;
+
+  // Draw waveform with glow
+  vizCtx.save();
+  vizCtx.shadowBlur = 12;
+  vizCtx.shadowColor = 'rgba(0,245,255,0.6)';
+  vizCtx.strokeStyle = 'rgba(0,245,255,0.9)';
+  vizCtx.lineWidth = 2 * devicePixelRatio;
+  vizCtx.beginPath();
+
+  const sliceWidth = W / bufLen;
+  let x = 0;
+  for (let i = 0; i < bufLen; i++) {
+    const v = timeDomain[i];
+    const y = (H / 2) + (v * H * 0.4);
+    if (i === 0) vizCtx.moveTo(x, y);
+    else vizCtx.lineTo(x, y);
+    x += sliceWidth;
+  }
+  vizCtx.stroke();
+  vizCtx.restore();
+
+  // Center line
+  vizCtx.strokeStyle = 'rgba(0,245,255,0.08)';
+  vizCtx.lineWidth = 1;
+  vizCtx.beginPath();
+  vizCtx.moveTo(0, H / 2);
+  vizCtx.lineTo(W, H / 2);
+  vizCtx.stroke();
+}
+
+function drawIdleViz() {
+  const W = vizCanvas.width;
+  const H = vizCanvas.height;
+  vizCtx.clearRect(0, 0, W, H);
+  vizCtx.fillStyle = 'rgba(14,14,40,0.3)';
+  vizCtx.fillRect(0, 0, W, H);
+
+  // Draw flat center line
+  vizCtx.strokeStyle = 'rgba(0,245,255,0.15)';
+  vizCtx.lineWidth = 1.5;
+  vizCtx.beginPath();
+  vizCtx.moveTo(0, H / 2);
+  vizCtx.lineTo(W, H / 2);
+  vizCtx.stroke();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STARFIELD BACKGROUND
+// ─────────────────────────────────────────────────────────────────────────────
+
+const bgCanvas = document.getElementById('bg-canvas');
+const bgCtx = bgCanvas.getContext('2d');
+const stars = [];
+
+function initStars() {
+  bgCanvas.width = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+  stars.length = 0;
+  const count = Math.floor((window.innerWidth * window.innerHeight) / 6000);
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      x: Math.random() * bgCanvas.width,
+      y: Math.random() * bgCanvas.height,
+      r: Math.random() * 1.2,
+      opacity: Math.random() * 0.5 + 0.1,
+      speed: Math.random() * 0.3 + 0.05,
+      twinkleOffset: Math.random() * Math.PI * 2,
+    });
+  }
+}
+
+let bgRaf;
+function animateBg(t) {
+  bgRaf = requestAnimationFrame(animateBg);
+  bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+  // Gradient nebula
+  const grad = bgCtx.createRadialGradient(
+    bgCanvas.width * 0.3, bgCanvas.height * 0.4, 0,
+    bgCanvas.width * 0.3, bgCanvas.height * 0.4, bgCanvas.width * 0.6
+  );
+  grad.addColorStop(0, 'rgba(0,50,80,0.25)');
+  grad.addColorStop(0.5, 'rgba(20,0,60,0.15)');
+  grad.addColorStop(1, 'rgba(6,6,18,0)');
+  bgCtx.fillStyle = grad;
+  bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+  // Stars
+  for (const star of stars) {
+    const twinkle = Math.sin(t * 0.001 * star.speed + star.twinkleOffset) * 0.3 + 0.7;
+    bgCtx.beginPath();
+    bgCtx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+    bgCtx.fillStyle = `rgba(200,220,255,${star.opacity * twinkle})`;
+    bgCtx.fill();
+  }
+}
+
+window.addEventListener('resize', () => {
+  initStars();
+  bgCanvas.width = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+  resizeViz();
+});
+
+initStars();
+animateBg(0);
+drawIdleViz();
+
+// Silence message visible initially
+document.getElementById('silence-msg').style.opacity = '1';
+</script>
+</body>
+</html>
