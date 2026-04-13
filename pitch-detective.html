@@ -295,6 +295,12 @@
     .scale-name .root { color: var(--cyan); }
     .scale-name .type { color: var(--text); opacity: 0.8; }
 
+    .scale-scope {
+      font-size: 12px;
+      color: var(--subtext);
+      line-height: 1.4;
+    }
+
     .degree-display {
       display: flex;
       align-items: center;
@@ -363,8 +369,9 @@
       height: 36px;
     }
 
-    /* Note history */
-    .history-card {
+    /* Idea roll and capture */
+    .roll-card,
+    .capture-card {
       width: 100%;
       border-radius: 20px;
       background: var(--surface);
@@ -382,37 +389,208 @@
       text-transform: uppercase;
     }
 
-    .history-notes {
+    .roll-header {
       display: flex;
-      gap: 6px;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: none;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--subtext);
     }
 
-    .history-notes::-webkit-scrollbar { display: none; }
+    .phrase-summary {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.45;
+    }
 
-    .history-note {
-      flex-shrink: 0;
-      padding: 6px 12px;
-      border-radius: 20px;
+    .piano-roll-shell {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .roll-labels {
+      position: relative;
+      min-height: 288px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      overflow: hidden;
+    }
+
+    .roll-label {
+      position: absolute;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      text-align: center;
+      color: var(--subtext);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .piano-roll {
+      min-height: 288px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%),
+        linear-gradient(90deg, rgba(0,245,255,0.05) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+      background-size: auto, 72px 100%, 100% 8px;
+      scrollbar-width: thin;
+    }
+
+    .piano-roll-grid {
+      position: relative;
+      min-height: 288px;
+    }
+
+    .phrase-band {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: rgba(191,90,242,0.05);
+      border-right: 1px dashed rgba(255,255,255,0.08);
+      pointer-events: none;
+    }
+
+    .roll-note {
+      position: absolute;
+      min-width: 14px;
+      border-radius: 7px;
+      padding: 0 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: -0.15px;
+      white-space: nowrap;
+      overflow: hidden;
+      color: var(--bg);
+      background: linear-gradient(135deg, var(--cyan), #7ae3ff);
+      box-shadow: 0 0 16px rgba(0,245,255,0.22);
+    }
+
+    .roll-note.phrase-accent {
+      background: linear-gradient(135deg, var(--pink), var(--orange));
+      box-shadow: 0 0 16px rgba(255,45,120,0.22);
+    }
+
+    .roll-playhead {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(255,214,10,0), rgba(255,214,10,0.95), rgba(255,214,10,0));
+      box-shadow: 0 0 18px rgba(255,214,10,0.4);
+      pointer-events: none;
+    }
+
+    .roll-empty {
+      min-height: 288px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--subtext);
+      font-size: 13px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .export-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
       font-size: 13px;
       font-weight: 700;
-      letter-spacing: -0.3px;
-      transition: all 0.3s ease;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .history-note:nth-child(1) { background: rgba(0,245,255,0.2); color: var(--cyan); border: 1px solid rgba(0,245,255,0.4); }
-    .history-note:nth-child(2) { background: rgba(0,245,255,0.15); color: rgba(0,245,255,0.85); border: 1px solid rgba(0,245,255,0.25); }
-    .history-note:nth-child(3) { background: rgba(0,245,255,0.1); color: rgba(0,245,255,0.7); border: 1px solid rgba(0,245,255,0.15); }
-    .history-note:nth-child(n+4) { background: rgba(255,255,255,0.05); color: var(--subtext); border: 1px solid rgba(255,255,255,0.08); }
+    .btn-secondary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary.primary {
+      background: linear-gradient(135deg, rgba(191,90,242,0.22), rgba(0,245,255,0.18));
+      border-color: rgba(0,245,255,0.2);
+    }
+
+    .export-preview {
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background: rgba(0,0,0,0.16);
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      min-height: 132px;
+    }
+
+    .saved-ideas {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .saved-idea {
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .saved-idea-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .saved-idea-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .saved-idea-meta {
+      font-size: 11px;
+      color: var(--subtext);
+    }
+
+    .saved-idea-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
 
     /* Controls */
     .controls {
       width: 100%;
       display: flex;
       gap: 12px;
+      align-items: stretch;
     }
 
     .btn-start {
@@ -514,6 +692,7 @@
     /* Responsive tweaks */
     @media (max-width: 360px) {
       .note-name { font-size: 72px; }
+      .piano-roll-shell { grid-template-columns: 32px minmax(0, 1fr); }
     }
 
     @media (min-height: 800px) {
@@ -571,10 +750,11 @@
       <div class="scale-title">Detected Scale</div>
       <div class="scale-confidence">Confidence: <span id="confidence">—</span></div>
     </div>
-    <div class="scale-name">
+  <div class="scale-name">
       <span class="root" id="scale-root">?</span>
       <span class="type" id="scale-type">&nbsp;Major</span>
     </div>
+    <div class="scale-scope" id="scale-scope">Phrase-aware scale inference will appear here.</div>
     <div class="degree-display">
       <div class="degree-badge" id="degree-badge">—</div>
       <div class="degree-info">
@@ -587,12 +767,36 @@
     </div>
   </div>
 
-  <!-- Note history -->
-  <div class="history-card">
-    <div class="history-title">Note History</div>
-    <div class="history-notes" id="history-notes">
-      <span style="color:var(--subtext); font-size:13px">No notes yet</span>
+  <!-- Idea timeline -->
+  <div class="roll-card">
+    <div class="history-title">Idea Timeline</div>
+    <div class="roll-header">
+      <div id="roll-meta">0 notes · 0 phrases</div>
+      <div id="roll-mode">Degree-first view</div>
     </div>
+    <div class="phrase-summary" id="phrase-summary">
+      Start listening and whistle a phrase. Silence and stop/start become phrase boundaries.
+    </div>
+    <div class="piano-roll-shell">
+      <div class="roll-labels" id="roll-labels"></div>
+      <div class="piano-roll" id="piano-roll">
+        <div class="piano-roll-grid" id="piano-roll-grid">
+          <div class="roll-empty">No captured notes yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rough capture and export -->
+  <div class="capture-card">
+    <div class="history-title">Rough Capture</div>
+    <div class="export-actions">
+      <button class="btn-secondary primary" onclick="saveIdea()">Save Idea</button>
+      <button class="btn-secondary" onclick="copyABC()">Copy ABC</button>
+      <button class="btn-secondary" onclick="downloadCurrentMIDI()">Download MIDI</button>
+    </div>
+    <div class="export-preview" id="export-preview">ABC export will appear here once you capture a few notes.</div>
+    <div class="saved-ideas" id="saved-ideas"></div>
   </div>
 
   <!-- Controls -->
@@ -615,8 +819,19 @@
 
 const NOTE_NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 const NOTE_NAMES_FLAT = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+const DEGREE_NAMES = {
+  0:'Root',1:'♭2nd',2:'2nd',3:'♭3rd',4:'3rd',5:'4th',
+  6:'♭5th',7:'5th',8:'♭6th',9:'6th',10:'♭7th',11:'7th'
+};
+const DEGREE_ROMAN = {
+  0:'I',1:'♭II',2:'II',3:'♭III',4:'III',5:'IV',
+  6:'♭V',7:'V',8:'♭VI',9:'VI',10:'♭VII',11:'VII'
+};
+const DEGREE_SHORT = {
+  0:'1',1:'♭2',2:'2',3:'♭3',4:'3',5:'4',
+  6:'♭5',7:'5',8:'♭6',9:'6',10:'♭7',11:'7'
+};
 
-// Scales: intervals from root
 const SCALES = {
   'Major':           [0,2,4,5,7,9,11],
   'Natural Minor':   [0,2,3,5,7,8,10],
@@ -632,21 +847,23 @@ const SCALES = {
   'Diminished':      [0,2,3,5,6,8,9,11],
 };
 
-const DEGREE_NAMES = {
-  0:'Root',1:'♭2nd',2:'2nd',3:'♭3rd',4:'3rd',5:'4th',
-  6:'♭5th',7:'5th',8:'♭6th',9:'6th',10:'♭7th',11:'7th'
-};
-const DEGREE_ROMAN = {
-  0:'I',1:'♭II',2:'II',3:'♭III',4:'III',5:'IV',
-  6:'♭V',7:'V',8:'♭VI',9:'VI',10:'♭VII',11:'VII'
-};
+const IDEAS_STORAGE_KEY = 'pitch-detective-ideas-v2';
+const SMOOTH_FACTOR = 0.25;
+const NOTE_SWITCH_FRAMES = 3;
+const PHRASE_GAP_MS = 900;
+const MIN_NOTE_MS = 120;
+const UI_FADE_MS = 300;
+const ROLL_MIN_MIDI = 48;
+const ROLL_MAX_MIDI = 84;
+const ROLL_ROW_PX = 8;
+const ROLL_PX_PER_MS = 0.11;
+const MIN_NOTE_WIDTH_PX = 16;
+const EXPORT_UNIT_MS = 240;
+const EXPORT_TEMPO_BPM = 120;
+const MIDI_PPQ = 480;
 
 function freqToMidi(freq) {
   return 12 * Math.log2(freq / 440) + 69;
-}
-
-function midiToFreq(midi) {
-  return 440 * Math.pow(2, (midi - 69) / 12);
 }
 
 function freqToNote(freq) {
@@ -665,50 +882,58 @@ function freqToNote(freq) {
   };
 }
 
-// Autocorrelation pitch detection (YIN-inspired)
 function detectPitch(buffer, sampleRate) {
   const SIZE = buffer.length;
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.005) return -1; // silence threshold (lower = more sensitive)
+  if (rms < 0.005) return -1;
 
-  // Clip leading/trailing silence: find first sample ABOVE threshold (where signal starts)
-  let r1 = 0, r2 = SIZE - 1;
+  let r1 = 0;
+  let r2 = SIZE - 1;
   const thres = 0.2;
   for (let i = 0; i < SIZE / 2; i++) {
-    if (Math.abs(buffer[i]) > thres) { r1 = i; break; }
+    if (Math.abs(buffer[i]) > thres) {
+      r1 = i;
+      break;
+    }
   }
   for (let i = 1; i < SIZE / 2; i++) {
-    if (Math.abs(buffer[SIZE - i]) > thres) { r2 = SIZE - i; break; }
+    if (Math.abs(buffer[SIZE - i]) > thres) {
+      r2 = SIZE - i;
+      break;
+    }
   }
 
   const buf = buffer.slice(r1, r2 + 1);
   const N = buf.length;
-
-  // Autocorrelation
   const c = new Float32Array(N);
+
   for (let lag = 0; lag < N; lag++) {
     for (let i = 0; i < N - lag; i++) {
       c[lag] += buf[i] * buf[i + lag];
     }
   }
 
-  // Find first zero crossing, then first peak
   let d = 0;
   while (d < N - 1 && c[d] > c[d + 1]) d++;
   if (d >= N - 2) return -1;
 
-  let maxVal = -Infinity, maxPos = d;
+  let maxVal = -Infinity;
+  let maxPos = d;
   for (let i = d; i < N; i++) {
-    if (c[i] > maxVal) { maxVal = c[i]; maxPos = i; }
+    if (c[i] > maxVal) {
+      maxVal = c[i];
+      maxPos = i;
+    }
   }
 
   if (maxPos === 0 || maxPos === N - 1) return -1;
   if (maxVal < 0.01) return -1;
 
-  // Parabolic interpolation for better accuracy
-  const prev = c[maxPos - 1], curr = c[maxPos], next = c[maxPos + 1];
+  const prev = c[maxPos - 1];
+  const curr = c[maxPos];
+  const next = c[maxPos + 1];
   const denom = 2 * (2 * curr - prev - next);
   let refined = maxPos;
   if (Math.abs(denom) > 1e-6) {
@@ -716,76 +941,13 @@ function detectPitch(buffer, sampleRate) {
   }
 
   const freq = sampleRate / refined;
-
-  // Sanity check: whistling is roughly 500–4000 Hz, singing 80–1200 Hz
   if (freq < 60 || freq > 4200) return -1;
 
   return freq;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SCALE DETECTION
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Rolling pitch class histogram (last ~5 seconds of notes)
-const pitchHistory = []; // {pitchClass, time}
-const HISTORY_WINDOW_MS = 5000;
-
-function updatePitchHistory(pitchClass) {
-  const now = Date.now();
-  pitchHistory.push({ pitchClass, time: now });
-  // Prune old entries
-  const cutoff = now - HISTORY_WINDOW_MS;
-  while (pitchHistory.length > 0 && pitchHistory[0].time < cutoff) {
-    pitchHistory.shift();
-  }
-}
-
-function detectScale() {
-  if (pitchHistory.length < 3) return null;
-
-  // Count pitch classes
-  const counts = new Array(12).fill(0);
-  for (const { pitchClass } of pitchHistory) counts[pitchClass]++;
-
-  const totalNotes = pitchHistory.length;
-  let bestScore = -1, bestScale = null, bestRoot = 0;
-
-  for (let root = 0; root < 12; root++) {
-    for (const [scaleName, intervals] of Object.entries(SCALES)) {
-      // How many notes fall in this scale?
-      let inScale = 0;
-      let weightedScore = 0;
-      for (let pc = 0; pc < 12; pc++) {
-        const interval = ((pc - root) + 12) % 12;
-        if (intervals.includes(interval)) {
-          inScale += counts[pc];
-          // Weight root and fifth higher
-          const bonus = (interval === 0) ? 2 : (interval === 7 ? 1.3 : 1);
-          weightedScore += counts[pc] * bonus;
-        }
-      }
-      const coverage = inScale / totalNotes;
-      // Prefer scales with higher coverage and penalize overly large scales
-      const lengthPenalty = 1 - (intervals.length - 5) * 0.03;
-      const score = coverage * weightedScore * lengthPenalty;
-
-      if (score > bestScore && coverage > 0.5) {
-        bestScore = score;
-        bestScale = scaleName;
-        bestRoot = root;
-      }
-    }
-  }
-
-  if (!bestScale) return null;
-
-  const confidence = Math.min(100, Math.round((bestScore / (totalNotes * 2)) * 100 + 40));
-  return { root: bestRoot, scale: bestScale, intervals: SCALES[bestScale], confidence };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AUDIO ENGINE
+// CAPTURE STATE
 // ─────────────────────────────────────────────────────────────────────────────
 
 let audioCtx = null;
@@ -796,15 +958,607 @@ let rafId = null;
 let isListening = false;
 let timeDomainBuffer = null;
 let freqBuffer = null;
-
-// Smoothing for pitch display
 let smoothedFreq = -1;
-const SMOOTH_FACTOR = 0.25;
+let silenceTimer = null;
+let lastDetectedNote = null;
+let captureOriginMs = null;
+let currentNoteEvent = null;
+let currentPhraseId = null;
+let pendingMidi = null;
+let pendingMidiFrames = 0;
+let silenceStartedAt = null;
+let noteIdCounter = 1;
+let phraseIdCounter = 1;
+let lastIdeaRenderAt = 0;
 
-// Note history for display (UI list)
-const noteDisplayHistory = [];
-const MAX_DISPLAY_HISTORY = 20;
-let lastPitchClass = -1;
+const recordedNotes = [];
+const phrases = [];
+
+function getNowMs() {
+  return performance.now();
+}
+
+function getPhraseById(id) {
+  return phrases.find((phrase) => phrase.id === id) || null;
+}
+
+function getNotesForPhrase(phraseId) {
+  return recordedNotes.filter((note) => note.phraseId === phraseId);
+}
+
+function getNonEmptyPhrases() {
+  return phrases
+    .map((phrase, index) => ({ ...phrase, index, notes: getNotesForPhrase(phrase.id) }))
+    .filter((phrase) => phrase.notes.length > 0);
+}
+
+function ensureCurrentPhrase(startTime) {
+  if (currentPhraseId !== null) return getPhraseById(currentPhraseId);
+  const phrase = {
+    id: phraseIdCounter++,
+    startTime,
+    endTime: startTime,
+  };
+  phrases.push(phrase);
+  currentPhraseId = phrase.id;
+  return phrase;
+}
+
+function closeCurrentPhrase(endTime) {
+  if (currentPhraseId === null) return;
+  const phrase = getPhraseById(currentPhraseId);
+  if (phrase) {
+    phrase.endTime = Math.max(phrase.startTime, endTime);
+  }
+  currentPhraseId = null;
+}
+
+function startCapturedNote(note, startTime) {
+  const phrase = ensureCurrentPhrase(startTime);
+  if (captureOriginMs === null) captureOriginMs = startTime;
+  currentNoteEvent = {
+    id: noteIdCounter++,
+    phraseId: phrase.id,
+    midi: note.midi,
+    pitchClass: note.pitchClass,
+    name: note.name,
+    octave: note.octave,
+    cents: note.cents,
+    startTime,
+    endTime: startTime,
+  };
+  recordedNotes.push(currentNoteEvent);
+  phrase.endTime = startTime;
+}
+
+function finishCapturedNote(endTime) {
+  if (!currentNoteEvent) return;
+  currentNoteEvent.endTime = Math.max(currentNoteEvent.startTime + MIN_NOTE_MS, endTime);
+  currentNoteEvent.durationMs = currentNoteEvent.endTime - currentNoteEvent.startTime;
+  const phrase = getPhraseById(currentNoteEvent.phraseId);
+  if (phrase) phrase.endTime = currentNoteEvent.endTime;
+  currentNoteEvent = null;
+}
+
+function handleStableDetectedNote(note, now) {
+  silenceStartedAt = null;
+  if (!currentNoteEvent) {
+    startCapturedNote(note, now);
+    pendingMidi = null;
+    pendingMidiFrames = 0;
+    return;
+  }
+
+  if (note.midi === currentNoteEvent.midi) {
+    currentNoteEvent.endTime = now;
+    currentNoteEvent.cents = note.cents;
+    pendingMidi = null;
+    pendingMidiFrames = 0;
+    return;
+  }
+
+  if (pendingMidi === note.midi) {
+    pendingMidiFrames += 1;
+    if (pendingMidiFrames >= NOTE_SWITCH_FRAMES) {
+      finishCapturedNote(now);
+      startCapturedNote(note, now);
+      pendingMidi = null;
+      pendingMidiFrames = 0;
+    }
+    return;
+  }
+
+  pendingMidi = note.midi;
+  pendingMidiFrames = 1;
+}
+
+function handleSilence(now) {
+  pendingMidi = null;
+  pendingMidiFrames = 0;
+  if (currentNoteEvent) finishCapturedNote(now);
+  if (silenceStartedAt === null) silenceStartedAt = now;
+  if (currentPhraseId !== null && now - silenceStartedAt >= PHRASE_GAP_MS) {
+    closeCurrentPhrase(silenceStartedAt);
+  }
+}
+
+function resetCaptureState() {
+  recordedNotes.length = 0;
+  phrases.length = 0;
+  captureOriginMs = null;
+  currentNoteEvent = null;
+  currentPhraseId = null;
+  pendingMidi = null;
+  pendingMidiFrames = 0;
+  silenceStartedAt = null;
+  noteIdCounter = 1;
+  phraseIdCounter = 1;
+  lastDetectedNote = null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHRASE-AWARE SCALE INFERENCE
+// ─────────────────────────────────────────────────────────────────────────────
+
+function noteWeight(note) {
+  const duration = note.durationMs || Math.max(MIN_NOTE_MS, note.endTime - note.startTime);
+  return 1 + Math.min(2.2, duration / 350);
+}
+
+function phraseBoundaryBonus(interval) {
+  if (interval === 0) return 2.1;
+  if (interval === 7) return 1.1;
+  if (interval === 4 || interval === 3) return 0.55;
+  return 0;
+}
+
+function getScaleContext() {
+  const phraseData = getNonEmptyPhrases();
+  const activePhrase = phraseData.find((phrase) => phrase.id === currentPhraseId && phrase.notes.length >= 3);
+  if (activePhrase) {
+    return {
+      label: `Active phrase ${activePhrase.index + 1}`,
+      notes: activePhrase.notes,
+      phraseData,
+    };
+  }
+
+  const latestPhrase = [...phraseData].reverse().find((phrase) => phrase.notes.length >= 3);
+  if (latestPhrase) {
+    return {
+      label: `Phrase ${latestPhrase.index + 1}`,
+      notes: latestPhrase.notes,
+      phraseData,
+    };
+  }
+
+  if (recordedNotes.length >= 3) {
+    return {
+      label: 'Whole idea',
+      notes: recordedNotes.slice(),
+      phraseData,
+    };
+  }
+
+  return null;
+}
+
+function evaluateScaleCandidate(root, scaleName, intervals, context) {
+  let score = 0;
+  let inScaleWeight = 0;
+  let totalWeight = 0;
+  const seenDegrees = new Set();
+  const contextNotes = context.notes;
+
+  for (const note of contextNotes) {
+    const interval = ((note.pitchClass - root) + 12) % 12;
+    const weight = noteWeight(note);
+    totalWeight += weight;
+    if (intervals.includes(interval)) {
+      inScaleWeight += weight;
+      seenDegrees.add(interval);
+      score += weight;
+      if (interval === 0) score += 0.7;
+      if (interval === 7) score += 0.35;
+    } else {
+      score -= weight * 1.45;
+    }
+  }
+
+  if (contextNotes.length > 0) {
+    const firstInterval = ((contextNotes[0].pitchClass - root) + 12) % 12;
+    const lastInterval = ((contextNotes[contextNotes.length - 1].pitchClass - root) + 12) % 12;
+    if (intervals.includes(firstInterval)) score += phraseBoundaryBonus(firstInterval) * 0.55;
+    if (intervals.includes(lastInterval)) score += phraseBoundaryBonus(lastInterval);
+  }
+
+  for (const phrase of context.phraseData) {
+    const finalNote = phrase.notes[phrase.notes.length - 1];
+    const startNote = phrase.notes[0];
+    const finalInterval = ((finalNote.pitchClass - root) + 12) % 12;
+    const startInterval = ((startNote.pitchClass - root) + 12) % 12;
+    if (intervals.includes(finalInterval)) score += phraseBoundaryBonus(finalInterval) * 0.5;
+    if (intervals.includes(startInterval)) score += phraseBoundaryBonus(startInterval) * 0.18;
+  }
+
+  const coverage = totalWeight > 0 ? inScaleWeight / totalWeight : 0;
+  const distinctCoverage = contextNotes.length > 0 ? seenDegrees.size / Math.max(1, Math.min(intervals.length, 5)) : 0;
+  const lengthPenalty = 1 - Math.max(0, intervals.length - 5) * 0.025;
+  const finalScore = score * (0.7 + coverage * 0.6) * (0.8 + distinctCoverage * 0.3) * lengthPenalty;
+
+  return { finalScore, coverage };
+}
+
+function detectScale() {
+  const context = getScaleContext();
+  if (!context) return null;
+
+  let best = null;
+  let secondBest = null;
+
+  for (let root = 0; root < 12; root++) {
+    for (const [scaleName, intervals] of Object.entries(SCALES)) {
+      const candidate = evaluateScaleCandidate(root, scaleName, intervals, context);
+      if (candidate.coverage < 0.55) continue;
+
+      const enriched = {
+        root,
+        scale: scaleName,
+        intervals,
+        score: candidate.finalScore,
+        coverage: candidate.coverage,
+      };
+
+      if (!best || enriched.score > best.score) {
+        secondBest = best;
+        best = enriched;
+      } else if (!secondBest || enriched.score > secondBest.score) {
+        secondBest = enriched;
+      }
+    }
+  }
+
+  if (!best) return null;
+
+  const spread = secondBest ? Math.max(0, best.score - secondBest.score) : best.score;
+  const confidence = Math.min(99, Math.round(best.coverage * 60 + Math.min(28, spread * 5) + 12));
+
+  return {
+    ...best,
+    confidence,
+    scopeLabel: context.label,
+    phraseCount: context.phraseData.length,
+    noteCount: context.notes.length,
+  };
+}
+
+function degreeInfoForPitchClass(pitchClass, scaleResult) {
+  if (!scaleResult) return null;
+  const interval = ((pitchClass - scaleResult.root) + 12) % 12;
+  const inScale = scaleResult.intervals.includes(interval);
+  return {
+    interval,
+    inScale,
+    degreeShort: DEGREE_SHORT[interval],
+    degreeName: DEGREE_NAMES[interval],
+    degreeRoman: DEGREE_ROMAN[interval],
+    degreeIndex: inScale ? scaleResult.intervals.indexOf(interval) + 1 : null,
+  };
+}
+
+function formatScaleName(scaleResult) {
+  if (!scaleResult) return 'Unknown';
+  return `${NOTE_NAMES[scaleResult.root]} ${scaleResult.scale}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORTS AND SAVED IDEAS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function normalizeCapturedNotes(notes = recordedNotes) {
+  return notes
+    .map((note) => ({
+      ...note,
+      durationMs: note.durationMs || Math.max(MIN_NOTE_MS, note.endTime - note.startTime),
+    }))
+    .sort((a, b) => a.startTime - b.startTime);
+}
+
+function quantizeUnits(ms) {
+  return Math.max(1, Math.round(ms / EXPORT_UNIT_MS));
+}
+
+function formatAbcDuration(units) {
+  return units === 1 ? '' : String(units);
+}
+
+function midiToABC(midi) {
+  const names = ['C','^C','D','^D','E','F','^F','G','^G','A','^A','B'];
+  const pc = ((midi % 12) + 12) % 12;
+  const octave = Math.floor(midi / 12) - 1;
+  let name = names[pc];
+
+  if (octave >= 5) {
+    name = name.toLowerCase();
+    name += "'".repeat(octave - 5);
+    return name;
+  }
+
+  if (octave === 4) return name;
+  return name + ','.repeat(4 - octave);
+}
+
+function formatABCKey(scaleResult) {
+  if (!scaleResult) return 'C';
+  const root = NOTE_NAMES[scaleResult.root].replace('♯', '#');
+  if (scaleResult.scale === 'Major') return root;
+  if (scaleResult.scale === 'Natural Minor' || scaleResult.scale === 'Harmonic Minor') return `${root}m`;
+  if (scaleResult.scale === 'Dorian') return `${root}dor`;
+  if (scaleResult.scale === 'Mixolydian') return `${root}mix`;
+  if (scaleResult.scale === 'Lydian') return `${root}lyd`;
+  if (scaleResult.scale === 'Phrygian') return `${root}phr`;
+  return root;
+}
+
+function buildDegreeSketch(scaleResult, notes = normalizeCapturedNotes()) {
+  if (!notes.length) return '';
+  const phraseMap = new Map();
+  for (const note of notes) {
+    if (!phraseMap.has(note.phraseId)) phraseMap.set(note.phraseId, []);
+    phraseMap.get(note.phraseId).push(note);
+  }
+
+  return [...phraseMap.values()].map((phraseNotes) => (
+    phraseNotes.map((note) => {
+      const info = degreeInfoForPitchClass(note.pitchClass, scaleResult);
+      if (info && info.inScale) return info.degreeShort;
+      return note.name;
+    }).join(' ')
+  )).join(' | ');
+}
+
+function buildABCNotation(scaleResult, notes = normalizeCapturedNotes()) {
+  if (!notes.length) return '';
+  const phraseMap = new Map();
+  for (const note of notes) {
+    if (!phraseMap.has(note.phraseId)) phraseMap.set(note.phraseId, []);
+    phraseMap.get(note.phraseId).push(note);
+  }
+
+  const body = [...phraseMap.values()].map((phraseNotes) => {
+    const tokens = [];
+    let cursor = phraseNotes[0].startTime;
+    for (const note of phraseNotes) {
+      const gap = note.startTime - cursor;
+      if (gap > EXPORT_UNIT_MS * 0.75) {
+        tokens.push(`z${formatAbcDuration(quantizeUnits(gap))}`);
+      }
+      tokens.push(`${midiToABC(note.midi)}${formatAbcDuration(quantizeUnits(note.durationMs))}`);
+      cursor = note.endTime;
+    }
+    return tokens.join(' ');
+  }).join(' | ');
+
+  const header = [
+    'X:1',
+    `T:Idea ${new Date().toLocaleString()}`,
+    'M:4/4',
+    'L:1/8',
+    `Q:1/4=${EXPORT_TEMPO_BPM}`,
+    `K:${formatABCKey(scaleResult)}`,
+  ];
+
+  return `${header.join('\n')}\n${body}`;
+}
+
+function encodeVarLen(value) {
+  const bytes = [value & 0x7F];
+  let remaining = value >> 7;
+  while (remaining > 0) {
+    bytes.unshift((remaining & 0x7F) | 0x80);
+    remaining >>= 7;
+  }
+  return bytes;
+}
+
+function asciiBytes(str) {
+  return Array.from(str).map((char) => char.charCodeAt(0));
+}
+
+function ticksFromMs(ms) {
+  return Math.max(0, Math.round((ms * MIDI_PPQ * EXPORT_TEMPO_BPM) / 60000));
+}
+
+function createMidiBytes(notes = normalizeCapturedNotes()) {
+  if (!notes.length) return null;
+
+  const startTime = notes[0].startTime;
+  const events = [];
+
+  for (const note of notes) {
+    events.push({ time: note.startTime - startTime, sort: 1, bytes: [0x90, note.midi, 100] });
+    events.push({ time: note.endTime - startTime, sort: 0, bytes: [0x80, note.midi, 0] });
+  }
+
+  events.sort((a, b) => {
+    if (a.time !== b.time) return a.time - b.time;
+    return a.sort - b.sort;
+  });
+
+  const track = [];
+  track.push(0x00, 0xFF, 0x51, 0x03, 0x07, 0xA1, 0x20);
+  track.push(0x00, 0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08);
+
+  let lastTick = 0;
+  for (const event of events) {
+    const tick = ticksFromMs(event.time);
+    const delta = tick - lastTick;
+    track.push(...encodeVarLen(delta), ...event.bytes);
+    lastTick = tick;
+  }
+  track.push(0x00, 0xFF, 0x2F, 0x00);
+
+  const header = [
+    ...asciiBytes('MThd'),
+    0x00, 0x00, 0x00, 0x06,
+    0x00, 0x00,
+    0x00, 0x01,
+    (MIDI_PPQ >> 8) & 0xFF, MIDI_PPQ & 0xFF,
+    ...asciiBytes('MTrk'),
+    (track.length >> 24) & 0xFF,
+    (track.length >> 16) & 0xFF,
+    (track.length >> 8) & 0xFF,
+    track.length & 0xFF,
+  ];
+
+  return new Uint8Array([...header, ...track]);
+}
+
+function buildIdeaSnapshot(scaleResult = detectScale()) {
+  const notes = normalizeCapturedNotes();
+  return {
+    id: (crypto.randomUUID && crypto.randomUUID()) || `idea-${Date.now()}`,
+    savedAt: new Date().toISOString(),
+    scale: scaleResult ? {
+      root: scaleResult.root,
+      scale: scaleResult.scale,
+      confidence: scaleResult.confidence,
+      scopeLabel: scaleResult.scopeLabel,
+    } : null,
+    phraseCount: getNonEmptyPhrases().length,
+    noteCount: notes.length,
+    notes,
+    degreeSketch: buildDegreeSketch(scaleResult, notes),
+    abc: buildABCNotation(scaleResult, notes),
+  };
+}
+
+function loadSavedIdeas() {
+  try {
+    const raw = localStorage.getItem(IDEAS_STORAGE_KEY);
+    const ideas = raw ? JSON.parse(raw) : [];
+    return Array.isArray(ideas) ? ideas : [];
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+}
+
+function persistSavedIdeas(ideas) {
+  try {
+    localStorage.setItem(IDEAS_STORAGE_KEY, JSON.stringify(ideas));
+  } catch (err) {
+    console.error(err);
+    showError('Could not save this idea locally.');
+  }
+}
+
+function findSavedIdea(id) {
+  return loadSavedIdeas().find((idea) => idea.id === id) || null;
+}
+
+function saveIdea() {
+  const snapshot = buildIdeaSnapshot();
+  if (!snapshot.notes.length) {
+    showError('Capture a phrase before saving an idea.');
+    return;
+  }
+  const ideas = loadSavedIdeas();
+  ideas.unshift(snapshot);
+  persistSavedIdeas(ideas.slice(0, 12));
+  renderSavedIdeas();
+}
+
+async function copyABC() {
+  const snapshot = buildIdeaSnapshot();
+  if (!snapshot.abc) {
+    showError('Capture a few notes before exporting ABC.');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(snapshot.abc);
+  } catch (err) {
+    console.error(err);
+    showError('Clipboard copy needs localhost or HTTPS.');
+  }
+}
+
+function downloadBlob(filename, blob) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function downloadCurrentMIDI() {
+  const bytes = createMidiBytes();
+  if (!bytes) {
+    showError('Capture a phrase before exporting MIDI.');
+    return;
+  }
+  downloadBlob('pitch-detective-idea.mid', new Blob([bytes], { type: 'audio/midi' }));
+}
+
+function copySavedABC(id) {
+  const idea = findSavedIdea(id);
+  if (!idea?.abc) {
+    showError('No ABC found for that saved idea.');
+    return;
+  }
+  navigator.clipboard.writeText(idea.abc).catch((err) => {
+    console.error(err);
+    showError('Clipboard copy needs localhost or HTTPS.');
+  });
+}
+
+function downloadSavedMIDI(id) {
+  const idea = findSavedIdea(id);
+  if (!idea) {
+    showError('Saved idea not found.');
+    return;
+  }
+  const bytes = createMidiBytes(idea.notes);
+  if (!bytes) {
+    showError('Saved idea has no MIDI notes.');
+    return;
+  }
+  downloadBlob(`${id}.mid`, new Blob([bytes], { type: 'audio/midi' }));
+}
+
+function renderSavedIdeas() {
+  const ideas = loadSavedIdeas();
+  const container = document.getElementById('saved-ideas');
+  if (!ideas.length) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = ideas.map((idea) => {
+    const when = new Date(idea.savedAt).toLocaleString();
+    const scaleLabel = idea.scale ? `${NOTE_NAMES[idea.scale.root]} ${idea.scale.scale}` : 'Unknown scale';
+    return `
+      <div class="saved-idea">
+        <div class="saved-idea-head">
+          <div class="saved-idea-title">${scaleLabel}</div>
+          <div class="saved-idea-meta">${when}</div>
+        </div>
+        <div class="saved-idea-meta">${idea.noteCount} notes · ${idea.phraseCount} phrases · ${idea.degreeSketch || 'No degree sketch'}</div>
+        <div class="saved-idea-actions">
+          <button class="btn-secondary" onclick="copySavedABC('${idea.id}')">Copy ABC</button>
+          <button class="btn-secondary" onclick="downloadSavedMIDI('${idea.id}')">MIDI</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIO ENGINE
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function startListening() {
   try {
@@ -828,25 +1582,35 @@ async function startListening() {
     freqBuffer = new Uint8Array(analyser.frequencyBinCount);
 
     isListening = true;
-    processAudio();
     updateListeningUI(true);
+    processAudio();
   } catch (err) {
-    showError('Microphone access denied. Please allow mic access and try again.');
     console.error(err);
+    showError('Microphone access denied. Please allow mic access and try again.');
   }
 }
 
 function stopListening() {
+  const now = getNowMs();
   isListening = false;
   if (rafId) cancelAnimationFrame(rafId);
   if (source) source.disconnect();
-  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (stream) stream.getTracks().forEach((track) => track.stop());
   if (audioCtx) audioCtx.close();
-  audioCtx = analyser = source = stream = null;
+  audioCtx = null;
+  analyser = null;
+  source = null;
+  stream = null;
   smoothedFreq = -1;
+  finishCapturedNote(now);
+  closeCurrentPhrase(now);
+  lastDetectedNote = null;
+  clearTimeout(silenceTimer);
+  silenceTimer = null;
   updateListeningUI(false);
   setNoteDisplay(null);
   drawIdleViz();
+  refreshIdeaUI(true);
 }
 
 function toggleListening() {
@@ -854,63 +1618,48 @@ function toggleListening() {
   else startListening();
 }
 
-let silenceTimer = null;
-let lastDetectedNote = null;
-
 function processAudio() {
   if (!isListening) return;
   rafId = requestAnimationFrame(processAudio);
 
   analyser.getFloatTimeDomainData(timeDomainBuffer);
   analyser.getByteFrequencyData(freqBuffer);
-
   drawViz(timeDomainBuffer, freqBuffer);
 
   const rawFreq = detectPitch(timeDomainBuffer, audioCtx.sampleRate);
+  const now = getNowMs();
 
   if (rawFreq > 0) {
-    // Smooth frequency
-    if (smoothedFreq < 0) {
-      smoothedFreq = rawFreq;
-    } else {
-      smoothedFreq = smoothedFreq * (1 - SMOOTH_FACTOR) + rawFreq * SMOOTH_FACTOR;
-    }
-
+    smoothedFreq = smoothedFreq < 0 ? rawFreq : (smoothedFreq * (1 - SMOOTH_FACTOR) + rawFreq * SMOOTH_FACTOR);
     const note = freqToNote(smoothedFreq);
-    setNoteDisplay(note, smoothedFreq);
-
-    // Only add to history when pitch class changes
-    if (note.pitchClass !== lastPitchClass) {
-      updatePitchHistory(note.pitchClass);
-      addToNoteHistory(note);
-      lastPitchClass = note.pitchClass;
-    }
-
+    lastDetectedNote = note;
+    handleStableDetectedNote(note, now);
     clearTimeout(silenceTimer);
     silenceTimer = null;
-    lastDetectedNote = note;
     document.getElementById('silence-msg').style.opacity = '0';
     document.getElementById('note-card').classList.add('active');
     document.getElementById('note-card').classList.remove('idle-state');
     document.getElementById('note-card').classList.add('active-state');
-
-    updateScaleDisplay(note);
+    setNoteDisplay(note, smoothedFreq);
+    refreshIdeaUI();
   } else {
-    // Fade out after silence
+    handleSilence(now);
     if (!silenceTimer) {
       silenceTimer = setTimeout(() => {
         smoothedFreq = -1;
-        lastPitchClass = -1;
+        lastDetectedNote = null;
         setNoteDisplay(null);
         document.getElementById('silence-msg').style.opacity = '1';
         document.getElementById('note-card').classList.remove('active');
-      }, 300);
+        refreshIdeaUI(true);
+      }, UI_FADE_MS);
     }
+    refreshIdeaUI();
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// UI UPDATES
+// UI
 // ─────────────────────────────────────────────────────────────────────────────
 
 function setNoteDisplay(note, freq) {
@@ -928,119 +1677,217 @@ function setNoteDisplay(note, freq) {
     return;
   }
 
-  // Note name with octave
   nameEl.innerHTML = `${note.name}<span class="note-octave">${note.octave}</span>`;
-
-  // Flash
   nameEl.classList.add('flash');
   setTimeout(() => nameEl.classList.remove('flash'), 100);
+  freqEl.textContent = freq ? `${freq.toFixed(1)} Hz` : '—';
 
-  // Frequency
-  freqEl.textContent = freq ? freq.toFixed(1) + ' Hz' : '—';
-
-  // Cents & tuner needle
   const cents = note.cents;
   centsEl.textContent = `${cents > 0 ? '+' : ''}${cents} cents`;
-
-  // Map cents (-50 to +50) to position (5% to 95%)
   const pos = 50 + (cents / 50) * 45;
   needle.style.left = `${Math.max(5, Math.min(95, pos))}%`;
 
-  if (Math.abs(cents) < 8) {
-    needle.className = 'tuner-needle in-tune';
-  } else if (cents > 0) {
-    needle.className = 'tuner-needle sharp';
-  } else {
-    needle.className = 'tuner-needle flat';
-  }
+  if (Math.abs(cents) < 8) needle.className = 'tuner-needle in-tune';
+  else if (cents > 0) needle.className = 'tuner-needle sharp';
+  else needle.className = 'tuner-needle flat';
 }
 
-function addToNoteHistory(note) {
-  noteDisplayHistory.unshift(note);
-  if (noteDisplayHistory.length > MAX_DISPLAY_HISTORY) noteDisplayHistory.pop();
-
-  const container = document.getElementById('history-notes');
-  container.innerHTML = noteDisplayHistory
-    .map(n => `<div class="history-note">${n.name}${n.octave}</div>`)
-    .join('');
-}
-
-function updateScaleDisplay(currentNote) {
-  const result = detectScale();
+function updateScaleDisplay(scaleResult, currentNote) {
   const scaleCard = document.getElementById('scale-card');
   scaleCard.classList.remove('idle-state');
   scaleCard.classList.add('active-state');
 
-  if (!result) {
+  if (!scaleResult) {
     document.getElementById('scale-root').textContent = '?';
-    document.getElementById('scale-type').textContent = ' — detecting…';
+    document.getElementById('scale-type').textContent = ' — listening…';
+    document.getElementById('scale-scope').textContent = 'Need at least a short phrase before degree-first mode can lock onto a scale.';
     document.getElementById('degree-badge').textContent = '—';
-    document.getElementById('degree-name').textContent = 'Keep playing!';
-    document.getElementById('degree-roman').textContent = 'Need more notes';
+    document.getElementById('degree-name').textContent = 'Keep whistling';
+    document.getElementById('degree-roman').textContent = 'No phrase context yet';
     document.getElementById('confidence').textContent = '—';
-    renderScaleNotes([], -1, currentNote?.pitchClass ?? -1);
+    renderScaleNotes(null, currentNote?.pitchClass ?? -1);
     return;
   }
 
-  const rootName = NOTE_NAMES[result.root];
-  document.getElementById('scale-root').textContent = rootName;
-  document.getElementById('scale-type').textContent = ' ' + result.scale;
-  document.getElementById('confidence').textContent = result.confidence + '%';
+  document.getElementById('scale-root').textContent = NOTE_NAMES[scaleResult.root];
+  document.getElementById('scale-type').textContent = ` ${scaleResult.scale}`;
+  document.getElementById('scale-scope').textContent =
+    `${scaleResult.scopeLabel} · ${scaleResult.noteCount} notes · ${scaleResult.phraseCount} phrase${scaleResult.phraseCount === 1 ? '' : 's'}`;
+  document.getElementById('confidence').textContent = `${scaleResult.confidence}%`;
 
-  // Current note's degree in this scale
   if (currentNote) {
-    const interval = ((currentNote.pitchClass - result.root) + 12) % 12;
-    const inScale = result.intervals.includes(interval);
-    const degIdx = result.intervals.indexOf(interval);
-
-    if (inScale) {
-      document.getElementById('degree-badge').textContent = ordinal(degIdx + 1);
-      document.getElementById('degree-name').textContent = DEGREE_NAMES[interval];
-      document.getElementById('degree-roman').textContent = DEGREE_ROMAN[interval];
-    } else {
+    const info = degreeInfoForPitchClass(currentNote.pitchClass, scaleResult);
+    if (info?.inScale) {
+      document.getElementById('degree-badge').textContent = DEGREE_SHORT[info.interval];
+      document.getElementById('degree-name').textContent = info.degreeName;
+      document.getElementById('degree-roman').textContent =
+        `${info.degreeRoman} · ${currentNote.name}${currentNote.octave}`;
+    } else if (info) {
       document.getElementById('degree-badge').textContent = '⚠';
-      document.getElementById('degree-name').textContent = 'Outside scale';
-      document.getElementById('degree-roman').textContent = DEGREE_NAMES[interval] + ' (chromatic)';
+      document.getElementById('degree-name').textContent = 'Outside inferred scale';
+      document.getElementById('degree-roman').textContent =
+        `${info.degreeName} chromatic · ${currentNote.name}${currentNote.octave}`;
     }
+  } else {
+    document.getElementById('degree-badge').textContent = '—';
+    document.getElementById('degree-name').textContent = 'Phrase captured';
+    document.getElementById('degree-roman').textContent = 'Degree view updates when pitch returns';
   }
 
-  renderScaleNotes(result, result.root, currentNote?.pitchClass ?? -1);
+  renderScaleNotes(scaleResult, currentNote?.pitchClass ?? -1);
 }
 
-function renderScaleNotes(result, root, currentPc) {
+function renderScaleNotes(scaleResult, currentPitchClass) {
   const container = document.getElementById('scale-notes');
-  if (!result || !result.intervals) {
+  if (!scaleResult) {
     container.innerHTML = '';
     return;
   }
 
-  container.innerHTML = result.intervals.map((interval, i) => {
-    const pc = (root + interval) % 12;
-    const isCurrent = pc === currentPc;
-    const name = NOTE_NAMES[pc];
-    return `<div class="scale-note-pip ${isCurrent ? 'current' : 'in-scale'}">${name}</div>`;
+  container.innerHTML = scaleResult.intervals.map((interval) => {
+    const pitchClass = (scaleResult.root + interval) % 12;
+    const isCurrent = pitchClass === currentPitchClass;
+    const label = DEGREE_SHORT[interval];
+    return `<div class="scale-note-pip ${isCurrent ? 'current' : 'in-scale'}">${label}</div>`;
   }).join('');
 }
 
-function ordinal(n) {
-  const s = ['th','st','nd','rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+function midiToRollTop(midi) {
+  const clamped = Math.max(ROLL_MIN_MIDI, Math.min(ROLL_MAX_MIDI, midi));
+  return (ROLL_MAX_MIDI - clamped) * ROLL_ROW_PX + 1;
+}
+
+function renderRollLabels() {
+  const container = document.getElementById('roll-labels');
+  const labels = [];
+  for (let midi = ROLL_MAX_MIDI; midi >= ROLL_MIN_MIDI; midi--) {
+    if (midi % 12 !== 0) continue;
+    labels.push(`<div class="roll-label" style="top:${midiToRollTop(midi) + 4}px">${NOTE_NAMES[0]}${Math.floor(midi / 12) - 1}</div>`);
+  }
+  container.innerHTML = labels.join('');
+}
+
+function getRollNoteLabel(note, scaleResult) {
+  const info = degreeInfoForPitchClass(note.pitchClass, scaleResult);
+  if (info?.inScale) return info.degreeShort;
+  if (scaleResult) return note.name;
+  return `${note.name}${note.octave}`;
+}
+
+function renderPianoRoll(scaleResult, now = getNowMs()) {
+  const grid = document.getElementById('piano-roll-grid');
+  const roll = document.getElementById('piano-roll');
+  const notes = normalizeCapturedNotes();
+  const height = (ROLL_MAX_MIDI - ROLL_MIN_MIDI + 1) * ROLL_ROW_PX;
+  grid.style.height = `${height}px`;
+
+  if (!notes.length || captureOriginMs === null) {
+    grid.innerHTML = '<div class="roll-empty">No captured notes yet.</div>';
+    document.getElementById('roll-meta').textContent = '0 notes · 0 phrases';
+    document.getElementById('roll-mode').textContent = 'Degree-first view';
+    return;
+  }
+
+  const nonEmptyPhrases = getNonEmptyPhrases();
+  const elapsedEnd = Math.max(...notes.map((note) => note.endTime), now);
+  const totalMs = Math.max(2600, elapsedEnd - captureOriginMs + 900);
+  const width = Math.max(roll.clientWidth - 6, totalMs * ROLL_PX_PER_MS);
+  grid.style.width = `${width}px`;
+
+  const phraseBands = nonEmptyPhrases.map((phrase) => {
+    const left = Math.max(0, (phrase.startTime - captureOriginMs) * ROLL_PX_PER_MS);
+    const bandWidth = Math.max(6, (phrase.endTime - phrase.startTime) * ROLL_PX_PER_MS);
+    return `<div class="phrase-band" style="left:${left}px;width:${bandWidth}px"></div>`;
+  }).join('');
+
+  const notesHtml = notes.map((note, index) => {
+    const left = Math.max(0, (note.startTime - captureOriginMs) * ROLL_PX_PER_MS);
+    const widthPx = Math.max(MIN_NOTE_WIDTH_PX, note.durationMs * ROLL_PX_PER_MS);
+    const top = midiToRollTop(note.midi);
+    const label = getRollNoteLabel(note, scaleResult);
+    const accent = index === 0 || notes[index - 1].phraseId !== note.phraseId;
+    return `
+      <div class="roll-note ${accent ? 'phrase-accent' : ''}"
+           style="left:${left}px;top:${top}px;width:${widthPx}px;height:${ROLL_ROW_PX - 2}px"
+           title="${note.name}${note.octave}">
+        ${label}
+      </div>
+    `;
+  }).join('');
+
+  const playheadLeft = Math.max(0, (now - captureOriginMs) * ROLL_PX_PER_MS);
+  grid.innerHTML = `${phraseBands}${notesHtml}<div class="roll-playhead" style="left:${playheadLeft}px"></div>`;
+
+  document.getElementById('roll-meta').textContent =
+    `${notes.length} notes · ${nonEmptyPhrases.length} phrase${nonEmptyPhrases.length === 1 ? '' : 's'}`;
+  document.getElementById('roll-mode').textContent =
+    scaleResult ? `Degrees in ${formatScaleName(scaleResult)}` : 'Absolute fallback';
+
+  if (isListening) {
+    roll.scrollLeft = Math.max(0, grid.scrollWidth - roll.clientWidth);
+  }
+}
+
+function renderPhraseSummary(scaleResult) {
+  const phrasesWithNotes = getNonEmptyPhrases();
+  const currentPhrase = phrasesWithNotes.find((phrase) => phrase.id === currentPhraseId);
+  const summary = document.getElementById('phrase-summary');
+
+  if (!recordedNotes.length) {
+    summary.textContent = 'Start listening and whistle a phrase. Silence and stop/start become phrase boundaries.';
+    return;
+  }
+
+  if (scaleResult) {
+    const phraseLabel = currentPhrase ? `You are in phrase ${currentPhrase.index + 1}.` : 'The current take is segmented into phrases.';
+    summary.textContent =
+      `${phraseLabel} Degree-first mode is anchored to ${formatScaleName(scaleResult)} using ${scaleResult.scopeLabel.toLowerCase()} as context.`;
+    return;
+  }
+
+  summary.textContent =
+    `${phrasesWithNotes.length} phrase${phrasesWithNotes.length === 1 ? '' : 's'} captured so far. Keep outlining a phrase ending so the scale can settle.`;
+}
+
+function renderExportPreview(scaleResult) {
+  const preview = document.getElementById('export-preview');
+  const snapshot = buildIdeaSnapshot(scaleResult);
+  if (!snapshot.notes.length) {
+    preview.textContent = 'ABC export will appear here once you capture a few notes.';
+    return;
+  }
+
+  const lines = [
+    `Scale: ${scaleResult ? formatScaleName(scaleResult) : 'Unresolved'}`,
+    `Degree sketch: ${snapshot.degreeSketch || 'Not enough context yet'}`,
+    '',
+    snapshot.abc || 'Not enough notes for ABC yet.',
+  ];
+  preview.textContent = lines.join('\n');
+}
+
+function refreshIdeaUI(force = false) {
+  const now = getNowMs();
+  if (!force && now - lastIdeaRenderAt < 120) return;
+  lastIdeaRenderAt = now;
+  const scaleResult = detectScale();
+  updateScaleDisplay(scaleResult, lastDetectedNote);
+  renderPhraseSummary(scaleResult);
+  renderPianoRoll(scaleResult, now);
+  renderExportPreview(scaleResult);
 }
 
 function clearHistory() {
-  noteDisplayHistory.length = 0;
-  pitchHistory.length = 0;
-  lastPitchClass = -1;
-  document.getElementById('history-notes').innerHTML =
-    '<span style="color:var(--subtext); font-size:13px">No notes yet</span>';
+  resetCaptureState();
+  refreshIdeaUI(true);
   document.getElementById('scale-root').textContent = '?';
   document.getElementById('scale-type').textContent = ' Major';
+  document.getElementById('scale-scope').textContent = 'Phrase-aware scale inference will appear here.';
   document.getElementById('degree-badge').textContent = '—';
   document.getElementById('degree-name').textContent = '—';
   document.getElementById('degree-roman').textContent = '—';
   document.getElementById('confidence').textContent = '—';
-  document.getElementById('scale-notes').innerHTML = '';
+  document.getElementById('silence-msg').style.opacity = '1';
 }
 
 function updateListeningUI(active) {
@@ -1073,7 +1920,10 @@ function showError(msg) {
   const el = document.getElementById('error-msg');
   el.textContent = msg;
   el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 5000);
+  clearTimeout(showError.timer);
+  showError.timer = setTimeout(() => {
+    el.style.display = 'none';
+  }, 5000);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1091,18 +1941,13 @@ function resizeViz() {
 window.addEventListener('resize', resizeViz);
 resizeViz();
 
-function drawViz(timeDomain, freqData) {
+function drawViz(timeDomain) {
   const W = vizCanvas.width;
   const H = vizCanvas.height;
   vizCtx.clearRect(0, 0, W, H);
-
-  // Background
   vizCtx.fillStyle = 'rgba(14,14,40,0.3)';
   vizCtx.fillRect(0, 0, W, H);
 
-  const bufLen = timeDomain.length;
-
-  // Draw waveform with glow
   vizCtx.save();
   vizCtx.shadowBlur = 12;
   vizCtx.shadowColor = 'rgba(0,245,255,0.6)';
@@ -1110,11 +1955,10 @@ function drawViz(timeDomain, freqData) {
   vizCtx.lineWidth = 2 * devicePixelRatio;
   vizCtx.beginPath();
 
-  const sliceWidth = W / bufLen;
+  const sliceWidth = W / timeDomain.length;
   let x = 0;
-  for (let i = 0; i < bufLen; i++) {
-    const v = timeDomain[i];
-    const y = (H / 2) + (v * H * 0.4);
+  for (let i = 0; i < timeDomain.length; i++) {
+    const y = (H / 2) + (timeDomain[i] * H * 0.4);
     if (i === 0) vizCtx.moveTo(x, y);
     else vizCtx.lineTo(x, y);
     x += sliceWidth;
@@ -1122,7 +1966,6 @@ function drawViz(timeDomain, freqData) {
   vizCtx.stroke();
   vizCtx.restore();
 
-  // Center line
   vizCtx.strokeStyle = 'rgba(0,245,255,0.08)';
   vizCtx.lineWidth = 1;
   vizCtx.beginPath();
@@ -1137,8 +1980,6 @@ function drawIdleViz() {
   vizCtx.clearRect(0, 0, W, H);
   vizCtx.fillStyle = 'rgba(14,14,40,0.3)';
   vizCtx.fillRect(0, 0, W, H);
-
-  // Draw flat center line
   vizCtx.strokeStyle = 'rgba(0,245,255,0.15)';
   vizCtx.lineWidth = 1.5;
   vizCtx.beginPath();
@@ -1172,12 +2013,10 @@ function initStars() {
   }
 }
 
-let bgRaf;
 function animateBg(t) {
-  bgRaf = requestAnimationFrame(animateBg);
+  requestAnimationFrame(animateBg);
   bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
 
-  // Gradient nebula
   const grad = bgCtx.createRadialGradient(
     bgCanvas.width * 0.3, bgCanvas.height * 0.4, 0,
     bgCanvas.width * 0.3, bgCanvas.height * 0.4, bgCanvas.width * 0.6
@@ -1188,7 +2027,6 @@ function animateBg(t) {
   bgCtx.fillStyle = grad;
   bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
 
-  // Stars
   for (const star of stars) {
     const twinkle = Math.sin(t * 0.001 * star.speed + star.twinkleOffset) * 0.3 + 0.7;
     bgCtx.beginPath();
@@ -1200,16 +2038,17 @@ function animateBg(t) {
 
 window.addEventListener('resize', () => {
   initStars();
-  bgCanvas.width = window.innerWidth;
-  bgCanvas.height = window.innerHeight;
   resizeViz();
+  renderRollLabels();
+  refreshIdeaUI(true);
 });
 
 initStars();
 animateBg(0);
 drawIdleViz();
-
-// Silence message visible initially
+renderRollLabels();
+renderSavedIdeas();
+refreshIdeaUI(true);
 document.getElementById('silence-msg').style.opacity = '1';
 </script>
 </body>
