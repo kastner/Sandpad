@@ -35,6 +35,7 @@ The best-crafted iterations live in `claude-opus/whistle-reader_*.html` — **co
 
 ```
 pitch-detective.html          ← The app. HTML + CSS + JS in one file.
+whistle-workbench.html        ← Experimental whistle-only workbench: waveform, large contour, playback, feedback bundle export
 claude-opus/
   whistle-reader.html         ← v0 from opus: basic pitch display
   whistle-reader_1.html       ← v1: scale degree detection added
@@ -60,6 +61,7 @@ CLAUDE.md                     ← Claude Code project settings (links here)
 ## Key Invariants — Do Not Break These
 
 1. **Single-file**: `pitch-detective.html` must remain a standalone file. No npm, no bundler, no external scripts beyond Google Fonts.
+1a. `whistle-workbench.html` is also intentionally single-file for the same reason.
 2. **No microphone state leaks**: Always disconnect nodes and call `audioCtx.close()` in `stopListening()`.
 3. **`captureOriginMs`** is the `performance.now()` timestamp at which the current take began. All note `startTime` / `endTime` values are in the same `performance.now()` epoch.
 4. **`normalizeCapturedNotes()`** is the canonical source of cleaned notes for all exports, piano roll rendering, and scale inference. Do not bypass it.
@@ -120,6 +122,8 @@ recordedNotes → getScaleContext() → evaluateScaleCandidate(root, scaleName)
 - Schedule all oscillators upfront using `audioCtx.currentTime + offsetSeconds`.
 - Oscillator teardown on Stop: `oscillator.stop(audioCtx.currentTime)` + `audioCtx.close()`.
 - Playback position is tracked via `performance.now()` diff from the playback start timestamp.
+- `whistle-workbench.html` is currently experimenting with a piano-ish additive tone:
+  strong 1x, much weaker 2x/3x/4x, tiny 5x, small 6x/7x, and a fast piano-style two-stage decay.
 
 ---
 

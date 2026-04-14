@@ -1,0 +1,2612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whistle Workbench</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #080811;
+    --panel: rgba(20, 22, 36, 0.88);
+    --panel-2: rgba(26, 29, 48, 0.96);
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #f1f3ff;
+    --subtext: #9da6c7;
+    --accent: #00d5ff;
+    --accent-soft: rgba(0, 213, 255, 0.2);
+    --green: #30d158;
+    --yellow: #ffcc00;
+    --orange: #ff9500;
+    --pink: #ff5fa2;
+    --red: #ff4d6d;
+    --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    --degree-1: #5b8def;
+    --degree-2: #8b5cf6;
+    --degree-3: #ec4899;
+    --degree-4: #f97316;
+    --degree-5: #4ade80;
+    --degree-6: #fbbf24;
+    --degree-7: #f87171;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background:
+      radial-gradient(circle at top left, rgba(0, 213, 255, 0.09), transparent 28%),
+      radial-gradient(circle at top right, rgba(255, 95, 162, 0.08), transparent 25%),
+      linear-gradient(180deg, #06060c 0%, #0b1020 100%);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  body {
+    padding: 28px;
+  }
+
+  .app {
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+
+  .logo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .logo h1 {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    letter-spacing: -0.03em;
+  }
+
+  .logo p {
+    margin: 0;
+    color: var(--subtext);
+    font-size: 14px;
+  }
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 999px;
+    padding: 10px 14px;
+    color: var(--subtext);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    transition: background 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .status-dot.active {
+    background: var(--green);
+    box-shadow: 0 0 0 8px rgba(48, 209, 88, 0.16);
+  }
+
+  .transport-card,
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(16px);
+  }
+
+  .transport-card {
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  button {
+    border: none;
+    cursor: pointer;
+    border-radius: 18px;
+    padding: 16px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  button:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .btn-start {
+    min-width: 230px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: white;
+    background: linear-gradient(135deg, var(--accent), #009dff);
+    box-shadow: 0 10px 30px rgba(0, 213, 255, 0.2);
+  }
+
+  .btn-start.listening {
+    background: linear-gradient(135deg, var(--red), #ff7a45);
+    box-shadow: 0 10px 30px rgba(255, 77, 109, 0.24);
+  }
+
+  .btn-play {
+    min-width: 170px;
+    color: white;
+    background: linear-gradient(135deg, var(--green), #27c168);
+    box-shadow: 0 10px 30px rgba(48, 209, 88, 0.18);
+  }
+
+  .btn-play.playing {
+    background: linear-gradient(135deg, var(--orange), var(--pink));
+    box-shadow: 0 10px 30px rgba(255, 149, 0, 0.22);
+  }
+
+  .btn-secondary,
+  .btn-clear {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+  }
+
+  .controls-spacer {
+    flex: 1;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1.4fr 0.8fr;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .stack {
+    display: grid;
+    gap: 18px;
+    align-content: start;
+    align-items: start;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .section-label {
+    margin: 0 0 12px;
+    color: var(--subtext);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .visualizer-card {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .wave-wrap {
+    padding: 18px 18px 12px;
+  }
+
+  #viz-canvas {
+    width: 100%;
+    height: 180px;
+    display: block;
+  }
+
+  .meter-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 18px 18px;
+  }
+
+  .meter-row .label {
+    min-width: 46px;
+    color: var(--subtext);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .input-meter-bar {
+    flex: 1;
+    height: 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+  }
+
+  .input-meter-fill {
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--yellow), var(--orange), var(--red));
+  }
+
+  .input-meter-status {
+    min-width: 86px;
+    color: var(--subtext);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    text-align: right;
+  }
+
+  .contour-card {
+    padding: 16px 16px 18px;
+  }
+
+  .contour-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 10px;
+  }
+
+  .contour-meta {
+    color: var(--subtext);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .contour-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(14, 14, 40, 0.38);
+    cursor: grab;
+  }
+
+  .contour-scroll:active {
+    cursor: grabbing;
+  }
+
+  #contour-canvas {
+    width: 100%;
+    height: 360px;
+    display: block;
+  }
+
+  .note-card {
+    display: grid;
+    gap: 14px;
+  }
+
+  .note-main {
+    display: flex;
+    align-items: end;
+    gap: 16px;
+  }
+
+  .note-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 72px;
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+  }
+
+  .note-meta {
+    color: var(--subtext);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .note-meta strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .candidates-line {
+    color: var(--subtext);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .tuner-bar {
+    position: relative;
+    height: 14px;
+    background: linear-gradient(90deg, rgba(255, 77, 109, 0.24), rgba(255, 204, 0, 0.2), rgba(48, 209, 88, 0.26), rgba(255, 204, 0, 0.2), rgba(255, 77, 109, 0.24));
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .tuner-center {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .tuner-needle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 18px rgba(0, 213, 255, 0.45);
+  }
+
+  .tuner-needle.in-tune {
+    background: var(--green);
+    box-shadow: 0 0 20px rgba(48, 209, 88, 0.45);
+  }
+
+  .tuner-needle.sharp,
+  .tuner-needle.flat {
+    background: var(--yellow);
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
+  }
+
+  .pitch-lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    width: fit-content;
+    color: var(--subtext);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .pitch-lock-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .pitch-lock.tracking .pitch-lock-dot {
+    background: var(--yellow);
+    box-shadow: 0 0 0 8px rgba(255, 204, 0, 0.15);
+  }
+
+  .pitch-lock.locked .pitch-lock-dot {
+    background: var(--green);
+    box-shadow: 0 0 0 8px rgba(48, 209, 88, 0.15);
+  }
+
+  .note-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 46px;
+  }
+
+  .note-chip {
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  .note-chip.active {
+    border-color: rgba(0, 213, 255, 0.5);
+    background: rgba(0, 213, 255, 0.12);
+    color: var(--accent);
+  }
+
+  .note-chip.degree-1 { color: var(--degree-1); border-color: color-mix(in srgb, var(--degree-1) 40%, transparent); }
+  .note-chip.degree-2 { color: var(--degree-2); border-color: color-mix(in srgb, var(--degree-2) 40%, transparent); }
+  .note-chip.degree-3 { color: var(--degree-3); border-color: color-mix(in srgb, var(--degree-3) 40%, transparent); }
+  .note-chip.degree-4 { color: var(--degree-4); border-color: color-mix(in srgb, var(--degree-4) 40%, transparent); }
+  .note-chip.degree-5 { color: var(--degree-5); border-color: color-mix(in srgb, var(--degree-5) 40%, transparent); }
+  .note-chip.degree-6 { color: var(--degree-6); border-color: color-mix(in srgb, var(--degree-6) 40%, transparent); }
+  .note-chip.degree-7 { color: var(--degree-7); border-color: color-mix(in srgb, var(--degree-7) 40%, transparent); }
+
+  .meta-grid {
+    display: grid;
+    gap: 10px;
+  }
+
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    color: var(--subtext);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .meta-row strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .recording-status {
+    color: var(--subtext);
+    line-height: 1.6;
+    font-size: 14px;
+  }
+
+  pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--subtext);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .error-msg {
+    display: none;
+    margin-top: 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 77, 109, 0.25);
+    background: rgba(255, 77, 109, 0.08);
+    color: #ffd9e2;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  @media (max-width: 1100px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <h1>Whistle Workbench</h1>
+      <p>Focused on whistle capture, waveform, contour, and playback. The local dev server can still auto-save takes into <code>captures/</code>.</p>
+    </div>
+    <div class="header-badge">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Ready</span>
+    </div>
+  </header>
+
+  <div class="transport-card">
+    <div class="controls">
+      <button class="btn-start" id="btn-start" onclick="toggleListening()">
+        <span id="btn-icon">🎤</span>
+        <span id="btn-text">Start Listening</span>
+      </button>
+      <button class="btn-play" id="btn-play" onclick="togglePlayback()" disabled>
+        <span id="btn-play-icon">▶</span>
+        <span id="btn-play-text">Play</span>
+      </button>
+      <button class="btn-secondary" onclick="saveFeedbackBundle()" id="btn-feedback" disabled>📦 Save Feedback</button>
+      <button class="btn-secondary" onclick="downloadCurrentRecording()" id="btn-recording" disabled>Download Recording</button>
+      <button class="btn-secondary" onclick="downloadAnalysisJSON()" id="btn-analysis" disabled>Download Analysis</button>
+      <button class="btn-clear" onclick="clearHistory()">Clear</button>
+      <div class="controls-spacer"></div>
+      <div class="header-badge" style="margin-left:auto">
+        <span id="capture-status">Dev server not checked yet.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="stack">
+      <div class="visualizer-card card">
+        <div class="wave-wrap">
+          <div class="section-label">Waveform</div>
+          <canvas id="viz-canvas"></canvas>
+        </div>
+        <div class="meter-row">
+          <div class="label">Input</div>
+          <div class="input-meter-bar"><div class="input-meter-fill" id="input-meter-fill"></div></div>
+          <div class="input-meter-status" id="input-meter-status">Idle</div>
+        </div>
+      </div>
+
+      <div class="contour-card card">
+        <div class="contour-header">
+          <div class="section-label" style="margin:0">Pitch Contour</div>
+          <div class="contour-meta" id="contour-meta">No take yet.</div>
+        </div>
+        <div class="contour-scroll" id="contour-scroll">
+          <canvas id="contour-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card note-card">
+        <div class="section-label">Current Degree</div>
+        <div class="note-main">
+          <div class="note-name" id="note-name">—</div>
+          <div class="note-meta">
+            <div id="degree-name"><strong>Waiting for tonal context</strong></div>
+            <div id="family-line">Relative-only view. Absolute note labels are hidden.</div>
+            <div id="freq-hz">Frequency: —</div>
+            <div id="cents-label">— cents</div>
+          </div>
+        </div>
+        <div class="tuner-bar">
+          <div class="tuner-center"></div>
+          <div class="tuner-needle" id="tuner-needle"></div>
+        </div>
+        <div class="pitch-lock" id="pitch-lock">
+          <span class="pitch-lock-dot" id="pitch-lock-dot"></span>
+          <span id="pitch-lock-text">Waiting for a stable note</span>
+        </div>
+        <div class="candidates-line" id="candidates-line">Mode candidates will appear once a phrase stabilizes.</div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Captured Melody</div>
+        <div class="note-strip" id="note-strip"></div>
+        <div class="meta-grid" style="margin-top:14px;">
+          <div class="meta-row"><span>Playable notes</span><strong id="note-count">0</strong></div>
+          <div class="meta-row"><span>Clusters</span><strong id="cluster-count">0</strong></div>
+          <div class="meta-row"><span>Take</span><strong id="take-id">—</strong></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Capture Loop</div>
+        <div class="recording-status" id="recording-status">Start listening to capture a whistle take and note trace together.</div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Analysis Preview</div>
+        <pre id="analysis-preview">No take yet.</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+</div>
+
+<script>
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const COLORS = ['#5b8def','#8b5cf6','#ec4899','#f97316','#4ade80','#fbbf24','#f87171'];
+const DEGREE_NAMES = {
+  0: 'Root', 1: 'Flat two', 2: 'Second', 3: 'Flat three', 4: 'Third', 5: 'Fourth',
+  6: 'Flat five', 7: 'Fifth', 8: 'Flat six', 9: 'Sixth', 10: 'Flat seven', 11: 'Seventh',
+};
+const DEGREE_SHORT = {
+  0: '1', 1: '♭2', 2: '2', 3: '♭3', 4: '3', 5: '4',
+  6: '♭5', 7: '5', 8: '♭6', 9: '6', 10: '♭7', 11: '7',
+};
+const SCALES = {
+  'Major': [0, 2, 4, 5, 7, 9, 11],
+  'Natural Minor': [0, 2, 3, 5, 7, 8, 10],
+  'Harmonic Minor': [0, 2, 3, 5, 7, 8, 11],
+  'Dorian': [0, 2, 3, 5, 7, 9, 10],
+  'Mixolydian': [0, 2, 4, 5, 7, 9, 10],
+  'Lydian': [0, 2, 4, 6, 7, 9, 11],
+  'Phrygian': [0, 1, 3, 5, 7, 8, 10],
+  'Pentatonic Maj': [0, 2, 4, 7, 9],
+  'Pentatonic Min': [0, 3, 5, 7, 10],
+};
+const TONAL_SCALE_NAMES = [
+  'Major',
+  'Natural Minor',
+  'Harmonic Minor',
+  'Dorian',
+  'Mixolydian',
+  'Lydian',
+  'Phrygian',
+  'Pentatonic Maj',
+  'Pentatonic Min',
+];
+const RMS_SILENCE_THRESHOLD = 0.003;
+const INPUT_TOO_QUIET_THRESHOLD = 0.007;
+const INPUT_GOOD_THRESHOLD = 0.018;
+const DETECT_MIN_FREQ = 350;
+const DETECT_MAX_FREQ = 3200;
+const SMOOTH_FACTOR = 0.38;
+const NOTE_SWITCH_FRAMES = 3;
+const MIN_NOTE_MS = 120;
+const MAX_TRANSIENT_SEMITONES = 0;
+const MIDI_CLUSTER_WINDOW_MS = 2600;
+const MIDI_CLUSTER_TOLERANCE = 0.55;
+const MIDI_CLUSTER_MIN_FRAMES = 4;
+const PITCH_CLASS_MERGE_GAP_MS = 80;
+const PHRASE_GAP_MS = 900;
+const TRANSITION_NOTE_MS = 165;
+const UI_FADE_MS = 300;
+const SPECTRUM_MIN_DB = -72;
+const SPECTRUM_MIN_PROMINENCE_DB = 4;
+const CAPTURE_SERVER_HEALTH_PATH = '/api/health';
+const CAPTURE_SERVER_UPLOAD_PATH = '/api/upload';
+const CONTOUR_PX_PER_MS = 0.18;
+const CONTOUR_LOGICAL_HEIGHT = 360;
+const CONTOUR_LABEL_WIDTH = 48;
+const CONTOUR_PAD_TOP = 18;
+const CONTOUR_PAD_BOTTOM = 16;
+const SCALE_LOCK_FRAMES_ACTIVE = 10;
+const SCALE_LOCK_FRAMES_IDLE = 4;
+const SCALE_MIN_NOTES_ACTIVE = 6;
+const SCALE_MIN_NOTES_IDLE = 4;
+const SCALE_MIN_CONFIDENCE_ACTIVE = 72;
+const SCALE_MIN_CONFIDENCE_IDLE = 62;
+
+let audioCtx = null;
+let analyser = null;
+let source = null;
+let highpass = null;
+let lowpass = null;
+let stream = null;
+let rafId = null;
+let isListening = false;
+let timeDomainBuffer = null;
+let floatFreqBuffer = null;
+let smoothedFreq = -1;
+let silenceTimer = null;
+let captureOriginMs = null;
+let currentNoteEvent = null;
+let currentPhraseId = null;
+let pendingMidi = null;
+let pendingPitchClass = null;
+let pendingMidiFrames = 0;
+let pendingOnsetStartTime = null;
+let pendingSwitchStartTime = null;
+let silenceStartedAt = null;
+let noteIdCounter = 1;
+let phraseIdCounter = 1;
+let mediaRecorder = null;
+let mediaRecorderMimeType = '';
+let recorderChunks = [];
+let lastRecordingBlob = null;
+let lastRecordingFilename = '';
+let activeTakeId = null;
+let captureServerAvailable = false;
+let captureServerChecked = false;
+let takeUploadPromise = null;
+let takeUploadTakeId = null;
+let currentInputRms = 0;
+let pitchLockFrames = 0;
+let pitchLockPitchClass = null;
+let lastStableFreq = -1;
+let lastDetectedNote = null;
+let contourAnimId = null;
+let playbackAudioCtx = null;
+let playbackVoices = [];
+let playbackStartWallMs = 0;
+let playbackEndTimer = null;
+let committedScale = null;
+let pendingScale = null;
+let pendingScaleKey = null;
+let pendingScaleFrames = 0;
+let currentDisplayScale = null;
+
+const recordedNotes = [];
+const phrases = [];
+const contourPoints = [];
+const voicedMidiFrames = [];
+const uploadedTakeIds = new Set();
+
+const vizCanvas = document.getElementById('viz-canvas');
+const vizCtx = vizCanvas.getContext('2d');
+
+function freqToMidi(freq) {
+  return 12 * Math.log2(freq / 440) + 69;
+}
+
+function midiToFreqValue(midi) {
+  return 440 * (2 ** ((midi - 69) / 12));
+}
+
+function midiValueToNote(midi) {
+  const roundedMidi = Math.round(midi);
+  const pitchClass = ((roundedMidi % 12) + 12) % 12;
+  return {
+    midi,
+    roundedMidi,
+    pitchClass,
+    name: NOTE_NAMES[pitchClass],
+    octave: Math.floor(roundedMidi / 12) - 1,
+    cents: Math.round((midi - roundedMidi) * 100),
+  };
+}
+
+function freqToNote(freq) {
+  return midiValueToNote(freqToMidi(freq));
+}
+
+function computeRms(buffer) {
+  let rms = 0;
+  for (let i = 0; i < buffer.length; i++) rms += buffer[i] * buffer[i];
+  return Math.sqrt(rms / buffer.length);
+}
+
+function detectPitchFromAutocorr(buffer, sampleRate) {
+  const size = buffer.length;
+  const rms = computeRms(buffer);
+  if (rms < RMS_SILENCE_THRESHOLD) return -1;
+
+  let r1 = 0;
+  let r2 = size - 1;
+  const threshold = Math.max(0.015, Math.min(0.08, rms * 3.2));
+  for (let i = 0; i < size / 2; i++) {
+    if (Math.abs(buffer[i]) > threshold) {
+      r1 = i;
+      break;
+    }
+  }
+  for (let i = 1; i < size / 2; i++) {
+    if (Math.abs(buffer[size - i]) > threshold) {
+      r2 = size - i;
+      break;
+    }
+  }
+
+  const buf = buffer.slice(r1, r2 + 1);
+  const length = buf.length;
+  const minLag = Math.max(2, Math.floor(sampleRate / DETECT_MAX_FREQ));
+  const maxLag = Math.min(length - 2, Math.ceil(sampleRate / DETECT_MIN_FREQ));
+  if (maxLag <= minLag + 2) return -1;
+
+  const correlation = new Float32Array(length);
+  for (let lag = 0; lag < length; lag++) {
+    for (let i = 0; i < length - lag; i++) {
+      correlation[lag] += buf[i] * buf[i + lag];
+    }
+  }
+
+  let d = minLag;
+  while (d < length - 1 && correlation[d] > correlation[d + 1]) d++;
+  if (d >= length - 2) return -1;
+
+  let maxVal = -Infinity;
+  let strongestPos = d;
+  const peaks = [];
+  for (let i = d + 1; i < maxLag; i++) {
+    if (correlation[i] > maxVal) {
+      maxVal = correlation[i];
+      strongestPos = i;
+    }
+    if (correlation[i] > correlation[i - 1] && correlation[i] >= correlation[i + 1]) {
+      peaks.push(i);
+    }
+  }
+
+  if (!peaks.length) peaks.push(strongestPos);
+  let maxPos = strongestPos;
+  const peakThreshold = maxVal * 0.9;
+  for (const peak of peaks) {
+    if (correlation[peak] >= peakThreshold) {
+      maxPos = peak;
+      break;
+    }
+  }
+
+  const candidateHz = sampleRate / maxPos;
+  if (candidateHz > DETECT_MAX_FREQ / 2 && maxPos * 2 <= maxLag) {
+    const lowerLag = maxPos * 2;
+    if (correlation[lowerLag] >= correlation[maxPos] * 0.88) maxPos = lowerLag;
+  }
+
+  if (maxPos <= 0 || maxPos >= length - 1 || maxVal < 0.01) return -1;
+  const prev = correlation[maxPos - 1];
+  const curr = correlation[maxPos];
+  const next = correlation[maxPos + 1];
+  const denom = 2 * (2 * curr - prev - next);
+  let refined = maxPos;
+  if (Math.abs(denom) > 1e-6) {
+    refined = maxPos - (next - prev) / denom;
+  }
+
+  const freq = sampleRate / refined;
+  return freq >= DETECT_MIN_FREQ && freq <= DETECT_MAX_FREQ ? freq : -1;
+}
+
+function interpolatePeakBin(magnitudes, index) {
+  if (index <= 0 || index >= magnitudes.length - 1) return index;
+  const prev = magnitudes[index - 1];
+  const curr = magnitudes[index];
+  const next = magnitudes[index + 1];
+  const denom = prev - 2 * curr + next;
+  if (Math.abs(denom) < 1e-6) return index;
+  const offset = 0.5 * (prev - next) / denom;
+  return index + Math.max(-0.5, Math.min(0.5, offset));
+}
+
+function scoreSpectralCandidate(freqDbBuffer, index) {
+  let score = freqDbBuffer[index];
+  const harmonicWeights = [[2, 0.32], [3, 0.18], [4, 0.1]];
+  for (const [factor, weight] of harmonicWeights) {
+    const harmonicIndex = index * factor;
+    if (harmonicIndex >= freqDbBuffer.length) break;
+    score += Math.max(SPECTRUM_MIN_DB, freqDbBuffer[harmonicIndex]) * weight;
+  }
+  return score;
+}
+
+function detectPitchFromSpectrum(freqDbBuffer, sampleRate) {
+  if (!freqDbBuffer?.length) return -1;
+
+  const binHz = sampleRate / (freqDbBuffer.length * 2);
+  const minBin = Math.max(2, Math.floor(DETECT_MIN_FREQ / binHz));
+  const maxBin = Math.min(freqDbBuffer.length - 3, Math.ceil(DETECT_MAX_FREQ / binHz));
+  if (maxBin <= minBin + 2) return -1;
+
+  let bestIndex = -1;
+  let bestScore = -Infinity;
+  let bestDb = -Infinity;
+  for (let i = minBin + 1; i < maxBin; i++) {
+    const db = freqDbBuffer[i];
+    if (db < SPECTRUM_MIN_DB) continue;
+    if (db < freqDbBuffer[i - 1] || db < freqDbBuffer[i + 1]) continue;
+    const prominence = db - Math.max(freqDbBuffer[i - 1], freqDbBuffer[i + 1]);
+    if (prominence < SPECTRUM_MIN_PROMINENCE_DB) continue;
+
+    const score = scoreSpectralCandidate(freqDbBuffer, i) + prominence * 1.7;
+    if (score > bestScore) {
+      bestScore = score;
+      bestIndex = i;
+      bestDb = db;
+    }
+  }
+
+  if (bestIndex < 0) return -1;
+
+  const halfIndex = Math.round(bestIndex / 2);
+  if (halfIndex >= minBin && halfIndex < maxBin && freqDbBuffer[halfIndex] >= bestDb - 11) {
+    const halfScore = scoreSpectralCandidate(freqDbBuffer, halfIndex) + freqDbBuffer[halfIndex] * 0.35;
+    if (halfScore >= bestScore * 0.92) bestIndex = halfIndex;
+  }
+
+  const magnitudes = new Float32Array(freqDbBuffer.length);
+  for (let i = minBin; i <= maxBin; i++) {
+    magnitudes[i] = 10 ** (freqDbBuffer[i] / 20);
+  }
+  const refinedBin = interpolatePeakBin(magnitudes, bestIndex);
+  const freq = refinedBin * binHz;
+  return freq >= DETECT_MIN_FREQ && freq <= DETECT_MAX_FREQ ? freq : -1;
+}
+
+function detectPitch(timeBuffer, freqDbBuffer, sampleRate) {
+  const rms = computeRms(timeBuffer);
+  if (rms < RMS_SILENCE_THRESHOLD) return -1;
+
+  const spectralFreq = detectPitchFromSpectrum(freqDbBuffer, sampleRate);
+  const autocorrFreq = detectPitchFromAutocorr(timeBuffer, sampleRate);
+
+  if (spectralFreq > 0 && autocorrFreq > 0) {
+    const semitoneGap = Math.abs(12 * Math.log2(spectralFreq / autocorrFreq));
+    if (semitoneGap <= 0.8) return spectralFreq * 0.7 + autocorrFreq * 0.3;
+    return spectralFreq;
+  }
+  if (spectralFreq > 0) return spectralFreq;
+  return autocorrFreq;
+}
+
+function getNowMs() {
+  return performance.now();
+}
+
+function getPhraseById(id) {
+  return phrases.find((phrase) => phrase.id === id) || null;
+}
+
+function ensureCurrentPhrase(startTime) {
+  if (currentPhraseId !== null) return getPhraseById(currentPhraseId);
+  const phrase = { id: phraseIdCounter++, startTime, endTime: startTime };
+  phrases.push(phrase);
+  currentPhraseId = phrase.id;
+  return phrase;
+}
+
+function closeCurrentPhrase(endTime) {
+  if (currentPhraseId === null) return;
+  const phrase = getPhraseById(currentPhraseId);
+  if (phrase) phrase.endTime = Math.max(phrase.startTime, endTime);
+  currentPhraseId = null;
+}
+
+function startCapturedNote(note, startTime) {
+  const phrase = ensureCurrentPhrase(startTime);
+  if (captureOriginMs === null) captureOriginMs = startTime;
+  currentNoteEvent = {
+    id: noteIdCounter++,
+    phraseId: phrase.id,
+    midi: note.midi,
+    pitchClass: note.pitchClass,
+    name: note.name,
+    octave: note.octave,
+    cents: note.cents,
+    startTime,
+    endTime: startTime,
+  };
+  recordedNotes.push(currentNoteEvent);
+  phrase.endTime = startTime;
+}
+
+function finishCapturedNote(endTime) {
+  if (!currentNoteEvent) return;
+  currentNoteEvent.endTime = Math.max(currentNoteEvent.startTime + MIN_NOTE_MS, endTime);
+  currentNoteEvent.durationMs = currentNoteEvent.endTime - currentNoteEvent.startTime;
+  const phrase = getPhraseById(currentNoteEvent.phraseId);
+  if (phrase) phrase.endTime = currentNoteEvent.endTime;
+  currentNoteEvent = null;
+}
+
+function maybeUpdateEventMidi(event, note) {
+  if (!event) return;
+  const semitoneDistance = Math.abs(note.midi - event.midi);
+  if (semitoneDistance <= 2) {
+    event.midi = note.midi;
+    event.name = note.name;
+    event.octave = note.octave;
+  }
+  event.cents = note.cents;
+}
+
+function recordVoicedMidiFrame(freq, time) {
+  if (freq <= 0) return;
+  voicedMidiFrames.push({ time, midi: freqToMidi(freq) });
+}
+
+function getRecentVoicedMidiFrames(now = getNowMs(), windowMs = MIDI_CLUSTER_WINDOW_MS) {
+  return voicedMidiFrames.filter((frame) => now - frame.time <= windowMs);
+}
+
+function computeMidiClusters(frames, tolerance = MIDI_CLUSTER_TOLERANCE, minFrames = MIDI_CLUSTER_MIN_FRAMES) {
+  if (!frames.length) return [];
+  const sorted = [...frames].sort((a, b) => a.midi - b.midi);
+  const clusters = [];
+
+  for (const frame of sorted) {
+    const cluster = clusters[clusters.length - 1];
+    if (!cluster) {
+      clusters.push({ sum: frame.midi, count: 1, min: frame.midi, max: frame.midi });
+      continue;
+    }
+
+    const center = cluster.sum / cluster.count;
+    if (Math.abs(frame.midi - center) <= tolerance) {
+      cluster.sum += frame.midi;
+      cluster.count += 1;
+      cluster.min = Math.min(cluster.min, frame.midi);
+      cluster.max = Math.max(cluster.max, frame.midi);
+      continue;
+    }
+
+    clusters.push({ sum: frame.midi, count: 1, min: frame.midi, max: frame.midi });
+  }
+
+  return clusters
+    .map((cluster) => {
+      const centerMidi = cluster.sum / cluster.count;
+      const note = midiValueToNote(centerMidi);
+      return {
+        centerMidi,
+        count: cluster.count,
+        minMidi: cluster.min,
+        maxMidi: cluster.max,
+        pitchClass: note.pitchClass,
+        note: `${note.name}${note.octave}`,
+      };
+    })
+    .filter((cluster) => cluster.count >= minFrames)
+    .sort((a, b) => a.centerMidi - b.centerMidi);
+}
+
+function stabilizeNoteToClusters(rawFreq, now) {
+  const rawMidi = freqToMidi(rawFreq);
+  const rawNote = freqToNote(rawFreq);
+  const clusters = computeMidiClusters(getRecentVoicedMidiFrames(now));
+  if (!clusters.length) return rawNote;
+
+  let bestCluster = null;
+  let bestDistance = Infinity;
+  for (const cluster of clusters) {
+    const distance = Math.abs(cluster.centerMidi - rawMidi);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestCluster = cluster;
+    }
+  }
+
+  if (!bestCluster) return rawNote;
+  if (bestDistance > 1.25) return rawNote;
+  if (bestDistance > 0.9 && bestCluster.count < 7) return rawNote;
+
+  const snappedNote = midiValueToNote(bestCluster.centerMidi);
+  return {
+    ...snappedNote,
+    clusterMidi: bestCluster.centerMidi,
+    clusterCount: bestCluster.count,
+    rawMidi,
+  };
+}
+
+function resetPitchLock() {
+  pitchLockFrames = 0;
+  pitchLockPitchClass = null;
+  lastStableFreq = -1;
+}
+
+function updatePitchLockState(note, rawFreq) {
+  if (!note || rawFreq <= 0 || currentInputRms < INPUT_TOO_QUIET_THRESHOLD) {
+    resetPitchLock();
+    return;
+  }
+
+  const centsDelta = lastStableFreq > 0
+    ? Math.abs(1200 * Math.log2(rawFreq / lastStableFreq))
+    : 0;
+
+  if (pitchLockPitchClass === note.pitchClass && centsDelta <= 45) {
+    pitchLockFrames = Math.min(12, pitchLockFrames + 1);
+  } else if (pitchLockPitchClass === note.pitchClass && centsDelta <= 80) {
+    pitchLockFrames = Math.max(1, pitchLockFrames);
+  } else {
+    pitchLockPitchClass = note.pitchClass;
+    pitchLockFrames = 1;
+  }
+
+  pitchLockPitchClass = note.pitchClass;
+  lastStableFreq = rawFreq;
+}
+
+function framesNeededForNoteSwitch(currentMidi, nextMidi) {
+  const interval = Math.abs(nextMidi - currentMidi);
+  if (interval >= 4) return 2;
+  if (interval >= 2) return NOTE_SWITCH_FRAMES;
+  return NOTE_SWITCH_FRAMES + 1;
+}
+
+function handleStableDetectedNote(note, now) {
+  silenceStartedAt = null;
+
+  if (!currentNoteEvent) {
+    if (pendingPitchClass === note.pitchClass) {
+      pendingMidiFrames += 1;
+      if (pendingMidiFrames >= NOTE_SWITCH_FRAMES) {
+        startCapturedNote(note, pendingOnsetStartTime ?? now);
+        pendingMidi = null;
+        pendingPitchClass = null;
+        pendingMidiFrames = 0;
+        pendingOnsetStartTime = null;
+      }
+    } else {
+      pendingPitchClass = note.pitchClass;
+      pendingMidi = note.midi;
+      pendingMidiFrames = 1;
+      pendingOnsetStartTime = now;
+    }
+    return;
+  }
+
+  if (note.pitchClass === currentNoteEvent.pitchClass) {
+    currentNoteEvent.endTime = now;
+    maybeUpdateEventMidi(currentNoteEvent, note);
+    pendingMidi = null;
+    pendingPitchClass = null;
+    pendingMidiFrames = 0;
+    pendingSwitchStartTime = null;
+    return;
+  }
+
+  if (Math.abs(note.midi - currentNoteEvent.midi) <= MAX_TRANSIENT_SEMITONES) {
+    currentNoteEvent.endTime = now;
+    currentNoteEvent.cents = note.cents;
+    pendingMidi = null;
+    pendingPitchClass = null;
+    pendingMidiFrames = 0;
+    pendingSwitchStartTime = null;
+    return;
+  }
+
+  if (pendingPitchClass === note.pitchClass) {
+    if (pendingMidi !== null && Math.abs(note.midi - pendingMidi) <= 1) {
+      pendingMidi = note.midi;
+      pendingMidiFrames += 1;
+    } else {
+      pendingMidi = note.midi;
+      pendingMidiFrames = 1;
+      pendingSwitchStartTime = now;
+    }
+    if (pendingMidiFrames >= framesNeededForNoteSwitch(currentNoteEvent.midi, note.midi)) {
+      const switchStartTime = pendingSwitchStartTime ?? now;
+      finishCapturedNote(switchStartTime);
+      startCapturedNote(note, switchStartTime);
+      pendingMidi = null;
+      pendingPitchClass = null;
+      pendingMidiFrames = 0;
+      pendingSwitchStartTime = null;
+    }
+    return;
+  }
+
+  pendingMidi = note.midi;
+  pendingPitchClass = note.pitchClass;
+  pendingMidiFrames = 1;
+  pendingSwitchStartTime = now;
+}
+
+function handleSilence(now) {
+  pendingMidi = null;
+  pendingPitchClass = null;
+  pendingMidiFrames = 0;
+  pendingOnsetStartTime = null;
+  pendingSwitchStartTime = null;
+  resetPitchLock();
+  smoothedFreq = -1;
+  if (currentNoteEvent) finishCapturedNote(now);
+  if (silenceStartedAt === null) silenceStartedAt = now;
+  if (currentPhraseId !== null && now - silenceStartedAt >= PHRASE_GAP_MS) {
+    closeCurrentPhrase(silenceStartedAt);
+  }
+}
+
+function resetCaptureState() {
+  recordedNotes.length = 0;
+  phrases.length = 0;
+  voicedMidiFrames.length = 0;
+  contourPoints.length = 0;
+  captureOriginMs = null;
+  currentNoteEvent = null;
+  currentPhraseId = null;
+  pendingMidi = null;
+  pendingPitchClass = null;
+  pendingMidiFrames = 0;
+  pendingOnsetStartTime = null;
+  pendingSwitchStartTime = null;
+  silenceStartedAt = null;
+  noteIdCounter = 1;
+  phraseIdCounter = 1;
+  lastDetectedNote = null;
+  resetPitchLock();
+  resetScaleTracking();
+}
+
+function buildTakeId() {
+  return new Date().toISOString().replace(/[:.]/g, '-');
+}
+
+function getRecordingExtension(mimeType) {
+  if (!mimeType) return 'webm';
+  if (mimeType.includes('mp4')) return 'm4a';
+  if (mimeType.includes('ogg')) return 'ogg';
+  if (mimeType.includes('wav')) return 'wav';
+  return 'webm';
+}
+
+function downloadBlob(filename, blob) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function updateCaptureStatus(message) {
+  document.getElementById('capture-status').textContent = message;
+}
+
+function updateRecordingStatus(message) {
+  document.getElementById('recording-status').textContent = message;
+}
+
+async function probeCaptureServer(force = false) {
+  if (!force && captureServerChecked) return captureServerAvailable;
+  captureServerChecked = true;
+  captureServerAvailable = false;
+  if (location.protocol === 'file:' || typeof fetch !== 'function') return false;
+  try {
+    const response = await fetch(CAPTURE_SERVER_HEALTH_PATH, { cache: 'no-store' });
+    captureServerAvailable = response.ok;
+  } catch (err) {
+    captureServerAvailable = false;
+  }
+  updateCaptureStatus(captureServerAvailable ? 'Dev server online' : 'Dev server offline');
+  return captureServerAvailable;
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      resolve(result.includes(',') ? result.split(',')[1] : result);
+    };
+    reader.onerror = () => reject(reader.error || new Error('Could not serialize blob.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function mergeConsecutivePitchClasses(notes) {
+  const merged = [];
+  for (const note of notes) {
+    const prev = merged[merged.length - 1];
+    const gap = prev ? note.startTime - prev.endTime : Infinity;
+    if (prev && prev.phraseId === note.phraseId && prev.pitchClass === note.pitchClass && gap <= PITCH_CLASS_MERGE_GAP_MS) {
+      prev.endTime = Math.max(prev.endTime, note.endTime);
+      prev.durationMs = prev.endTime - prev.startTime;
+      if (Math.abs(note.midi - prev.midi) <= 2) {
+        prev.midi = note.midi;
+        prev.name = note.name;
+        prev.octave = note.octave;
+      }
+      continue;
+    }
+    merged.push({ ...note });
+  }
+  return merged
+    .map((note) => ({
+      ...note,
+      durationMs: Math.max(MIN_NOTE_MS, note.endTime - note.startTime),
+    }))
+    .filter((note) => note.durationMs >= MIN_NOTE_MS);
+}
+
+function getPlayableNotes() {
+  return mergeConsecutivePitchClasses(recordedNotes);
+}
+
+function getNormalizedPhraseData(notes = getPlayableNotes()) {
+  const grouped = new Map();
+  for (const note of notes) {
+    if (!grouped.has(note.phraseId)) {
+      grouped.set(note.phraseId, {
+        id: note.phraseId,
+        startTime: note.startTime,
+        endTime: note.endTime,
+        notes: [],
+      });
+    }
+    const phrase = grouped.get(note.phraseId);
+    phrase.startTime = Math.min(phrase.startTime, note.startTime);
+    phrase.endTime = Math.max(phrase.endTime, note.endTime);
+    phrase.notes.push(note);
+  }
+  return [...grouped.values()]
+    .sort((a, b) => a.startTime - b.startTime)
+    .map((phrase, index) => ({ ...phrase, index }));
+}
+
+function noteWeight(note) {
+  const duration = note.durationMs || Math.max(MIN_NOTE_MS, note.endTime - note.startTime);
+  return 1 + Math.min(2.2, duration / 350);
+}
+
+function phraseBoundaryBonus(interval) {
+  if (interval === 0) return 2.1;
+  if (interval === 7) return 1.1;
+  if (interval === 4 || interval === 3) return 0.55;
+  return 0;
+}
+
+function evaluateScaleCandidate(root, scaleName, intervals, context) {
+  let score = 0;
+  let inScaleWeight = 0;
+  let totalWeight = 0;
+  const seenDegrees = new Set();
+
+  for (const note of context.notes) {
+    const interval = ((note.pitchClass - root) + 12) % 12;
+    const weight = noteWeight(note);
+    totalWeight += weight;
+    if (intervals.includes(interval)) {
+      inScaleWeight += weight;
+      seenDegrees.add(interval);
+      score += weight;
+      if (interval === 0) score += 0.7;
+      if (interval === 7) score += 0.35;
+    } else {
+      score -= weight * 1.45;
+    }
+  }
+
+  if (context.notes.length > 0) {
+    const firstInterval = ((context.notes[0].pitchClass - root) + 12) % 12;
+    const lastInterval = ((context.notes[context.notes.length - 1].pitchClass - root) + 12) % 12;
+    if (intervals.includes(firstInterval)) score += phraseBoundaryBonus(firstInterval) * 0.55;
+    if (intervals.includes(lastInterval)) score += phraseBoundaryBonus(lastInterval);
+  }
+
+  for (const phrase of context.phraseData) {
+    const finalNote = phrase.notes[phrase.notes.length - 1];
+    const startNote = phrase.notes[0];
+    const finalInterval = ((finalNote.pitchClass - root) + 12) % 12;
+    const startInterval = ((startNote.pitchClass - root) + 12) % 12;
+    if (intervals.includes(finalInterval)) score += phraseBoundaryBonus(finalInterval) * 0.5;
+    if (intervals.includes(startInterval)) score += phraseBoundaryBonus(startInterval) * 0.18;
+  }
+
+  const coverage = totalWeight > 0 ? inScaleWeight / totalWeight : 0;
+  const distinctCoverage = context.notes.length > 0 ? seenDegrees.size / Math.max(1, Math.min(intervals.length, 5)) : 0;
+  const lengthPenalty = 1 - Math.max(0, intervals.length - 5) * 0.025;
+  const finalScore = score * (0.7 + coverage * 0.6) * (0.8 + distinctCoverage * 0.3) * lengthPenalty;
+  return { finalScore, coverage };
+}
+
+function detectScaleForNotes(notes = getPlayableNotes(), scaleNames = TONAL_SCALE_NAMES) {
+  const phraseData = getNormalizedPhraseData(notes);
+  if (!notes.length || !phraseData.length) return null;
+
+  const context = {
+    label: 'Whole idea',
+    notes,
+    phraseData,
+  };
+
+  const candidates = [];
+  for (let root = 0; root < 12; root++) {
+    for (const scaleName of scaleNames) {
+      const intervals = SCALES[scaleName];
+      const candidate = evaluateScaleCandidate(root, scaleName, intervals, context);
+      if (candidate.coverage < 0.5) continue;
+      candidates.push({
+        root,
+        scale: scaleName,
+        intervals,
+        score: candidate.finalScore,
+        coverage: candidate.coverage,
+      });
+    }
+  }
+  candidates.sort((a, b) => b.score - a.score);
+  const best = candidates[0];
+  const secondBest = candidates[1] || null;
+  if (!best) return null;
+
+  const distinctPC = new Set(context.notes.map((note) => note.pitchClass)).size;
+  const breadth = Math.min(1, distinctPC / Math.max(5, best.intervals.length * 0.7));
+  const uniqueness = secondBest
+    ? (best.score - secondBest.score) / (Math.abs(best.score) * 0.2 + 1)
+    : 0.8;
+  const clampedUniqueness = Math.min(1, Math.max(0, uniqueness));
+  const confidence = Math.min(95, Math.round(best.coverage * 50 + clampedUniqueness * 30 + breadth * 20));
+
+  const seen = new Set();
+  const topCandidates = [];
+  for (const candidate of candidates) {
+    const key = `${candidate.root}:${candidate.scale}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    topCandidates.push({
+      root: candidate.root,
+      scale: candidate.scale,
+      score: candidate.score,
+      label: `${NOTE_NAMES[candidate.root]} ${candidate.scale}`,
+    });
+    if (topCandidates.length >= 3) break;
+  }
+
+  return {
+    ...best,
+    confidence,
+    topCandidates,
+    scopeLabel: context.label,
+    phraseCount: phraseData.length,
+    noteCount: notes.length,
+  };
+}
+
+function scaleKey(scaleResult) {
+  return scaleResult ? `${scaleResult.root}:${scaleResult.scale}` : '';
+}
+
+function cloneScale(scaleResult) {
+  return scaleResult ? { ...scaleResult, intervals: [...scaleResult.intervals], topCandidates: [...(scaleResult.topCandidates || [])] } : null;
+}
+
+function resetScaleTracking() {
+  committedScale = null;
+  pendingScale = null;
+  pendingScaleKey = null;
+  pendingScaleFrames = 0;
+  currentDisplayScale = null;
+}
+
+function updateScaleTracking(rawCandidate) {
+  const activePhrase = currentPhraseId !== null;
+  const neededFrames = activePhrase ? SCALE_LOCK_FRAMES_ACTIVE : SCALE_LOCK_FRAMES_IDLE;
+  const minNotes = activePhrase ? SCALE_MIN_NOTES_ACTIVE : SCALE_MIN_NOTES_IDLE;
+  const minConfidence = activePhrase ? SCALE_MIN_CONFIDENCE_ACTIVE : SCALE_MIN_CONFIDENCE_IDLE;
+
+  if (!rawCandidate || rawCandidate.noteCount < 4) {
+    pendingScale = null;
+    pendingScaleKey = null;
+    pendingScaleFrames = 0;
+    currentDisplayScale = committedScale;
+    return {
+      displayScale: committedScale,
+      rawCandidate: null,
+      state: committedScale ? 'holding' : 'none',
+      pendingFrames: 0,
+      neededFrames,
+    };
+  }
+
+  const key = scaleKey(rawCandidate);
+  if (key === pendingScaleKey) {
+    pendingScaleFrames += 1;
+    pendingScale = cloneScale(rawCandidate);
+  } else {
+    pendingScaleKey = key;
+    pendingScale = cloneScale(rawCandidate);
+    pendingScaleFrames = 1;
+  }
+
+  if (pendingScaleFrames >= neededFrames) committedScale = cloneScale(rawCandidate);
+
+  const candidateReady =
+    rawCandidate.noteCount >= minNotes &&
+    rawCandidate.confidence >= minConfidence &&
+    pendingScaleFrames >= Math.max(4, Math.floor(neededFrames / 2));
+
+  currentDisplayScale = committedScale || (candidateReady ? pendingScale : null);
+  return {
+    displayScale: currentDisplayScale,
+    rawCandidate,
+    state: committedScale ? (key === scaleKey(committedScale) ? 'committed' : 'holding') : 'warming',
+    pendingFrames: pendingScaleFrames,
+    neededFrames,
+  };
+}
+
+function degreeInfoForPitchClass(pitchClass, scaleResult) {
+  if (!scaleResult) return null;
+  const interval = ((pitchClass - scaleResult.root) + 12) % 12;
+  const inScale = scaleResult.intervals.includes(interval);
+  return {
+    interval,
+    inScale,
+    degreeShort: DEGREE_SHORT[interval],
+    degreeName: DEGREE_NAMES[interval],
+    degreeIndex: inScale ? scaleResult.intervals.indexOf(interval) + 1 : null,
+  };
+}
+
+function scaleFamilyLabel(scaleName) {
+  if (scaleName === 'Major') return 'Major family';
+  if (scaleName === 'Natural Minor') return 'Minor family';
+  if (scaleName === 'Harmonic Minor') return 'Minor family (harmonic)';
+  if (scaleName === 'Dorian') return 'Minor family (Dorian)';
+  if (scaleName === 'Phrygian') return 'Minor family (Phrygian)';
+  if (scaleName === 'Mixolydian') return 'Major family (Mixolydian)';
+  if (scaleName === 'Lydian') return 'Major family (Lydian)';
+  if (scaleName === 'Pentatonic Maj') return 'Major pentatonic';
+  if (scaleName === 'Pentatonic Min') return 'Minor pentatonic';
+  return scaleName;
+}
+
+function subsample(items, maxItems) {
+  if (items.length <= maxItems) return items;
+  const stride = items.length / maxItems;
+  const result = [];
+  for (let i = 0; i < maxItems; i++) {
+    result.push(items[Math.floor(i * stride)]);
+  }
+  return result;
+}
+
+function buildAnalysisSnapshot(takeId = activeTakeId) {
+  const playableNotes = getPlayableNotes();
+  const midiClusters = computeMidiClusters(voicedMidiFrames, MIDI_CLUSTER_TOLERANCE, MIDI_CLUSTER_MIN_FRAMES);
+  const scale = currentDisplayScale || detectScaleForNotes(playableNotes);
+  return {
+    createdAt: new Date().toISOString(),
+    takeId,
+    rawNoteCount: recordedNotes.length,
+    playableNoteCount: playableNotes.length,
+    captureOriginMs,
+    scale: scale ? {
+      root: scale.root,
+      rootName: NOTE_NAMES[scale.root],
+      scaleName: scale.scale,
+      family: scaleFamilyLabel(scale.scale),
+      confidence: scale.confidence,
+      topCandidates: scale.topCandidates || [],
+    } : null,
+    rawNotes: recordedNotes.map((note) => ({
+      startMs: captureOriginMs === null ? 0 : Math.round(note.startTime - captureOriginMs),
+      durationMs: Math.round(note.durationMs || (note.endTime - note.startTime)),
+      midi: Math.round(note.midi * 100) / 100,
+      note: `${note.name}${note.octave}`,
+      phraseId: note.phraseId,
+    })),
+    playableNotes: playableNotes.map((note) => ({
+      startMs: captureOriginMs === null ? 0 : Math.round(note.startTime - captureOriginMs),
+      durationMs: Math.round(note.durationMs),
+      midi: Math.round(note.midi * 100) / 100,
+      note: `${note.name}${note.octave}`,
+      phraseId: note.phraseId,
+      degree: degreeInfoForPitchClass(note.pitchClass, scale)?.degreeShort || null,
+    })),
+    midiClusters: midiClusters.map((cluster) => ({
+      centerMidi: Math.round(cluster.centerMidi * 100) / 100,
+      note: cluster.note,
+      count: cluster.count,
+      spread: Math.round((cluster.maxMidi - cluster.minMidi) * 100) / 100,
+    })),
+    contourPoints: subsample(contourPoints, 2500).map((point) => ({
+      timeMs: captureOriginMs === null ? 0 : Math.round(point.time - captureOriginMs),
+      midi: point.midi > 0 ? Math.round(point.midi * 100) / 100 : 0,
+    })),
+  };
+}
+
+function audioBufferToWavBlob(buffer) {
+  const sampleRate = buffer.sampleRate;
+  const data = buffer.getChannelData(0);
+  const dataLength = data.length * 2;
+  const totalLength = 44 + dataLength;
+  const wav = new ArrayBuffer(totalLength);
+  const view = new DataView(wav);
+  function writeString(offset, value) {
+    for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i));
+  }
+  writeString(0, 'RIFF');
+  view.setUint32(4, totalLength - 8, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, 'data');
+  view.setUint32(40, dataLength, true);
+  let offset = 44;
+  for (let i = 0; i < data.length; i++) {
+    const sample = Math.max(-1, Math.min(1, data[i]));
+    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+    offset += 2;
+  }
+  return new Blob([wav], { type: 'audio/wav' });
+}
+
+async function decodeRecordingToWav() {
+  if (!lastRecordingBlob) return null;
+  try {
+    const ab = await lastRecordingBlob.arrayBuffer();
+    const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const decoded = await tempCtx.decodeAudioData(ab);
+    await tempCtx.close();
+    const offCtx = new OfflineAudioContext(1, decoded.length, decoded.sampleRate);
+    const src = offCtx.createBufferSource();
+    src.buffer = decoded;
+    src.connect(offCtx.destination);
+    src.start(0);
+    const rendered = await offCtx.startRendering();
+    return audioBufferToWavBlob(rendered);
+  } catch (err) {
+    console.warn('Could not decode recording to WAV:', err);
+    return null;
+  }
+}
+
+async function renderPlaybackWav() {
+  const notes = getPlaybackNotes();
+  if (!notes.length || captureOriginMs === null) return null;
+  const originMs = notes[0].startTime;
+  const lastNote = notes[notes.length - 1];
+  const totalDurSec = (lastNote.startTime - originMs + lastNote.durationMs) / 1000 + 0.6;
+  const sampleRate = 44100;
+  const offCtx = new OfflineAudioContext(1, Math.ceil(totalDurSec * sampleRate), sampleRate);
+  const masterGain = offCtx.createGain();
+  masterGain.gain.value = 0.42;
+  masterGain.connect(offCtx.destination);
+  for (const note of notes) {
+    const startSec = (note.startTime - originMs) / 1000;
+    const durSec = note.durationMs / 1000;
+    scheduleKeyboardishTone(offCtx, masterGain, midiToFreqValue(note.midi), startSec, durSec, 0.18);
+  }
+  const rendered = await offCtx.startRendering();
+  return audioBufferToWavBlob(rendered);
+}
+
+function buildFeedbackJson(takeId, recordingFilename, playbackFilename) {
+  const snapshot = buildAnalysisSnapshot(takeId);
+  return {
+    ...snapshot,
+    files: {
+      recording: recordingFilename || null,
+      playback: playbackFilename || null,
+    },
+    parameters: {
+      RMS_SILENCE_THRESHOLD,
+      INPUT_TOO_QUIET_THRESHOLD,
+      INPUT_GOOD_THRESHOLD,
+      DETECT_MIN_FREQ,
+      DETECT_MAX_FREQ,
+      SMOOTH_FACTOR,
+      NOTE_SWITCH_FRAMES,
+      MIN_NOTE_MS,
+      MAX_TRANSIENT_SEMITONES,
+      MIDI_CLUSTER_WINDOW_MS,
+      MIDI_CLUSTER_TOLERANCE,
+      MIDI_CLUSTER_MIN_FRAMES,
+      PITCH_CLASS_MERGE_GAP_MS,
+      PHRASE_GAP_MS,
+      SCALE_LOCK_FRAMES_ACTIVE,
+      SCALE_LOCK_FRAMES_IDLE,
+      SCALE_MIN_NOTES_ACTIVE,
+      SCALE_MIN_NOTES_IDLE,
+      SCALE_MIN_CONFIDENCE_ACTIVE,
+      SCALE_MIN_CONFIDENCE_IDLE,
+    },
+  };
+}
+
+async function saveFeedbackBundle() {
+  const notes = getPlaybackNotes();
+  if (!notes.length) {
+    showError('Capture a phrase first — nothing to bundle yet.');
+    return;
+  }
+  const btn = document.getElementById('btn-feedback');
+  btn.disabled = true;
+  const takeId = activeTakeId || buildTakeId();
+  const recWavFilename = `whistle-workbench-${takeId}-recording.wav`;
+  const playWavFilename = `whistle-workbench-${takeId}-playback.wav`;
+  const jsonFilename = `whistle-workbench-${takeId}-feedback.json`;
+
+  try {
+    updateRecordingStatus('Rendering feedback bundle…');
+    const [recWavBlob, playWavBlob] = await Promise.all([
+      decodeRecordingToWav(),
+      renderPlaybackWav(),
+    ]);
+    const feedbackJson = buildFeedbackJson(takeId, recWavFilename, playWavFilename);
+    const jsonBlob = new Blob([JSON.stringify(feedbackJson, null, 2)], { type: 'application/json' });
+
+    if (recWavBlob) downloadBlob(recWavFilename, recWavBlob);
+    if (playWavBlob) downloadBlob(playWavFilename, playWavBlob);
+    downloadBlob(jsonFilename, jsonBlob);
+
+    const downloadedList = [recWavBlob && recWavFilename, playWavBlob && playWavFilename, jsonFilename]
+      .filter(Boolean)
+      .join(', ');
+
+    const serverUp = await probeCaptureServer(true);
+    if (!serverUp) {
+      updateRecordingStatus(`Downloaded: ${downloadedList}`);
+      return;
+    }
+
+    updateRecordingStatus('Uploading feedback bundle to captures/…');
+    try {
+      const payload = {
+        takeId,
+        uploadedAt: new Date().toISOString(),
+        analysisFilename: jsonFilename,
+        analysis: feedbackJson,
+        recordingFilename: recWavBlob ? recWavFilename : null,
+        recordingMimeType: 'audio/wav',
+        recordingBase64: recWavBlob ? await blobToBase64(recWavBlob) : null,
+        playbackFilename: playWavBlob ? playWavFilename : null,
+        playbackMimeType: 'audio/wav',
+        playbackBase64: playWavBlob ? await blobToBase64(playWavBlob) : null,
+      };
+      const response = await fetch(CAPTURE_SERVER_UPLOAD_PATH, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      const uploaded = [result.recordingPath, result.playbackPath, result.analysisPath].filter(Boolean).join(', ');
+      updateRecordingStatus(`Downloaded and saved to captures/: ${uploaded}`);
+    } catch (uploadErr) {
+      updateRecordingStatus(`Downloaded (${downloadedList}); capture server unreachable: ${uploadErr.message}`);
+    }
+  } catch (err) {
+    console.error('saveFeedbackBundle error:', err);
+    showError(`Error building feedback bundle: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    updatePlayButton();
+  }
+}
+
+async function maybeUploadCurrentTake(takeId = activeTakeId) {
+  if (!takeId) return false;
+  if (uploadedTakeIds.has(takeId)) return true;
+  if (takeUploadPromise && takeUploadTakeId === takeId) return takeUploadPromise;
+  const serverReady = await probeCaptureServer();
+  if (!serverReady) return false;
+
+  const snapshot = buildAnalysisSnapshot(takeId);
+  const analysisFilename = `whistle-workbench-${takeId}-analysis.json`;
+  updateRecordingStatus(
+    lastRecordingBlob
+      ? `Recording ready: ${lastRecordingFilename}. Uploading the take into captures/...`
+      : `Uploading the trace for ${takeId} into captures/...`
+  );
+
+  takeUploadTakeId = takeId;
+  takeUploadPromise = (async () => {
+    const payload = {
+      takeId,
+      uploadedAt: new Date().toISOString(),
+      analysisFilename,
+      analysis: snapshot,
+      recordingFilename: lastRecordingFilename || null,
+      recordingMimeType: lastRecordingBlob?.type || null,
+      recordingBase64: lastRecordingBlob ? await blobToBase64(lastRecordingBlob) : null,
+    };
+
+    const response = await fetch(CAPTURE_SERVER_UPLOAD_PATH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(`Upload failed with ${response.status}`);
+    const result = await response.json();
+    uploadedTakeIds.add(takeId);
+    updateRecordingStatus(
+      result.recordingPath
+        ? `Auto-saved ${result.recordingPath} and ${result.analysisPath}.`
+        : `Auto-saved ${result.analysisPath}.`
+    );
+    return true;
+  })()
+    .catch((err) => {
+      console.error(err);
+      updateRecordingStatus('Upload failed. Use Download Recording and Download Analysis as fallback.');
+      return false;
+    })
+    .finally(() => {
+      takeUploadPromise = null;
+      takeUploadTakeId = null;
+    });
+
+  return takeUploadPromise;
+}
+
+function startSessionRecording(inputStream, takeId) {
+  if (typeof MediaRecorder === 'undefined') {
+    updateRecordingStatus('This browser does not expose MediaRecorder, so only the note trace will be saved.');
+    return;
+  }
+
+  const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+  mediaRecorderMimeType = candidates.find((mime) => MediaRecorder.isTypeSupported?.(mime)) || '';
+  try {
+    mediaRecorder = mediaRecorderMimeType
+      ? new MediaRecorder(inputStream, { mimeType: mediaRecorderMimeType })
+      : new MediaRecorder(inputStream);
+  } catch (err) {
+    console.error(err);
+    mediaRecorder = null;
+    updateRecordingStatus('Recording could not be started in this browser, but note capture is still active.');
+    return;
+  }
+
+  recorderChunks = [];
+  mediaRecorder.ondataavailable = (event) => {
+    if (event.data && event.data.size > 0) recorderChunks.push(event.data);
+  };
+  mediaRecorder.onstop = async () => {
+    if (!recorderChunks.length) {
+      mediaRecorder = null;
+      updateRecordingStatus('No audio chunks were captured for the last take.');
+      await maybeUploadCurrentTake(takeId);
+      return;
+    }
+    lastRecordingBlob = new Blob(recorderChunks, {
+      type: mediaRecorderMimeType || recorderChunks[0]?.type || 'audio/webm',
+    });
+    lastRecordingFilename = `whistle-workbench-${takeId}.${getRecordingExtension(lastRecordingBlob.type)}`;
+    mediaRecorder = null;
+    document.getElementById('btn-recording').disabled = false;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await maybeUploadCurrentTake(takeId);
+    if (!uploadedTakeIds.has(takeId)) {
+      updateRecordingStatus(`Recording ready: ${lastRecordingFilename}. Download it with the analysis JSON.`);
+    }
+  };
+  mediaRecorder.start();
+  updateRecordingStatus(
+    captureServerAvailable
+      ? 'Recording this listening session. When you stop, the take will auto-upload into captures/.'
+      : 'Recording this listening session alongside the note trace.'
+  );
+}
+
+function stopSessionRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+}
+
+function resizeViz() {
+  vizCanvas.width = vizCanvas.offsetWidth * devicePixelRatio;
+  vizCanvas.height = vizCanvas.offsetHeight * devicePixelRatio;
+}
+
+function drawViz(timeDomain) {
+  const width = vizCanvas.width;
+  const height = vizCanvas.height;
+  vizCtx.clearRect(0, 0, width, height);
+  vizCtx.fillStyle = 'rgba(14,14,40,0.3)';
+  vizCtx.fillRect(0, 0, width, height);
+
+  vizCtx.save();
+  vizCtx.shadowBlur = 12;
+  vizCtx.shadowColor = 'rgba(0,213,255,0.6)';
+  vizCtx.strokeStyle = 'rgba(0,213,255,0.9)';
+  vizCtx.lineWidth = 2 * devicePixelRatio;
+  vizCtx.beginPath();
+
+  const sliceWidth = width / timeDomain.length;
+  let x = 0;
+  for (let i = 0; i < timeDomain.length; i++) {
+    const y = (height / 2) + (timeDomain[i] * height * 0.4);
+    if (i === 0) vizCtx.moveTo(x, y);
+    else vizCtx.lineTo(x, y);
+    x += sliceWidth;
+  }
+  vizCtx.stroke();
+  vizCtx.restore();
+
+  vizCtx.strokeStyle = 'rgba(0,213,255,0.08)';
+  vizCtx.lineWidth = 1;
+  vizCtx.beginPath();
+  vizCtx.moveTo(0, height / 2);
+  vizCtx.lineTo(width, height / 2);
+  vizCtx.stroke();
+}
+
+function drawIdleViz() {
+  const width = vizCanvas.width;
+  const height = vizCanvas.height;
+  vizCtx.clearRect(0, 0, width, height);
+  vizCtx.fillStyle = 'rgba(14,14,40,0.3)';
+  vizCtx.fillRect(0, 0, width, height);
+  vizCtx.strokeStyle = 'rgba(0,213,255,0.15)';
+  vizCtx.lineWidth = 1.5;
+  vizCtx.beginPath();
+  vizCtx.moveTo(0, height / 2);
+  vizCtx.lineTo(width, height / 2);
+  vizCtx.stroke();
+}
+
+function getContourMidiRange() {
+  const voiced = contourPoints.filter((point) => point.midi > 0);
+  if (!voiced.length) return { min: 58, max: 86 };
+  const min = Math.floor(Math.min(...voiced.map((point) => point.midi)) - 2);
+  const max = Math.ceil(Math.max(...voiced.map((point) => point.midi)) + 2);
+  return { min, max: Math.max(min + 8, max) };
+}
+
+function getContourLanes(scaleRef) {
+  const clusters = computeMidiClusters(voicedMidiFrames, MIDI_CLUSTER_TOLERANCE, MIDI_CLUSTER_MIN_FRAMES);
+  if (!clusters.length) return [];
+  return clusters.map((cluster) => {
+    const info = degreeInfoForPitchClass(cluster.pitchClass, scaleRef);
+    return {
+      midi: cluster.centerMidi,
+      note: cluster.note,
+      label: info?.inScale ? info.degreeShort : '•',
+      degreeIndex: info?.degreeIndex || null,
+      emphasis: info?.interval === 0,
+    };
+  });
+}
+
+function drawContourCanvas() {
+  const canvas = document.getElementById('contour-canvas');
+  const scroll = document.getElementById('contour-scroll');
+  const dpr = window.devicePixelRatio || 1;
+  const height = CONTOUR_LOGICAL_HEIGHT;
+  const drawableHeight = height - CONTOUR_PAD_TOP - CONTOUR_PAD_BOTTOM;
+
+  let totalMs = 5000;
+  if (contourPoints.length > 1 && captureOriginMs !== null) {
+    const lastTime = contourPoints[contourPoints.length - 1].time;
+    totalMs = Math.max(totalMs, lastTime - captureOriginMs + 500);
+  }
+  const width = Math.max(scroll.clientWidth, CONTOUR_LABEL_WIDTH + totalMs * CONTOUR_PX_PER_MS);
+
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = 'rgba(14,14,40,0.3)';
+  ctx.fillRect(0, 0, width, height);
+
+  if (contourPoints.length < 2 || captureOriginMs === null) {
+    ctx.fillStyle = 'rgba(157,166,199,0.45)';
+    ctx.font = '14px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Pitch contour appears here during listening', width / 2, height / 2);
+    return;
+  }
+
+  const range = getContourMidiRange();
+  const minMidi = range.min;
+  const maxMidi = range.max;
+  const toY = (midi) => CONTOUR_PAD_TOP + drawableHeight - ((midi - minMidi) / (maxMidi - minMidi)) * drawableHeight;
+  const toX = (time) => CONTOUR_LABEL_WIDTH + (time - captureOriginMs) * CONTOUR_PX_PER_MS;
+  const scaleRef = currentDisplayScale || pendingScale;
+  const contourLanes = getContourLanes(scaleRef);
+
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  if (contourLanes.length) {
+    for (const lane of contourLanes) {
+      const y = toY(lane.midi);
+      const color = lane.degreeIndex ? COLORS[(lane.degreeIndex - 1) % COLORS.length] : 'rgba(157,166,199,0.7)';
+      ctx.strokeStyle = lane.emphasis ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.05)';
+      ctx.lineWidth = lane.emphasis ? 1.8 : 1;
+      ctx.setLineDash(lane.emphasis ? [] : [4, 5]);
+      ctx.beginPath();
+      ctx.moveTo(CONTOUR_LABEL_WIDTH, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = color;
+      ctx.font = lane.degreeIndex ? '700 14px JetBrains Mono' : '700 12px JetBrains Mono';
+      ctx.fillText(lane.label, CONTOUR_LABEL_WIDTH - 6, y - 5);
+
+      ctx.fillStyle = 'rgba(157,166,199,0.28)';
+      ctx.font = '10px JetBrains Mono';
+      ctx.fillText(lane.note, CONTOUR_LABEL_WIDTH - 6, y + 8);
+    }
+  } else {
+    ctx.font = '10px JetBrains Mono';
+    ctx.fillStyle = 'rgba(157,166,199,0.18)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 1;
+    for (let midi = minMidi; midi <= maxMidi; midi += 2) {
+      const y = toY(midi);
+      ctx.beginPath();
+      ctx.moveTo(CONTOUR_LABEL_WIDTH, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+  }
+
+  const notes = getPlayableNotes();
+  for (const note of notes) {
+    const noteX = toX(note.startTime);
+    const noteW = Math.max(4, note.durationMs * CONTOUR_PX_PER_MS);
+    const noteY = toY(note.midi + 0.5);
+    const noteH = Math.max(3, drawableHeight / Math.max(10, maxMidi - minMidi));
+    const info = degreeInfoForPitchClass(note.pitchClass, scaleRef);
+    const color = info?.degreeIndex ? COLORS[(info.degreeIndex - 1) % COLORS.length] : '#00d5ff';
+    ctx.fillStyle = `${color}22`;
+    ctx.strokeStyle = `${color}55`;
+    ctx.fillRect(noteX, noteY, noteW, noteH);
+    ctx.strokeRect(noteX, noteY, noteW, noteH);
+  }
+
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  let prevX = null;
+  let prevY = null;
+  for (const point of contourPoints) {
+    if (point.midi <= 0) {
+      prevX = null;
+      prevY = null;
+      continue;
+    }
+    const x = toX(point.time);
+    const y = toY(point.midi);
+    if (prevX !== null) {
+      ctx.save();
+      const info = degreeInfoForPitchClass(midiValueToNote(point.midi).pitchClass, scaleRef);
+      const color = info?.degreeIndex ? COLORS[(info.degreeIndex - 1) % COLORS.length] : '#00d5ff';
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 8;
+      ctx.strokeStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(prevX, prevY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.restore();
+    }
+    prevX = x;
+    prevY = y;
+  }
+
+  if (playbackAudioCtx && playbackStartWallMs > 0) {
+    const elapsed = performance.now() - playbackStartWallMs;
+    const playheadX = toX(captureOriginMs + elapsed);
+    if (playheadX >= CONTOUR_LABEL_WIDTH && playheadX <= width) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,204,0,0.95)';
+      ctx.shadowColor = 'rgba(255,204,0,0.4)';
+      ctx.shadowBlur = 10;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(playheadX, 0);
+      ctx.lineTo(playheadX, height);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  if (isListening || playbackAudioCtx) {
+    const targetX = playbackAudioCtx && playbackStartWallMs > 0
+      ? Math.max(0, toX(captureOriginMs + (performance.now() - playbackStartWallMs)) - scroll.clientWidth * 0.55)
+      : Math.max(0, canvas.clientWidth - scroll.clientWidth);
+    scroll.scrollLeft = targetX;
+  }
+}
+
+function startContourAnimation() {
+  if (contourAnimId) return;
+  function loop() {
+    drawContourCanvas();
+    contourAnimId = requestAnimationFrame(loop);
+  }
+  contourAnimId = requestAnimationFrame(loop);
+}
+
+function stopContourAnimation() {
+  if (contourAnimId) {
+    cancelAnimationFrame(contourAnimId);
+    contourAnimId = null;
+  }
+  drawContourCanvas();
+}
+
+function updateInputMeter(rms = 0) {
+  currentInputRms = rms;
+  const fill = document.getElementById('input-meter-fill');
+  const status = document.getElementById('input-meter-status');
+  const normalized = Math.max(0, Math.min(1, rms / 0.03));
+  fill.style.width = `${normalized * 100}%`;
+
+  if (!isListening && rms <= 0.0005) {
+    status.textContent = 'Idle';
+    status.style.color = 'var(--subtext)';
+    return;
+  }
+  if (rms < INPUT_TOO_QUIET_THRESHOLD) {
+    status.textContent = 'Too quiet';
+    status.style.color = 'var(--subtext)';
+    return;
+  }
+  if (rms < INPUT_GOOD_THRESHOLD) {
+    status.textContent = 'Good';
+    status.style.color = 'var(--green)';
+    return;
+  }
+  status.textContent = 'Hot';
+  status.style.color = 'var(--yellow)';
+}
+
+function setNoteDisplay(note, freq) {
+  const nameEl = document.getElementById('note-name');
+  const degreeNameEl = document.getElementById('degree-name');
+  const familyLineEl = document.getElementById('family-line');
+  const freqEl = document.getElementById('freq-hz');
+  const centsEl = document.getElementById('cents-label');
+  const needle = document.getElementById('tuner-needle');
+  const scaleResult = currentDisplayScale;
+
+  if (!note) {
+    nameEl.innerHTML = '—';
+    nameEl.style.color = 'var(--text)';
+    degreeNameEl.innerHTML = '<strong>Waiting for tonal context</strong>';
+    familyLineEl.textContent = scaleResult
+      ? `${scaleFamilyLabel(scaleResult.scale)} · ${scaleResult.confidence}% confidence`
+      : 'Relative-only view. Absolute note labels are hidden.';
+    freqEl.textContent = 'Frequency: —';
+    centsEl.textContent = '— cents';
+    needle.style.left = '50%';
+    needle.className = 'tuner-needle';
+    return;
+  }
+
+  const info = degreeInfoForPitchClass(note.pitchClass, scaleResult);
+  if (info?.inScale) {
+    nameEl.textContent = info.degreeShort;
+    nameEl.style.color = COLORS[(info.degreeIndex - 1) % COLORS.length];
+    degreeNameEl.innerHTML = `<strong>${info.degreeName}</strong>`;
+  } else {
+    nameEl.textContent = '•';
+    nameEl.style.color = 'var(--subtext)';
+    degreeNameEl.innerHTML = '<strong>Outside current mode candidate</strong>';
+  }
+  familyLineEl.textContent = scaleResult
+    ? `${scaleFamilyLabel(scaleResult.scale)} · ${scaleResult.confidence}% confidence`
+    : 'Relative-only view. Absolute note labels are hidden.';
+  freqEl.textContent = `Frequency: ${freq ? `${freq.toFixed(1)} Hz` : '—'}`;
+  centsEl.textContent = `${note.cents > 0 ? '+' : ''}${note.cents} cents`;
+
+  const cents = Math.max(-50, Math.min(50, note.cents));
+  const pos = 50 + (cents / 50) * 45;
+  needle.style.left = `${Math.max(5, Math.min(95, pos))}%`;
+
+  if (Math.abs(cents) < 8) needle.className = 'tuner-needle in-tune';
+  else if (cents > 0) needle.className = 'tuner-needle sharp';
+  else needle.className = 'tuner-needle flat';
+}
+
+function updatePitchLockUI() {
+  const card = document.getElementById('pitch-lock');
+  const text = document.getElementById('pitch-lock-text');
+  card.className = 'pitch-lock';
+
+  if (!isListening || !lastDetectedNote) {
+    text.textContent = 'Waiting for a stable note';
+    return;
+  }
+  if (currentInputRms < INPUT_TOO_QUIET_THRESHOLD) {
+    text.textContent = 'Too quiet to lock';
+    return;
+  }
+  if (pitchLockFrames >= 5) {
+    card.classList.add('locked');
+    text.textContent = 'Locked';
+    return;
+  }
+  if (pitchLockFrames >= 2) {
+    card.classList.add('tracking');
+    text.textContent = 'Tracking';
+    return;
+  }
+  text.textContent = 'Searching';
+}
+
+function getPlaybackNotes() {
+  return getPlayableNotes();
+}
+
+function getPlaybackIndex() {
+  if (!playbackAudioCtx || playbackStartWallMs <= 0 || captureOriginMs === null) return -1;
+  const notes = getPlaybackNotes();
+  if (!notes.length) return -1;
+  const absoluteTime = captureOriginMs + (performance.now() - playbackStartWallMs);
+  for (let i = 0; i < notes.length; i++) {
+    if (absoluteTime >= notes[i].startTime && absoluteTime <= notes[i].endTime) return i;
+  }
+  return absoluteTime >= notes[notes.length - 1].endTime ? notes.length - 1 : -1;
+}
+
+function renderNoteStrip() {
+  const strip = document.getElementById('note-strip');
+  const notes = getPlaybackNotes();
+  const playbackIndex = getPlaybackIndex();
+  const scaleResult = currentDisplayScale;
+  if (!notes.length) {
+    strip.innerHTML = '<div class="note-chip">No captured notes yet.</div>';
+    document.getElementById('note-count').textContent = '0';
+    return;
+  }
+  strip.innerHTML = notes.map((note, index) => {
+    const active = index === playbackIndex ? ' active' : '';
+    const info = degreeInfoForPitchClass(note.pitchClass, scaleResult);
+    const label = info?.inScale ? info.degreeShort : '•';
+    const color = info?.degreeIndex ? COLORS[(info.degreeIndex - 1) % COLORS.length] : '#9da6c7';
+    return `<div class="note-chip${active}" style="color:${color};border-color:${color}55">${label}</div>`;
+  }).join('');
+  document.getElementById('note-count').textContent = String(notes.length);
+}
+
+function renderAnalysisPreview() {
+  const snapshot = buildAnalysisSnapshot();
+  const clusters = computeMidiClusters(voicedMidiFrames, MIDI_CLUSTER_TOLERANCE, MIDI_CLUSTER_MIN_FRAMES);
+  document.getElementById('cluster-count').textContent = String(clusters.length);
+  document.getElementById('take-id').textContent = activeTakeId || '—';
+  document.getElementById('analysis-preview').textContent = JSON.stringify({
+    takeId: snapshot.takeId,
+    scale: snapshot.scale,
+    rawNoteCount: snapshot.rawNoteCount,
+    playableNoteCount: snapshot.playableNoteCount,
+    midiClusters: snapshot.midiClusters,
+    playableNotes: snapshot.playableNotes,
+  }, null, 2);
+
+  const notes = getPlaybackNotes();
+  if (!notes.length || captureOriginMs === null) {
+    document.getElementById('contour-meta').textContent = activeTakeId ? `Take ${activeTakeId}` : 'No take yet.';
+    return;
+  }
+  const durationMs = Math.max(...notes.map((note) => note.endTime)) - captureOriginMs;
+  document.getElementById('contour-meta').textContent = `${notes.length} notes over ${(durationMs / 1000).toFixed(2)} s`;
+}
+
+function refreshUI() {
+  const scaleTracking = updateScaleTracking(detectScaleForNotes(getPlaybackNotes()));
+  currentDisplayScale = scaleTracking.displayScale;
+  const scaleResult = currentDisplayScale;
+  const currentNote = lastDetectedNote;
+  document.getElementById('candidates-line').textContent = scaleResult?.topCandidates?.length
+    ? `Candidates: ${scaleResult.topCandidates.map((candidate) => candidate.scale).join(' · ')}`
+    : 'Mode candidates will appear once a phrase stabilizes.';
+  if (currentNote) {
+    setNoteDisplay(currentNote, midiToFreqValue(currentNote.clusterMidi ?? currentNote.midi));
+  } else {
+    setNoteDisplay(null);
+  }
+  updatePitchLockUI();
+  renderNoteStrip();
+  renderAnalysisPreview();
+  updatePlayButton();
+}
+
+function updateListeningUI(active) {
+  const btn = document.getElementById('btn-start');
+  const dot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+  const icon = document.getElementById('btn-icon');
+  const text = document.getElementById('btn-text');
+
+  if (active) {
+    btn.classList.add('listening');
+    dot.classList.add('active');
+    statusText.textContent = 'Listening';
+    icon.textContent = 'Stop';
+    text.textContent = 'Stop Listening';
+  } else {
+    btn.classList.remove('listening');
+    dot.classList.remove('active');
+    statusText.textContent = 'Ready';
+    icon.textContent = 'Mic';
+    text.textContent = 'Start Listening';
+    updateInputMeter(0);
+  }
+}
+
+function showError(message) {
+  const el = document.getElementById('error-msg');
+  el.textContent = message;
+  el.style.display = 'block';
+  clearTimeout(showError.timer);
+  showError.timer = setTimeout(() => {
+    el.style.display = 'none';
+  }, 5000);
+}
+
+function updatePlayButton() {
+  const btn = document.getElementById('btn-play');
+  const icon = document.getElementById('btn-play-icon');
+  const text = document.getElementById('btn-play-text');
+  const hasNotes = getPlaybackNotes().length > 0;
+  document.getElementById('btn-feedback').disabled = !hasNotes;
+  if (playbackAudioCtx) {
+    btn.disabled = false;
+    btn.classList.add('playing');
+    icon.textContent = 'Stop';
+    text.textContent = 'Stop';
+  } else {
+    btn.disabled = !hasNotes;
+    btn.classList.remove('playing');
+    icon.textContent = 'Play';
+    text.textContent = 'Play';
+  }
+}
+
+function scheduleKeyboardishTone(ctx, destination, freq, noteStart, noteDur, gainScale = 1) {
+  const attack = 0.0035;
+  const noteEnd = noteStart + noteDur;
+  const decay1Time = Math.max(0.05, Math.min(0.11, noteDur * 0.18));
+  const decay2Time = Math.max(0.18, Math.min(0.55, noteDur * 0.55));
+  const bodyTime = decay1Time + decay2Time;
+  const releaseTime = Math.max(0.07, Math.min(0.16, noteDur * 0.18));
+  const releaseStart = Math.max(noteStart + attack + bodyTime, noteEnd - releaseTime);
+  const partials = [
+    { multiple: 1, gain: 1.0, breakLevel: 0.46, tailLevel: 0.22, detune: 0.0 },
+    { multiple: 2, gain: 0.30, breakLevel: 0.08, tailLevel: 0.01, detune: 0.8 },
+    { multiple: 3, gain: 0.11, breakLevel: 0.03, tailLevel: 0.003, detune: -1.1 },
+    { multiple: 4, gain: 0.09, breakLevel: 0.022, tailLevel: 0.002, detune: 0.5 },
+    { multiple: 5, gain: 0.03, breakLevel: 0.006, tailLevel: 0.0008, detune: -0.4 },
+    { multiple: 6, gain: 0.09, breakLevel: 0.012, tailLevel: 0.0015, detune: 0.6 },
+    { multiple: 7, gain: 0.06, breakLevel: 0.008, tailLevel: 0.001, detune: -0.7 },
+  ];
+  const voices = [];
+  for (const partial of partials) {
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq * partial.multiple, noteStart);
+    osc.detune.setValueAtTime(partial.detune, noteStart);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(Math.max(850, freq * 4.0), noteStart);
+    filter.frequency.exponentialRampToValueAtTime(Math.max(520, freq * 1.8), noteStart + decay1Time + decay2Time);
+    filter.Q.value = 0.12;
+    gain.gain.setValueAtTime(0.0001, noteStart);
+    gain.gain.linearRampToValueAtTime(partial.gain * gainScale, noteStart + attack);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, partial.breakLevel * gainScale), noteStart + attack + decay1Time);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, partial.tailLevel * gainScale), noteStart + attack + decay1Time + decay2Time);
+    gain.gain.setValueAtTime(Math.max(0.0001, partial.tailLevel * gainScale), releaseStart);
+    gain.gain.exponentialRampToValueAtTime(0.0001, noteEnd + 0.03);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(destination);
+    osc.start(noteStart);
+    osc.stop(noteEnd + 0.06);
+    voices.push({ osc, gain });
+  }
+  return voices;
+}
+
+function startPlayback() {
+  const notes = getPlaybackNotes();
+  if (!notes.length || captureOriginMs === null) return;
+
+  playbackAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  playbackVoices = [];
+
+  const masterGain = playbackAudioCtx.createGain();
+  masterGain.gain.value = 0.42;
+  masterGain.connect(playbackAudioCtx.destination);
+
+  const baseTime = playbackAudioCtx.currentTime + 0.05;
+  const originMs = notes[0].startTime;
+  let maxEndTime = 0;
+
+  for (const note of notes) {
+    const startSec = (note.startTime - originMs) / 1000;
+    const durSec = note.durationMs / 1000;
+    const freq = midiToFreqValue(note.midi);
+    const noteStart = baseTime + startSec;
+    playbackVoices.push(...scheduleKeyboardishTone(playbackAudioCtx, masterGain, freq, noteStart, durSec, 0.18));
+    const noteEnd = noteStart + Math.max(durSec, 0.18);
+    maxEndTime = Math.max(maxEndTime, noteEnd);
+  }
+
+  playbackStartWallMs = performance.now() - (notes[0].startTime - captureOriginMs);
+  updatePlayButton();
+  renderNoteStrip();
+  startContourAnimation();
+  const totalDurationMs = (maxEndTime - baseTime) * 1000 + 200;
+  playbackEndTimer = setTimeout(() => {
+    stopPlayback();
+  }, totalDurationMs);
+}
+
+function stopPlayback() {
+  if (playbackEndTimer) {
+    clearTimeout(playbackEndTimer);
+    playbackEndTimer = null;
+  }
+  if (playbackAudioCtx) {
+    for (const voice of playbackVoices) {
+      try { voice.osc.stop(); } catch (err) { /* ignore */ }
+    }
+    playbackVoices = [];
+    try { playbackAudioCtx.close(); } catch (err) { /* ignore */ }
+    playbackAudioCtx = null;
+  }
+  playbackStartWallMs = 0;
+  updatePlayButton();
+  renderNoteStrip();
+  if (!isListening) stopContourAnimation();
+  drawContourCanvas();
+}
+
+function togglePlayback() {
+  if (playbackAudioCtx) stopPlayback();
+  else startPlayback();
+}
+
+async function startListening() {
+  try {
+    stopPlayback();
+    await probeCaptureServer();
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+      },
+    });
+
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.02;
+
+    source = audioCtx.createMediaStreamSource(stream);
+    highpass = audioCtx.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.value = 420;
+    highpass.Q.value = 0.6;
+
+    lowpass = audioCtx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 2600;
+    lowpass.Q.value = 0.7;
+
+    source.connect(highpass);
+    highpass.connect(lowpass);
+    lowpass.connect(analyser);
+
+    timeDomainBuffer = new Float32Array(analyser.fftSize);
+    floatFreqBuffer = new Float32Array(analyser.frequencyBinCount);
+    resetCaptureState();
+    activeTakeId = buildTakeId();
+    lastRecordingBlob = null;
+    lastRecordingFilename = '';
+    document.getElementById('btn-recording').disabled = true;
+    document.getElementById('btn-analysis').disabled = true;
+    startSessionRecording(stream, activeTakeId);
+
+    isListening = true;
+    updateListeningUI(true);
+    setNoteDisplay(null);
+    refreshUI();
+    startContourAnimation();
+    processAudio();
+  } catch (err) {
+    console.error(err);
+    showError('Microphone access denied. Please allow mic access and try again.');
+  }
+}
+
+function stopListening() {
+  const now = getNowMs();
+  const takeId = activeTakeId;
+  const recorderWillFinalize = Boolean(mediaRecorder && mediaRecorder.state !== 'inactive');
+  isListening = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  stopSessionRecording();
+  if (source) source.disconnect();
+  if (highpass) highpass.disconnect();
+  if (lowpass) lowpass.disconnect();
+  if (stream) stream.getTracks().forEach((track) => track.stop());
+  if (audioCtx) audioCtx.close();
+  audioCtx = null;
+  analyser = null;
+  source = null;
+  highpass = null;
+  lowpass = null;
+  stream = null;
+  floatFreqBuffer = null;
+  smoothedFreq = -1;
+  finishCapturedNote(now);
+  closeCurrentPhrase(now);
+  lastDetectedNote = null;
+  clearTimeout(silenceTimer);
+  silenceTimer = null;
+  updateListeningUI(false);
+  updatePlayButton();
+  document.getElementById('btn-analysis').disabled = getPlaybackNotes().length === 0;
+  setNoteDisplay(null);
+  drawIdleViz();
+  if (!playbackAudioCtx) stopContourAnimation();
+  drawContourCanvas();
+  refreshUI();
+  if (!recorderWillFinalize) void maybeUploadCurrentTake(takeId);
+}
+
+function toggleListening() {
+  if (isListening) stopListening();
+  else startListening();
+}
+
+function processAudio() {
+  if (!isListening) return;
+  rafId = requestAnimationFrame(processAudio);
+
+  analyser.getFloatTimeDomainData(timeDomainBuffer);
+  analyser.getFloatFrequencyData(floatFreqBuffer);
+  updateInputMeter(computeRms(timeDomainBuffer));
+  drawViz(timeDomainBuffer);
+
+  let rawFreq = detectPitch(timeDomainBuffer, floatFreqBuffer, audioCtx.sampleRate);
+  const now = getNowMs();
+
+  if (rawFreq > 0 && smoothedFreq > 0) {
+    const ratio = rawFreq / smoothedFreq;
+    if (ratio > 1.75 && ratio < 2.25) rawFreq = -1;
+  }
+
+  if (rawFreq > 0) {
+    recordVoicedMidiFrame(rawFreq, now);
+    smoothedFreq = smoothedFreq < 0 ? rawFreq : (smoothedFreq * (1 - SMOOTH_FACTOR) + rawFreq * SMOOTH_FACTOR);
+    const note = stabilizeNoteToClusters(smoothedFreq, now);
+    lastDetectedNote = note;
+    updatePitchLockState(note, rawFreq);
+    handleStableDetectedNote(note, now);
+    contourPoints.push({ time: now, midi: freqToMidi(smoothedFreq) });
+    clearTimeout(silenceTimer);
+    silenceTimer = null;
+    refreshUI();
+  } else {
+    handleSilence(now);
+    contourPoints.push({ time: now, midi: 0 });
+    updatePitchLockUI();
+    if (!silenceTimer) {
+      silenceTimer = setTimeout(() => {
+        smoothedFreq = -1;
+        lastDetectedNote = null;
+        setNoteDisplay(null);
+        refreshUI();
+      }, UI_FADE_MS);
+    }
+    refreshUI();
+  }
+}
+
+function clearHistory() {
+  if (isListening) stopListening();
+  stopPlayback();
+  resetCaptureState();
+  activeTakeId = null;
+  lastRecordingBlob = null;
+  lastRecordingFilename = '';
+  document.getElementById('btn-recording').disabled = true;
+  document.getElementById('btn-analysis').disabled = true;
+  setNoteDisplay(null);
+  updateInputMeter(0);
+  drawIdleViz();
+  drawContourCanvas();
+  refreshUI();
+  updateRecordingStatus('Start listening to capture a whistle take and note trace together.');
+}
+
+function downloadCurrentRecording() {
+  if (!lastRecordingBlob || !activeTakeId) return;
+  downloadBlob(`whistle-workbench-${activeTakeId}.${getRecordingExtension(lastRecordingBlob.type)}`, lastRecordingBlob);
+}
+
+function downloadAnalysisJSON() {
+  const notes = getPlaybackNotes();
+  if (!notes.length) return;
+  const blob = new Blob([JSON.stringify(buildAnalysisSnapshot(), null, 2)], { type: 'application/json' });
+  downloadBlob(`whistle-workbench-${activeTakeId || 'take'}-analysis.json`, blob);
+}
+
+window.addEventListener('resize', () => {
+  resizeViz();
+  drawContourCanvas();
+});
+
+resizeViz();
+drawIdleViz();
+probeCaptureServer();
+refreshUI();
+</script>
+</body>
+</html>

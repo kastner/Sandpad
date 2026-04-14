@@ -9,6 +9,8 @@ Legend: 🔴 High · 🟡 Medium · 🟢 Low · 🔬 Research needed
 ## Active / In Progress
 
 - [x] Melody playback — notes play with correct sustained durations
+- [x] Whistle workbench checkpoint — new `whistle-workbench.html` for whistle-only iteration with waveform, large contour, playback, and feedback bundles
+- [x] Playback timbre pivot — moved away from the old bright synthetic tone toward a darker piano-ish additive voice with stronger fundamental and faster overtone decay
 - [x] Scrollable pitch contour canvas — full-session history, auto-scroll live
 - [x] Piano roll overlay on contour — semi-transparent quantized notes over raw trace
 - [x] Scale confidence fix — less eager, shows top-3 alternatives
@@ -53,6 +55,7 @@ Legend: 🔴 High · 🟡 Medium · 🟢 Low · 🔬 Research needed
 
 ## Playback
 
+- 🔴 **Keep tuning the workbench voice** — the new additive keyboard-ish tone is closer, but still needs work on brightness, attack noise, and long-note body.
 - 🟡 **Instrument variety** — let the user choose the playback timbre: sine (pure), sawtooth (buzzy), triangle (flute-like), or a basic sampled piano/vibraphone via AudioBuffer.
 - 🟡 **Tempo scaling** — a slider to play back the melody faster or slower (scale note durations proportionally).
 - 🟡 **Loop** — loop the playback continuously until manually stopped.
@@ -101,6 +104,7 @@ Legend: 🔴 High · 🟡 Medium · 🟢 Low · 🔬 Research needed
 
 ## Known Bugs / Rough Edges
 
+- `whistle-workbench.html` still over-segments whistle onsets on simple melodies like "Mary Had a Little Lamb"; the offline contour is usually simpler than the app's playable-note list.
 - Scale detection with very short (< 3-note) phrases can show confident but wrong results.
 - `applyTonalCleanup` and `applyDegreeMelodyCleanup` still exist in the code but are no longer called from `normalizeCapturedNotes`. They could be removed or repurposed for an opt-in "snap to scale" export mode.
 - On some Android Chrome builds, `MediaRecorder` produces 0-byte chunks; the app falls back to trace-only silently but this is not surfaced to the user.

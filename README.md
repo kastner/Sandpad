@@ -7,6 +7,7 @@ The app listens through the browser microphone, estimates the current fundamenta
 ## What Is In This Repo
 
 - `pitch-detective.html` is the full app: HTML, CSS, and JavaScript in one file.
+- `whistle-workbench.html` is the newer whistle-only tuning surface: transport, waveform, large contour, playback, and feedback-bundle export without the rest of the sketchpad UI.
 - `deploy-gist.sh` publishes the HTML file as a public GitHub gist and opens an `htmlpreview.github.io` URL that is easy to test on a phone.
 - `index.html` redirects to `pitch-detective.html` so the repo can also be served directly by GitHub Pages.
 
@@ -42,6 +43,14 @@ python3 dev_server.py --port 4173
 ```
 
 Then open `http://127.0.0.1:4173/pitch-detective.html`. When you stop a take, the browser will still let you download the recording and trace manually, but it will also auto-upload them into `captures/` if the local server is present.
+
+For the stripped-down whistle tuning loop, open `http://127.0.0.1:4173/whistle-workbench.html`. That page keeps the same local capture server flow, but focuses on:
+
+- whistle input only
+- a larger contour view
+- relative-degree display
+- playback timbre tuning
+- one-click feedback bundles (`recording.wav`, `playback.wav`, `feedback.json`)
 
 For a purely static run:
 
@@ -82,3 +91,4 @@ The raw `audit.jsonl` is intentionally not committed. It includes the full agent
 - MIDI and ABC export are intentionally rough first passes, meant for sketch capture rather than notation-quality transcription.
 - Saved ideas live in browser local storage for now.
 - There is no production backend or build step. `dev_server.py` exists only for local capture/debugging.
+- `whistle-workbench.html` is intentionally experimental and currently the fastest place to iterate on whistle onset handling, contour readability, and playback tone.
