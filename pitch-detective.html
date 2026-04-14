@@ -1034,8 +1034,10 @@
       <button class="btn-secondary" onclick="downloadCurrentMIDI()">Download MIDI</button>
       <button class="btn-secondary" onclick="downloadCurrentRecording()">Download Recording</button>
       <button class="btn-secondary" onclick="downloadAnalysisJSON()">Download Trace JSON</button>
+      <button class="btn-secondary" id="btn-feedback" onclick="saveFeedbackBundle()">📦 Save Feedback</button>
     </div>
     <div class="recording-status" id="recording-status">Press Start Listening to capture audio and the detected-note trace together.</div>
+    <div class="recording-status" id="feedback-status" style="display:none"></div>
     <div class="export-preview" id="export-preview">ABC export will appear here once you capture a few notes.</div>
     <div class="saved-ideas" id="saved-ideas"></div>
   </div>
@@ -2782,6 +2784,286 @@ function downloadCurrentRecording() {
     return;
   }
   downloadBlob(lastRecordingFilename || 'pitch-detective-recording.webm', lastRecordingBlob);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FEEDBACK BUNDLE  (recording WAV + playback WAV + verbose analysis JSON)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function audioBufferToWavBlob(buffer) {
+  const sr = buffer.sampleRate;
+  const data = buffer.getChannelData(0);
+  const dl = data.length * 2;
+  const total = 44 + dl;
+  const wav = new ArrayBuffer(total);
+  const v = new DataView(wav);
+  function ws(o, s) { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); }
+  ws(0, 'RIFF'); v.setUint32(4, total - 8, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  ws(36, 'data'); v.setUint32(40, dl, true);
+  let off = 44;
+  for (let i = 0; i < data.length; i++) {
+    const s = Math.max(-1, Math.min(1, data[i]));
+    v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    off += 2;
+  }
+  return new Blob([wav], { type: 'audio/wav' });
+}
+
+// Render the synthesized melody through the same oscillator chain used in
+// startPlayback(), but into an OfflineAudioContext so we get a WAV blob.
+async function renderPlaybackWav() {
+  const notes = normalizeCapturedNotes();
+  if (!notes.length || captureOriginMs === null) return null;
+
+  const originMs = notes[0].startTime;
+  const lastNote = notes[notes.length - 1];
+  const totalDurSec = (lastNote.startTime - originMs + lastNote.durationMs) / 1000 + 0.5;
+  const sampleRate = 44100;
+  const offCtx = new OfflineAudioContext(1, Math.ceil(totalDurSec * sampleRate), sampleRate);
+
+  const masterGain = offCtx.createGain();
+  masterGain.gain.value = 0.3;
+  masterGain.connect(offCtx.destination);
+
+  for (const note of notes) {
+    const startSec = (note.startTime - originMs) / 1000;
+    const durSec = note.durationMs / 1000;
+    const freq = midiToFreqValue(note.midi);
+
+    const osc = offCtx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+
+    const filter = offCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1800;
+    filter.Q.value = 0.7;
+
+    const env = offCtx.createGain();
+    env.gain.value = 0;
+    const attackSec = 0.008;
+    const releaseSec = 0.04;
+    const noteEnd = startSec + durSec;
+
+    env.gain.setValueAtTime(0, startSec);
+    env.gain.linearRampToValueAtTime(0.6, startSec + attackSec);
+    env.gain.setValueAtTime(0.6, Math.max(startSec + attackSec, noteEnd - releaseSec));
+    env.gain.linearRampToValueAtTime(0, noteEnd);
+
+    osc.connect(filter);
+    filter.connect(env);
+    env.connect(masterGain);
+    osc.start(startSec);
+    osc.stop(noteEnd + 0.01);
+  }
+
+  const rendered = await offCtx.startRendering();
+  return audioBufferToWavBlob(rendered);
+}
+
+// Decode the browser's MediaRecorder blob (webm/ogg/mp4) to a WAV.
+// Uses a real AudioContext for decodeAudioData, then an OfflineAudioContext
+// to re-render so we get a clean mono PCM buffer.
+async function decodeRecordingToWav() {
+  if (!lastRecordingBlob) return null;
+  try {
+    const ab = await lastRecordingBlob.arrayBuffer();
+    // decodeAudioData requires a running AudioContext on some browsers
+    const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const decoded = await tempCtx.decodeAudioData(ab);
+    tempCtx.close();
+    const offCtx = new OfflineAudioContext(1, decoded.length, decoded.sampleRate);
+    const src = offCtx.createBufferSource();
+    src.buffer = decoded;
+    src.connect(offCtx.destination);
+    src.start(0);
+    const rendered = await offCtx.startRendering();
+    return audioBufferToWavBlob(rendered);
+  } catch (err) {
+    console.warn('Could not decode recording to WAV:', err);
+    return null;
+  }
+}
+
+// Rich analysis payload: all tunable parameters + every layer of pitch data
+// so an agent can reason about the full pipeline without needing the audio files.
+function buildFeedbackJson(takeId, recordingFilename, playbackFilename) {
+  const notes = normalizeCapturedNotes();
+  const scale = detectScale();
+  const origin = captureOriginMs ?? 0;
+
+  // Subsample large arrays so the JSON stays under ~2 MB
+  function subsample(arr, maxPts) {
+    if (arr.length <= maxPts) return arr;
+    const step = Math.ceil(arr.length / maxPts);
+    return arr.filter((_, i) => i % step === 0);
+  }
+
+  const voicedFramesSub = subsample(voicedMidiFrames, 3000).map((f) => ({
+    tMs: Math.round(f.time - origin),
+    midi: Math.round(f.midi * 100) / 100,
+  }));
+
+  const contourSub = subsample(contourPoints.filter((p) => p.midi > 0), 3000).map((p) => ({
+    tMs: Math.round(p.time - origin),
+    midi: Math.round(p.midi * 100) / 100,
+    deg: p.degree,
+  }));
+
+  return {
+    takeId,
+    createdAt: new Date().toISOString(),
+    files: {
+      recording: recordingFilename || null,
+      playback: playbackFilename || null,
+    },
+    // Every tunable constant so a future agent can suggest tweaks
+    parameters: {
+      SMOOTH_FACTOR,
+      NOTE_SWITCH_FRAMES,
+      PITCH_CLASS_MERGE_GAP_MS,
+      PHRASE_GAP_MS,
+      MIN_NOTE_MS,
+      TRANSITION_NOTE_MS,
+      SCALE_LOCK_FRAMES_ACTIVE,
+      SCALE_LOCK_FRAMES_IDLE,
+      SCALE_MIN_NOTES_ACTIVE,
+      SCALE_MIN_NOTES_IDLE,
+      SCALE_MIN_CONFIDENCE_ACTIVE,
+      SCALE_MIN_CONFIDENCE_IDLE,
+      RMS_SILENCE_THRESHOLD,
+      INPUT_TOO_QUIET_THRESHOLD,
+      DETECT_MIN_FREQ,
+      DETECT_MAX_FREQ,
+      MIDI_CLUSTER_WINDOW_MS,
+      MIDI_CLUSTER_TOLERANCE,
+      MIDI_CLUSTER_MIN_FRAMES,
+      MAX_TRANSIENT_SEMITONES,
+    },
+    scale: scale ? {
+      root: scale.root,
+      rootName: NOTE_NAMES[scale.root],
+      scaleName: scale.scale,
+      confidence: scale.confidence,
+      topCandidates: scale.topCandidates || [],
+    } : null,
+    // Pre-normalization: every raw note event the detector committed
+    rawNotes: recordedNotes.map((n) => ({
+      phraseId: n.phraseId,
+      startMs: Math.round(n.startTime - origin),
+      endMs: Math.round(n.endTime - origin),
+      durationMs: Math.round(n.endTime - n.startTime),
+      midi: n.midi,
+      note: `${n.name}${n.octave}`,
+    })),
+    // Post-normalization: what actually gets played back and exported
+    normalizedNotes: notes.map((n) => ({
+      phraseId: n.phraseId,
+      startMs: Math.round(n.startTime - origin),
+      durationMs: Math.round(n.durationMs),
+      midi: n.midi,
+      note: `${n.name}${n.octave}`,
+    })),
+    phrases: getNormalizedPhraseData(notes).map((p) => ({
+      phraseId: p.id,
+      startMs: Math.round(p.startTime - origin),
+      endMs: Math.round(p.endTime - origin),
+      noteCount: p.notes.length,
+    })),
+    midiClusters: computeMidiClusters(voicedMidiFrames, 0.95, 6).map((c) => ({
+      centerMidi: Math.round(c.centerMidi * 100) / 100,
+      note: c.note,
+      count: c.count,
+      spread: Math.round((c.maxMidi - c.minMidi) * 100) / 100,
+    })),
+    // Dense raw pitch trace — the wobbly pre-cluster signal
+    voicedMidiFrames: voicedFramesSub,
+    // Contour as rendered (post-degree-coloring, silence gaps excluded)
+    contourPoints: contourSub,
+    degreeSketch: buildDegreeSketch(scale, notes),
+    abc: buildABCNotation(scale, notes),
+  };
+}
+
+function setFeedbackStatus(msg, isError = false) {
+  const el = document.getElementById('feedback-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+  el.style.color = isError ? 'var(--pink)' : 'var(--subtext)';
+}
+
+async function saveFeedbackBundle() {
+  const notes = normalizeCapturedNotes();
+  if (!notes.length) {
+    setFeedbackStatus('Capture a phrase first — nothing to bundle yet.', true);
+    return;
+  }
+
+  const btn = document.getElementById('btn-feedback');
+  if (btn) btn.disabled = true;
+
+  const takeId = activeTakeId || buildTakeId();
+  const recWavFilename = `pitch-detective-${takeId}-recording.wav`;
+  const playWavFilename = `pitch-detective-${takeId}-playback.wav`;
+  const jsonFilename   = `pitch-detective-${takeId}-feedback.json`;
+
+  try {
+    setFeedbackStatus('Rendering WAVs…');
+    const [recWavBlob, playWavBlob] = await Promise.all([
+      decodeRecordingToWav(),
+      renderPlaybackWav(),
+    ]);
+
+    setFeedbackStatus('Building feedback JSON…');
+    const feedbackJson = buildFeedbackJson(takeId, recWavFilename, playWavFilename);
+    const jsonBlob = new Blob([JSON.stringify(feedbackJson, null, 2)], { type: 'application/json' });
+
+    // Always download locally so you have them regardless of server state
+    if (recWavBlob) downloadBlob(recWavFilename, recWavBlob);
+    if (playWavBlob) downloadBlob(playWavFilename, playWavBlob);
+    downloadBlob(jsonFilename, jsonBlob);
+
+    // Upload all three to the local capture server when available
+    const serverUp = await probeCaptureServer();
+    if (serverUp) {
+      setFeedbackStatus('Uploading to captures/…');
+      const payload = {
+        takeId,
+        uploadedAt: new Date().toISOString(),
+        analysisFilename: jsonFilename,
+        analysis: feedbackJson,
+        recordingFilename: recWavBlob ? recWavFilename : null,
+        recordingMimeType: 'audio/wav',
+        recordingBase64: recWavBlob ? await blobToBase64(recWavBlob) : null,
+        playbackFilename: playWavBlob ? playWavFilename : null,
+        playbackMimeType: 'audio/wav',
+        playbackBase64: playWavBlob ? await blobToBase64(playWavBlob) : null,
+      };
+      const resp = await fetch(CAPTURE_SERVER_UPLOAD_PATH, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await resp.json();
+      if (result.ok) {
+        const saved = [result.recordingPath, result.playbackPath, result.analysisPath].filter(Boolean).join(', ');
+        setFeedbackStatus(`Saved to captures/: ${saved}`);
+      } else {
+        setFeedbackStatus('Downloaded locally; server upload failed: ' + (result.error || '?'), true);
+      }
+    } else {
+      const saved = [recWavBlob && recWavFilename, playWavBlob && playWavFilename, jsonFilename].filter(Boolean).join(', ');
+      setFeedbackStatus(`Downloaded: ${saved}`);
+    }
+  } catch (err) {
+    console.error('saveFeedbackBundle error:', err);
+    setFeedbackStatus('Error saving feedback bundle: ' + err.message, true);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 function downloadAnalysisJSON() {
