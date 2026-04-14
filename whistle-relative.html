@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whistle Relative</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0c0c10;
+    --surface: #15151a;
+    --surface-2: #1d1d25;
+    --border: #2b2d37;
+    --text: #eef1f7;
+    --dim: #8c93a7;
+    --accent: #5b8def;
+    --accent-2: #7bd389;
+    --warn: #f4c95d;
+    --danger: #f87171;
+    --white-key: #f2f5fa;
+    --white-key-text: #11131a;
+    --black-key: #232534;
+    --black-key-text: #f2f5fa;
+    --degree-1: #5b8def;
+    --degree-2: #8b5cf6;
+    --degree-3: #ec4899;
+    --degree-4: #f97316;
+    --degree-5: #4ade80;
+    --degree-6: #fbbf24;
+    --degree-7: #f87171;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top left, rgba(91,141,239,0.12), transparent 30%),
+      radial-gradient(circle at top right, rgba(123,211,137,0.08), transparent 28%),
+      linear-gradient(180deg, #0b0b10 0%, #101118 100%);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .app {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 28px 18px 48px;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: 10px 0 18px;
+    background: linear-gradient(180deg, rgba(12,12,16,0.96), rgba(12,12,16,0.78), rgba(12,12,16,0));
+    backdrop-filter: blur(10px);
+  }
+
+  header {
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    margin: 0 0 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+  }
+
+  header p {
+    margin: 0;
+    color: var(--dim);
+    line-height: 1.5;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    background: rgba(21,21,26,0.88);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 12px;
+  }
+
+  button {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 11px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  }
+
+  button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: rgba(91,141,239,0.6);
+    background: var(--surface-2);
+  }
+
+  button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .btn-recording {
+    background: rgba(248,113,113,0.15);
+    border-color: rgba(248,113,113,0.55);
+    color: #ffd5d5;
+  }
+
+  .status {
+    margin-left: auto;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+    color: var(--dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .pill {
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 18px;
+  }
+
+  .card {
+    background: rgba(21,21,26,0.92);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+  }
+
+  .section-title {
+    margin: 0 0 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .display-row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 18px;
+    align-items: center;
+  }
+
+  .degree-badge {
+    min-height: 108px;
+    border-radius: 18px;
+    background: var(--surface-2);
+    display: grid;
+    place-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 58px;
+    font-weight: 700;
+  }
+
+  .display-copy h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+  }
+
+  .display-copy .sub {
+    color: var(--dim);
+    margin-bottom: 8px;
+    line-height: 1.45;
+  }
+
+  .display-copy .detail {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  .meter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .meter-bar {
+    flex: 1;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.05);
+    overflow: hidden;
+  }
+
+  .meter-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent-2), var(--warn), var(--danger));
+  }
+
+  .mode-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mode-candidate {
+    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    padding: 12px 14px;
+  }
+
+  .mode-candidate.best {
+    border-color: rgba(91,141,239,0.55);
+    background: rgba(91,141,239,0.1);
+  }
+
+  .mode-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .mode-name {
+    font-weight: 700;
+  }
+
+  .mode-meta {
+    color: var(--dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .mode-degrees {
+    color: var(--dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .sequence {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 56px;
+  }
+
+  .chip {
+    min-width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: grid;
+    place-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .chip.rest {
+    min-width: 20px;
+    color: var(--dim);
+    border-style: dashed;
+  }
+
+  .chip.active {
+    transform: translateY(-2px);
+    background: rgba(91,141,239,0.16);
+    box-shadow: 0 0 0 1px rgba(91,141,239,0.28) inset, 0 10px 20px rgba(91,141,239,0.18);
+  }
+
+  .canvas-wrap {
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  #contourCanvas {
+    width: 100%;
+    height: 240px;
+    display: block;
+  }
+
+  .cluster-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cluster-pill {
+    border-radius: 999px;
+    padding: 8px 11px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .keyboard-wrap {
+    padding-top: 8px;
+  }
+
+  .keyboard {
+    position: relative;
+    height: 220px;
+    display: flex;
+    gap: 4px;
+    align-items: stretch;
+  }
+
+  .white-key {
+    flex: 1;
+    position: relative;
+    border: 1px solid #cfd5e4;
+    border-bottom-width: 5px;
+    border-radius: 0 0 14px 14px;
+    background: linear-gradient(180deg, #ffffff, #e7ecf6);
+    color: var(--white-key-text);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .white-key.active {
+    background: linear-gradient(180deg, #dbe6fb, #c1d4f5);
+  }
+
+  .white-key .key-label {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .white-key .top {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #4a556a;
+  }
+
+  .white-key .degree {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .white-key .note {
+    font-size: 12px;
+    color: #4a556a;
+  }
+
+  .mini {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  .footer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  @media (max-width: 860px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+
+    .status {
+      margin-left: 0;
+      width: 100%;
+    }
+
+    .display-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <header>
+      <h1>whistle relative</h1>
+      <p>Cluster-first whistle reader. It favors relative pitch, shows likely modes instead of overcommitting early, and gives you a playable keyboard with the detected center mapped to keyboard C.</p>
+    </header>
+    <div class="controls">
+      <button id="listenBtn" class="btn-primary" onclick="toggleListening()">Start Listening</button>
+      <button onclick="clearSession()">Clear</button>
+      <button id="playBtn" onclick="playDetectedMelody()" disabled>Play Melody</button>
+      <button id="downloadRecordingBtn" onclick="downloadRecording()" disabled>Download Recording</button>
+      <button id="downloadAnalysisBtn" onclick="downloadAnalysis()" disabled>Download Analysis</button>
+      <div class="status">
+        <div class="pill" id="statusPill">Idle</div>
+        <div class="pill" id="familyPill">Family unresolved</div>
+        <div class="pill" id="centerPill">Center hint unresolved</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="section-title">Current Degree</div>
+        <div class="display-row">
+          <div class="degree-badge" id="degreeBadge">—</div>
+          <div class="display-copy">
+            <h2 id="degreeName">Waiting for a stable cluster</h2>
+            <div class="sub" id="degreeSummary">Relative pitch is the primary signal. Exact concert-pitch key is treated as a hint, not the goal.</div>
+            <div class="detail" id="degreeDetail">No stable note yet.</div>
+            <div class="meter">
+              <div class="mini" style="min-width:54px;">Input</div>
+              <div class="meter-bar"><div class="meter-fill" id="inputFill"></div></div>
+              <div class="mini" id="inputStatus">Idle</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="section-title">Detected Melody</div>
+        <div class="sequence" id="sequence"></div>
+        <div class="footer-actions">
+          <div class="mini" id="sequenceMeta">No melody captured yet.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="section-title">Contour</div>
+        <div class="canvas-wrap"><canvas id="contourCanvas"></canvas></div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="section-title">Relative Keyboard</div>
+        <div class="mini" id="keyboardMeta">Keyboard C follows the detected center. White keys step through the current mode.</div>
+        <div class="keyboard-wrap">
+          <div class="keyboard" id="keyboard"></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="section-title">Mode Candidates</div>
+        <div class="mode-list" id="modeCandidates"></div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="section-title">Recent Clusters</div>
+        <div class="cluster-list" id="clusterList"></div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="section-title">Analysis Preview</div>
+        <pre id="analysisPreview">No take yet.</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const NOTE_NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const DEGREE_COLORS = ['var(--degree-1)','var(--degree-2)','var(--degree-3)','var(--degree-4)','var(--degree-5)','var(--degree-6)','var(--degree-7)'];
+const MODE_LIBRARY = {
+  'Major': {
+    family: 'Major family',
+    intervals: [0,2,4,5,7,9,11],
+    degreeNames: ['Tonic','Supertonic','Mediant','Subdominant','Dominant','Submediant','Leading tone'],
+    solfege: ['do','re','mi','fa','sol','la','ti'],
+  },
+  'Natural Minor': {
+    family: 'Minor family',
+    intervals: [0,2,3,5,7,8,10],
+    degreeNames: ['Tonic','Supertonic','Mediant','Subdominant','Dominant','Submediant','Subtonic'],
+    solfege: ['do','re','me','fa','sol','le','te'],
+  },
+  'Harmonic Minor': {
+    family: 'Minor family (harmonic)',
+    intervals: [0,2,3,5,7,8,11],
+    degreeNames: ['Tonic','Supertonic','Mediant','Subdominant','Dominant','Submediant','Leading tone'],
+    solfege: ['do','re','me','fa','sol','le','ti'],
+  },
+  'Dorian': {
+    family: 'Minor family (Dorian)',
+    intervals: [0,2,3,5,7,9,10],
+    degreeNames: ['Tonic','Supertonic','Mediant','Subdominant','Dominant','Raised sixth','Subtonic'],
+    solfege: ['do','re','me','fa','sol','la','te'],
+  },
+  'Mixolydian': {
+    family: 'Major family (Mixolydian)',
+    intervals: [0,2,4,5,7,9,10],
+    degreeNames: ['Tonic','Supertonic','Mediant','Subdominant','Dominant','Submediant','Subtonic'],
+    solfege: ['do','re','mi','fa','sol','la','te'],
+  },
+  'Lydian': {
+    family: 'Major family (Lydian)',
+    intervals: [0,2,4,6,7,9,11],
+    degreeNames: ['Tonic','Supertonic','Mediant','Raised fourth','Dominant','Submediant','Leading tone'],
+    solfege: ['do','re','mi','fi','sol','la','ti'],
+  },
+  'Phrygian': {
+    family: 'Minor family (Phrygian)',
+    intervals: [0,1,3,5,7,8,10],
+    degreeNames: ['Tonic','Flat two','Mediant','Subdominant','Dominant','Submediant','Subtonic'],
+    solfege: ['do','ra','me','fa','sol','le','te'],
+  },
+  'Major Pentatonic': {
+    family: 'Major pentatonic',
+    intervals: [0,2,4,7,9],
+    degreeNames: ['Tonic','Supertonic','Mediant','Dominant','Submediant'],
+    solfege: ['do','re','mi','sol','la'],
+  },
+  'Minor Pentatonic': {
+    family: 'Minor pentatonic',
+    intervals: [0,3,5,7,10],
+    degreeNames: ['Tonic','Mediant','Subdominant','Dominant','Subtonic'],
+    solfege: ['do','me','fa','sol','te'],
+  },
+};
+
+const DETECT_MIN_FREQ = 400;
+const DETECT_MAX_FREQ = 3000;
+const RMS_MIN = 0.01;
+const CLUSTER_TOLERANCE = 0.95;
+const CLUSTER_PC_TOLERANCE = 0.45;
+const OBS_WINDOW_MS = 5500;
+const MIN_CLUSTER_FRAMES = 4;
+const NOTE_CONFIRM_MS = 115;
+const NOTE_SAME_THRESHOLD = 0.7;
+const SILENCE_RESET_MS = 180;
+const SMOOTH_ALPHA = 0.28;
+const PLAYBACK_TIME_SCALE = 0.72;
+const CAPTURE_SERVER_HEALTH_PATH = '/api/health';
+const CAPTURE_SERVER_UPLOAD_PATH = '/api/upload';
+
+let audioCtx = null;
+let analyser = null;
+let mediaStream = null;
+let rafId = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordedBlob = null;
+let recordingMimeType = '';
+let isListening = false;
+
+let timeBuffer = null;
+let freqDbBuffer = null;
+let currentInputRms = 0;
+let activeTakeId = null;
+let captureServerAvailable = false;
+let captureServerChecked = false;
+
+const frameObservations = [];
+const noteEvents = [];
+const contourFrames = [];
+let currentStableMidi = null;
+let currentStableSince = 0;
+let currentStableLastAt = 0;
+let pendingMidi = null;
+let pendingSince = 0;
+let silenceSince = null;
+
+let modeCandidates = [];
+let bestMode = null;
+let lastDisplayInfo = null;
+
+let synthCtx = null;
+let playbackVoices = [];
+let playbackStopTimer = null;
+let playbackRafId = null;
+let playbackState = {
+  active: false,
+  startPerf: 0,
+  totalSourceMs: 0,
+  totalRealMs: 0,
+  sourceStartTime: 0,
+};
+
+function buildTakeId() {
+  return new Date().toISOString().replace(/[:.]/g, '-');
+}
+
+function freqToMidi(freq) {
+  return 69 + 12 * Math.log2(freq / 440);
+}
+
+function midiToFreq(midi) {
+  return 440 * (2 ** ((midi - 69) / 12));
+}
+
+function noteFromMidi(midi) {
+  const rounded = Math.round(midi);
+  const pitchClass = ((rounded % 12) + 12) % 12;
+  return {
+    midi,
+    roundedMidi: rounded,
+    pitchClass,
+    name: NOTE_NAMES[pitchClass],
+    octave: Math.floor(rounded / 12) - 1,
+    cents: Math.round((midi - rounded) * 100),
+  };
+}
+
+function computeRms(buffer) {
+  let rms = 0;
+  for (let i = 0; i < buffer.length; i++) rms += buffer[i] * buffer[i];
+  return Math.sqrt(rms / buffer.length);
+}
+
+function interpolatePeakBin(magnitudes, index) {
+  if (index <= 0 || index >= magnitudes.length - 1) return index;
+  const prev = magnitudes[index - 1];
+  const curr = magnitudes[index];
+  const next = magnitudes[index + 1];
+  const denom = prev - 2 * curr + next;
+  if (Math.abs(denom) < 1e-9) return index;
+  const offset = 0.5 * (prev - next) / denom;
+  return index + Math.max(-0.5, Math.min(0.5, offset));
+}
+
+function detectPitchFromSpectrum(freqDb, sampleRate) {
+  const binHz = sampleRate / (freqDb.length * 2);
+  const minBin = Math.max(2, Math.floor(DETECT_MIN_FREQ / binHz));
+  const maxBin = Math.min(freqDb.length - 3, Math.ceil(DETECT_MAX_FREQ / binHz));
+  let bestIndex = -1;
+  let bestDb = -Infinity;
+  for (let i = minBin + 1; i < maxBin; i++) {
+    const db = freqDb[i];
+    if (db < -72) continue;
+    if (db < freqDb[i - 1] || db < freqDb[i + 1]) continue;
+    const prominence = db - Math.max(freqDb[i - 1], freqDb[i + 1]);
+    if (prominence < 4) continue;
+    const harmonic2 = i * 2 < freqDb.length ? freqDb[i * 2] : -120;
+    const score = db + prominence * 1.7 + Math.max(-72, harmonic2) * 0.15;
+    if (score > bestDb) {
+      bestDb = score;
+      bestIndex = i;
+    }
+  }
+  if (bestIndex < 0) return -1;
+
+  const halfIndex = Math.round(bestIndex / 2);
+  if (halfIndex >= minBin && halfIndex < maxBin && freqDb[halfIndex] >= freqDb[bestIndex] - 10) {
+    bestIndex = halfIndex;
+  }
+
+  const magnitudes = new Float32Array(freqDb.length);
+  for (let i = minBin; i <= maxBin; i++) magnitudes[i] = 10 ** (freqDb[i] / 20);
+  const refined = interpolatePeakBin(magnitudes, bestIndex);
+  const freq = refined * binHz;
+  return freq >= DETECT_MIN_FREQ && freq <= DETECT_MAX_FREQ ? freq : -1;
+}
+
+function circularDistance(a, b) {
+  let diff = Math.abs(a - b) % 12;
+  if (diff > 6) diff = 12 - diff;
+  return diff;
+}
+
+function recentObservations(now = performance.now()) {
+  return frameObservations.filter((obs) => now - obs.time <= OBS_WINDOW_MS);
+}
+
+function cluster1D(values, tolerance, minCount = 1) {
+  if (!values.length) return [];
+  const sorted = [...values].sort((a, b) => a.value - b.value);
+  const clusters = [];
+  for (const entry of sorted) {
+    const cluster = clusters[clusters.length - 1];
+    if (!cluster) {
+      clusters.push({
+        totalWeight: entry.weight,
+        weightedValue: entry.value * entry.weight,
+        count: 1,
+        min: entry.value,
+        max: entry.value,
+      });
+      continue;
+    }
+    const center = cluster.weightedValue / cluster.totalWeight;
+    if (Math.abs(entry.value - center) <= tolerance) {
+      cluster.totalWeight += entry.weight;
+      cluster.weightedValue += entry.value * entry.weight;
+      cluster.count += 1;
+      cluster.min = Math.min(cluster.min, entry.value);
+      cluster.max = Math.max(cluster.max, entry.value);
+    } else {
+      clusters.push({
+        totalWeight: entry.weight,
+        weightedValue: entry.value * entry.weight,
+        count: 1,
+        min: entry.value,
+        max: entry.value,
+      });
+    }
+  }
+  return clusters
+    .map((cluster) => ({
+      center: cluster.weightedValue / cluster.totalWeight,
+      totalWeight: cluster.totalWeight,
+      count: cluster.count,
+      min: cluster.min,
+      max: cluster.max,
+    }))
+    .filter((cluster) => cluster.count >= minCount);
+}
+
+function computeAbsoluteClusters(observations = recentObservations()) {
+  const values = observations.map((obs) => ({ value: obs.midi, weight: obs.weight || 1 }));
+  return cluster1D(values, CLUSTER_TOLERANCE, MIN_CLUSTER_FRAMES)
+    .sort((a, b) => a.center - b.center)
+    .map((cluster) => ({
+      ...cluster,
+      note: `${noteFromMidi(cluster.center).name}${noteFromMidi(cluster.center).octave}`,
+      pitchClass: noteFromMidi(cluster.center).pitchClass,
+    }));
+}
+
+function computePitchClassClusters(absClusters) {
+  const pcs = [];
+  for (const cluster of absClusters) {
+    const pc = ((cluster.center % 12) + 12) % 12;
+    let matched = false;
+    for (const existing of pcs) {
+      if (circularDistance(existing.center, pc) <= CLUSTER_PC_TOLERANCE) {
+        existing.weightedCenter += pc * cluster.totalWeight;
+        existing.totalWeight += cluster.totalWeight;
+        existing.count += cluster.count;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      pcs.push({
+        center: pc,
+        weightedCenter: pc * cluster.totalWeight,
+        totalWeight: cluster.totalWeight,
+        count: cluster.count,
+      });
+    }
+  }
+  return pcs
+    .map((cluster) => ({
+      center: cluster.weightedCenter / cluster.totalWeight,
+      totalWeight: cluster.totalWeight,
+      count: cluster.count,
+    }))
+    .sort((a, b) => a.center - b.center);
+}
+
+function rankModeCandidates(pcClusters, observations) {
+  if (pcClusters.length < 2) return [];
+  const firstMidi = observations[0]?.midi ?? null;
+  const lastMidi = observations[observations.length - 1]?.midi ?? null;
+  const candidates = [];
+
+  for (const tonicCluster of pcClusters) {
+    const tonicPc = tonicCluster.center;
+    for (const [modeName, mode] of Object.entries(MODE_LIBRARY)) {
+      let score = 0;
+      let matches = 0;
+      for (const cluster of pcClusters) {
+        const rel = ((cluster.center - tonicPc) + 12) % 12;
+        let bestDist = Infinity;
+        let bestDegree = 0;
+        for (let i = 0; i < mode.intervals.length; i++) {
+          const dist = circularDistance(rel, mode.intervals[i]);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestDegree = i;
+          }
+        }
+        if (bestDist <= 0.7) {
+          score += (1.2 - bestDist) * cluster.totalWeight;
+          if (cluster === tonicCluster) score += 3.5;
+          if (bestDegree === 0 || bestDegree === 4) score += 0.8;
+          matches += 1;
+        } else {
+          score -= bestDist * cluster.totalWeight * 0.8;
+        }
+      }
+
+      if (firstMidi !== null) {
+        const firstPc = ((firstMidi % 12) + 12) % 12;
+        const firstRel = ((firstPc - tonicPc) + 12) % 12;
+        for (const favored of [0, 2, 4]) {
+          if (favored >= mode.intervals.length) continue;
+          if (circularDistance(firstRel, mode.intervals[favored]) <= 0.85) score += 1.5;
+        }
+      }
+
+      if (lastMidi !== null) {
+        const lastPc = ((lastMidi % 12) + 12) % 12;
+        const lastRel = ((lastPc - tonicPc) + 12) % 12;
+        if (circularDistance(lastRel, 0) <= 0.7) score += 3.5;
+        if (mode.intervals.includes(7) && circularDistance(lastRel, 7) <= 0.7) score += 1;
+      }
+
+      if (mode.intervals.length <= 5 && pcClusters.length <= 5 && matches === pcClusters.length) score += 2;
+      if (modeName === 'Major' || modeName === 'Natural Minor') score += 0.4;
+
+      candidates.push({
+        tonicPc,
+        modeName,
+        family: mode.family,
+        intervals: mode.intervals,
+        degreeNames: mode.degreeNames,
+        solfege: mode.solfege,
+        score,
+      });
+    }
+  }
+
+  candidates.sort((a, b) => b.score - a.score);
+  const best = candidates[0];
+  if (!best) return [];
+
+  return candidates.slice(0, 4).map((candidate, index) => {
+    const confidence = Math.max(0.08, Math.min(0.98, candidate.score / Math.max(1, best.score)));
+    return {
+      ...candidate,
+      confidence,
+      rank: index + 1,
+      tonicName: NOTE_NAMES[Math.round(candidate.tonicPc) % 12],
+    };
+  });
+}
+
+function infoForMidi(midi, candidate) {
+  if (!candidate) return null;
+  let bestIndex = 0;
+  let bestDistance = Infinity;
+  for (let i = 0; i < candidate.intervals.length; i++) {
+    const targetPc = (candidate.tonicPc + candidate.intervals[i]) % 12;
+    const midiPc = ((midi % 12) + 12) % 12;
+    const distance = circularDistance(midiPc, targetPc);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = i;
+    }
+  }
+  const degree = bestIndex + 1;
+  return {
+    degree,
+    degreeLabel: `${degree}\u0302`,
+    color: DEGREE_COLORS[(degree - 1) % DEGREE_COLORS.length],
+    solfege: candidate.solfege[bestIndex] || '',
+    degreeName: candidate.degreeNames[bestIndex] || `Degree ${degree}`,
+    distance: bestDistance,
+  };
+}
+
+function updateModeState(now) {
+  const observations = recentObservations(now);
+  const absClusters = computeAbsoluteClusters(observations);
+  const pcClusters = computePitchClassClusters(absClusters);
+  modeCandidates = rankModeCandidates(pcClusters, observations);
+  bestMode = modeCandidates[0] || null;
+  return { absClusters, pcClusters };
+}
+
+function stabilizeMidiToClusters(rawMidi, absClusters) {
+  if (!absClusters.length) return rawMidi;
+  let best = null;
+  let bestDistance = Infinity;
+  for (const cluster of absClusters) {
+    const distance = Math.abs(cluster.center - rawMidi);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = cluster;
+    }
+  }
+  if (!best) return rawMidi;
+  if (bestDistance <= 1.15) return best.center;
+  return rawMidi;
+}
+
+function startNote(now, midi) {
+  currentStableMidi = midi;
+  currentStableSince = now;
+  currentStableLastAt = now;
+}
+
+function finalizeCurrentNote(endTime) {
+  if (currentStableMidi === null) return;
+  const durationMs = endTime - currentStableSince;
+  if (durationMs < NOTE_CONFIRM_MS) {
+    currentStableMidi = null;
+    return;
+  }
+  noteEvents.push({
+    midi: currentStableMidi,
+    startTime: currentStableSince,
+    endTime,
+    durationMs,
+  });
+  currentStableMidi = null;
+}
+
+function processStableNote(midi, now) {
+  if (currentStableMidi === null) {
+    startNote(now, midi);
+    pendingMidi = null;
+    return;
+  }
+
+  const distance = Math.abs(midi - currentStableMidi);
+  if (distance <= NOTE_SAME_THRESHOLD) {
+    currentStableMidi += (midi - currentStableMidi) * SMOOTH_ALPHA;
+    currentStableLastAt = now;
+    pendingMidi = null;
+    return currentStableMidi;
+  }
+
+  if (pendingMidi === null || Math.abs(midi - pendingMidi) > NOTE_SAME_THRESHOLD) {
+    pendingMidi = midi;
+    pendingSince = now;
+    return currentStableMidi;
+  }
+
+  pendingMidi += (midi - pendingMidi) * SMOOTH_ALPHA;
+  if (now - pendingSince >= NOTE_CONFIRM_MS) {
+    finalizeCurrentNote(now);
+    startNote(now, pendingMidi);
+    pendingMidi = null;
+    return currentStableMidi;
+  }
+
+  return currentStableMidi;
+}
+
+function updateInputStatus(rms) {
+  currentInputRms = rms;
+  const fill = document.getElementById('inputFill');
+  const status = document.getElementById('inputStatus');
+  const normalized = Math.max(0, Math.min(1, rms / 0.05));
+  fill.style.width = `${normalized * 100}%`;
+  if (!isListening && rms <= 0.0005) {
+    status.textContent = 'Idle';
+  } else if (rms < RMS_MIN) {
+    status.textContent = 'Too quiet';
+  } else if (rms < 0.024) {
+    status.textContent = 'Good';
+  } else {
+    status.textContent = 'Hot';
+  }
+}
+
+function renderDegree(midi, freq, info) {
+  const badge = document.getElementById('degreeBadge');
+  const name = document.getElementById('degreeName');
+  const summary = document.getElementById('degreeSummary');
+  const detail = document.getElementById('degreeDetail');
+
+  if (!info) {
+    badge.textContent = '—';
+    badge.style.color = 'var(--dim)';
+    name.textContent = 'Waiting for a stable cluster';
+    summary.textContent = bestMode
+      ? `Best current fit: ${bestMode.family}. Exact mode is still provisional.`
+      : 'Relative pitch is the primary signal. Exact concert-pitch key is treated as a hint, not the goal.';
+    detail.textContent = 'No stable degree yet.';
+    return;
+  }
+
+  badge.textContent = info.degreeLabel;
+  badge.style.color = info.color;
+  name.textContent = `${info.solfege} — ${info.degreeName}`;
+  summary.textContent = bestMode
+    ? `Best current fit: ${bestMode.modeName} (${bestMode.family}), center near ${NOTE_NAMES[Math.round(bestMode.tonicPc) % 12]}.`
+    : 'Mode candidates are still warming up.';
+  detail.textContent = `${freq.toFixed(1)} Hz · MIDI ${midi.toFixed(2)} · cluster-stabilized relative degree`;
+}
+
+function renderSequence() {
+  const el = document.getElementById('sequence');
+  if (!noteEvents.length) {
+    el.innerHTML = '';
+    document.getElementById('sequenceMeta').textContent = 'No melody captured yet.';
+    document.getElementById('playBtn').disabled = true;
+    return;
+  }
+  el.innerHTML = noteEvents.slice(-42).map((note) => {
+    const info = infoForMidi(note.midi, bestMode);
+    if (!info) return '<div class="chip">?</div>';
+    const playbackIndex = getPlaybackCurrentIndex();
+    const noteIndex = noteEvents.indexOf(note);
+    const activeClass = playbackState.active && playbackIndex === noteIndex ? ' active' : '';
+    return `<div class="chip${activeClass}" style="color:${info.color};border-color:${info.color}44">${info.degreeLabel}</div>`;
+  }).join('');
+  document.getElementById('sequenceMeta').textContent = `${noteEvents.length} note events · ${bestMode ? bestMode.family : 'family unresolved'}`;
+  document.getElementById('playBtn').disabled = false;
+}
+
+function renderModeCandidates() {
+  const el = document.getElementById('modeCandidates');
+  if (!modeCandidates.length) {
+    el.innerHTML = '<div class="mini">Need a few stable pitch clusters before mode candidates can settle.</div>';
+    document.getElementById('familyPill').textContent = 'Family unresolved';
+    document.getElementById('centerPill').textContent = 'Center hint unresolved';
+    return;
+  }
+
+  el.innerHTML = modeCandidates.map((candidate, index) => `
+    <div class="mode-candidate ${index === 0 ? 'best' : ''}">
+      <div class="mode-head">
+        <div class="mode-name">${candidate.modeName}</div>
+        <div class="mode-meta">${Math.round(candidate.confidence * 100)}% · ${candidate.family}</div>
+      </div>
+      <div class="mode-degrees">Center near ${candidate.tonicName} · degrees ${candidate.intervals.map((_, i) => `${i + 1}`).join(' ')}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('familyPill').textContent = bestMode ? bestMode.family : 'Family unresolved';
+  document.getElementById('centerPill').textContent = bestMode ? `Center near ${bestMode.tonicName}` : 'Center hint unresolved';
+}
+
+function renderClusters(absClusters) {
+  const el = document.getElementById('clusterList');
+  if (!absClusters.length) {
+    el.innerHTML = '<div class="mini">No stable clusters yet.</div>';
+    return;
+  }
+  el.innerHTML = absClusters.map((cluster) => (
+    `<div class="cluster-pill">${cluster.center.toFixed(2)} (${cluster.note}) · ${cluster.count}</div>`
+  )).join('');
+}
+
+function renderKeyboard() {
+  const el = document.getElementById('keyboard');
+  const candidate = bestMode;
+  const scale = candidate?.intervals || MODE_LIBRARY.Major.intervals;
+  const tonicPc = candidate?.tonicPc ?? 0;
+  const centerMidi = candidate ? findReferenceTonicMidi(candidate) : 60;
+  const whiteLabels = ['C','D','E','F','G','A','B','C'];
+
+  el.innerHTML = whiteLabels.map((label, index) => {
+    const degreeIndex = scale.length === 0 ? 0 : (index % scale.length);
+    const octaveShift = index === 7 ? 12 : 0;
+    const midi = centerMidi + scale[degreeIndex] + octaveShift;
+    const actual = noteFromMidi(midi);
+    const displayDegree = degreeIndex + 1;
+    const color = DEGREE_COLORS[(displayDegree - 1) % DEGREE_COLORS.length];
+    return `
+      <button class="white-key" onpointerdown="playKeyboardNote(${midi.toFixed(3)}, ${displayDegree})" onpointerup="stopKeyboardNote()" onpointerleave="stopKeyboardNote()">
+        <div class="key-label">
+          <div class="top">${label}</div>
+          <div class="degree" style="color:${color}">${displayDegree}\u0302</div>
+          <div class="note">${actual.name}${actual.octave}</div>
+        </div>
+      </button>
+    `;
+  }).join('');
+
+  document.getElementById('keyboardMeta').textContent = candidate
+    ? `Keyboard C is centered near ${candidate.tonicName}. White keys step through ${candidate.modeName}.`
+    : 'Keyboard defaults to a major-relative layout until mode candidates settle.';
+}
+
+function renderAnalysisPreview(absClusters) {
+  const preview = document.getElementById('analysisPreview');
+  const summary = {
+    bestMode: bestMode ? {
+      mode: bestMode.modeName,
+      family: bestMode.family,
+      centerHint: bestMode.tonicName,
+      confidence: Math.round(bestMode.confidence * 100),
+    } : null,
+    clusters: absClusters.map((cluster) => ({
+      centerMidi: Math.round(cluster.center * 100) / 100,
+      note: cluster.note,
+      count: cluster.count,
+      spread: Math.round((cluster.max - cluster.min) * 100) / 100,
+    })),
+    degreeSketch: noteEvents.map((note) => infoForMidi(note.midi, bestMode)?.degree ?? '?').join(' '),
+  };
+  preview.textContent = JSON.stringify(summary, null, 2);
+}
+
+function drawContour() {
+  const canvas = document.getElementById('contourCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+
+  const recent = contourFrames.slice(-900);
+  if (recent.length < 2) return;
+  const positive = recent.filter((f) => f.midi > 0);
+  if (!positive.length) return;
+
+  const minMidi = Math.min(...positive.map((f) => f.midi)) - 2;
+  const maxMidi = Math.max(...positive.map((f) => f.midi)) + 2;
+  const now = performance.now();
+  const leftPad = 34;
+  const width = rect.width - leftPad;
+  let startTime = 0;
+  let endTime = 0;
+  let visibleFrames = recent;
+  if (isListening) {
+    startTime = now - 10000;
+    endTime = now;
+    visibleFrames = recent.filter((frame) => frame.time >= startTime);
+  } else {
+    startTime = positive[0].time;
+    endTime = Math.max(positive[positive.length - 1].time, startTime + 1000);
+    visibleFrames = recent.filter((frame) => frame.time >= startTime && frame.time <= endTime);
+  }
+  const domainMs = Math.max(800, endTime - startTime);
+  const toX = (time) => leftPad + ((time - startTime) / domainMs) * width;
+  const toY = (midi) => rect.height - 16 - ((midi - minMidi) / Math.max(4, maxMidi - minMidi)) * (rect.height - 28);
+
+  if (bestMode) {
+    const refMidi = findReferenceTonicMidi(bestMode);
+    ctx.font = '500 11px JetBrains Mono';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    for (let octave = -1; octave <= 2; octave++) {
+      bestMode.intervals.forEach((interval, index) => {
+        const midi = refMidi + interval + octave * 12;
+        if (midi < minMidi || midi > maxMidi) return;
+        const y = toY(midi);
+        ctx.beginPath();
+        ctx.moveTo(leftPad, y);
+        ctx.lineTo(rect.width, y);
+        ctx.stroke();
+        ctx.fillStyle = DEGREE_COLORS[index % DEGREE_COLORS.length];
+        ctx.fillText(`${index + 1}\u0302`, leftPad - 8, y);
+      });
+    }
+  }
+
+  ctx.lineWidth = 3;
+  let prev = null;
+  for (const frame of visibleFrames) {
+    if (frame.midi <= 0) {
+      prev = null;
+      continue;
+    }
+    const x = toX(frame.time);
+    const y = toY(frame.midi);
+    const info = infoForMidi(frame.midi, bestMode);
+    const color = info ? DEGREE_COLORS[(info.degree - 1) % DEGREE_COLORS.length] : '#8c93a7';
+    if (prev) {
+      ctx.strokeStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(prev.x, prev.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+    prev = { x, y };
+  }
+
+  const playbackSourceMs = getPlaybackSourceElapsedMs();
+  if (playbackState.active && playbackSourceMs !== null) {
+    const playheadTime = playbackState.sourceStartTime + playbackSourceMs;
+    const x = Math.max(leftPad, Math.min(rect.width, toX(playheadTime)));
+    ctx.strokeStyle = 'rgba(244,201,93,0.95)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, rect.height);
+    ctx.stroke();
+  }
+}
+
+function updateUI(absClusters) {
+  renderModeCandidates();
+  renderClusters(absClusters);
+  renderSequence();
+  renderKeyboard();
+  renderAnalysisPreview(absClusters);
+  drawContour();
+}
+
+function pushObservation(now, midi, weight = 1) {
+  frameObservations.push({ time: now, midi, weight });
+  if (frameObservations.length > 5000) frameObservations.splice(0, frameObservations.length - 3000);
+}
+
+function processAudio() {
+  if (!isListening) return;
+  rafId = requestAnimationFrame(processAudio);
+
+  analyser.getFloatTimeDomainData(timeBuffer);
+  analyser.getFloatFrequencyData(freqDbBuffer);
+  const rms = computeRms(timeBuffer);
+  updateInputStatus(rms);
+  const now = performance.now();
+
+  if (rms < RMS_MIN) {
+    contourFrames.push({ time: now, midi: 0 });
+    if (silenceSince === null) silenceSince = now;
+    if (silenceSince && now - silenceSince >= SILENCE_RESET_MS) {
+      finalizeCurrentNote(now);
+      pendingMidi = null;
+    }
+    if (contourFrames.length > 4000) contourFrames.splice(0, contourFrames.length - 2500);
+    updateUI(computeAbsoluteClusters(recentObservations(now)));
+    return;
+  }
+
+  silenceSince = null;
+  const freq = detectPitchFromSpectrum(freqDbBuffer, audioCtx.sampleRate);
+  if (freq <= 0) return;
+
+  const rawMidi = freqToMidi(freq);
+  pushObservation(now, rawMidi, 1);
+  const { absClusters } = updateModeState(now);
+  const stableMidi = stabilizeMidiToClusters(rawMidi, absClusters);
+  const noteMidi = processStableNote(stableMidi, now);
+  const displayMidi = noteMidi ?? stableMidi;
+  contourFrames.push({ time: now, midi: displayMidi });
+  if (contourFrames.length > 4000) contourFrames.splice(0, contourFrames.length - 2500);
+
+  const info = infoForMidi(displayMidi, bestMode);
+  renderDegree(displayMidi, midiToFreq(displayMidi), info);
+  updateUI(absClusters);
+}
+
+function findReferenceTonicMidi(candidate) {
+  const absClusters = computeAbsoluteClusters();
+  if (!candidate || !absClusters.length) return 60 + Math.round(candidate?.tonicPc || 0);
+  let best = null;
+  let bestDistance = Infinity;
+  for (const cluster of absClusters) {
+    const distance = circularDistance(((cluster.center % 12) + 12) % 12, candidate.tonicPc);
+    if (distance < bestDistance) {
+      best = cluster;
+      bestDistance = distance;
+    }
+  }
+  if (!best) return 60 + Math.round(candidate.tonicPc);
+  const roundedPc = ((Math.round(best.center) % 12) + 12) % 12;
+  let tonicMidi = Math.round(best.center) - roundedPc + Math.round(candidate.tonicPc);
+  while (tonicMidi < 48) tonicMidi += 12;
+  while (tonicMidi > 72) tonicMidi -= 12;
+  return tonicMidi;
+}
+
+function ensureSynthContext() {
+  if (!synthCtx || synthCtx.state === 'closed') synthCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return synthCtx;
+}
+
+function playToneAt(ctx, freq, startTime, duration, gainValue = 0.07) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(freq, startTime);
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.linearRampToValueAtTime(gainValue, startTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.03);
+  return { osc, gain };
+}
+
+function updatePlayButton() {
+  const button = document.getElementById('playBtn');
+  button.textContent = playbackState.active ? 'Stop' : 'Play Melody';
+  button.disabled = !noteEvents.length;
+}
+
+function getPlaybackSourceElapsedMs() {
+  if (!playbackState.active) return null;
+  const elapsedRealMs = performance.now() - playbackState.startPerf;
+  return Math.max(0, Math.min(playbackState.totalSourceMs, elapsedRealMs / PLAYBACK_TIME_SCALE));
+}
+
+function getPlaybackCurrentIndex() {
+  const sourceElapsedMs = getPlaybackSourceElapsedMs();
+  if (sourceElapsedMs === null || !noteEvents.length) return -1;
+  const absoluteTime = playbackState.sourceStartTime + sourceElapsedMs;
+  for (let i = 0; i < noteEvents.length; i++) {
+    if (absoluteTime >= noteEvents[i].startTime && absoluteTime <= noteEvents[i].endTime) return i;
+  }
+  return absoluteTime >= noteEvents[noteEvents.length - 1].endTime ? noteEvents.length - 1 : -1;
+}
+
+function getPlaybackMidi(note) {
+  const candidate = bestMode;
+  const info = infoForMidi(note.midi, candidate);
+  if (!candidate || !info) return note.midi - 12;
+  const sourceTonicMidi = findReferenceTonicMidi(candidate);
+  const targetTonicMidi = 60;
+  const sourceDegreeMidi = sourceTonicMidi + candidate.intervals[info.degree - 1];
+  const octaveOffset = Math.round((note.midi - sourceDegreeMidi) / 12);
+  return targetTonicMidi + candidate.intervals[info.degree - 1] + octaveOffset * 12;
+}
+
+function stopDetectedMelody() {
+  if (playbackStopTimer) {
+    clearTimeout(playbackStopTimer);
+    playbackStopTimer = null;
+  }
+  if (playbackRafId) {
+    cancelAnimationFrame(playbackRafId);
+    playbackRafId = null;
+  }
+  if (synthCtx && synthCtx.state !== 'closed') {
+    for (const voice of playbackVoices) {
+      try {
+        voice.gain.gain.cancelScheduledValues(synthCtx.currentTime);
+        voice.gain.gain.setValueAtTime(voice.gain.gain.value, synthCtx.currentTime);
+        voice.gain.gain.exponentialRampToValueAtTime(0.0001, synthCtx.currentTime + 0.04);
+        voice.osc.stop(synthCtx.currentTime + 0.05);
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+  }
+  playbackVoices = [];
+  playbackState.active = false;
+  updatePlayButton();
+  renderSequence();
+  drawContour();
+}
+
+function tickPlayback() {
+  if (!playbackState.active) return;
+  renderSequence();
+  drawContour();
+  playbackRafId = requestAnimationFrame(tickPlayback);
+}
+
+function playDetectedMelody() {
+  if (playbackState.active) {
+    stopDetectedMelody();
+    return;
+  }
+  if (!noteEvents.length) return;
+  const ctx = ensureSynthContext();
+  const start = ctx.currentTime + 0.05;
+  const firstTime = noteEvents[0].startTime;
+  const lastTime = Math.max(...noteEvents.map((note) => note.endTime));
+  playbackVoices = [];
+  playbackState = {
+    active: true,
+    startPerf: performance.now(),
+    totalSourceMs: lastTime - firstTime,
+    totalRealMs: (lastTime - firstTime) * PLAYBACK_TIME_SCALE,
+    sourceStartTime: firstTime,
+  };
+  for (const note of noteEvents) {
+    const when = start + ((note.startTime - firstTime) * PLAYBACK_TIME_SCALE) / 1000;
+    const duration = Math.max(0.08, (note.durationMs * PLAYBACK_TIME_SCALE) / 1000 * 0.9);
+    playbackVoices.push(playToneAt(ctx, midiToFreq(getPlaybackMidi(note)), when, duration, 0.07));
+  }
+  updatePlayButton();
+  renderSequence();
+  drawContour();
+  playbackRafId = requestAnimationFrame(tickPlayback);
+  playbackStopTimer = setTimeout(stopDetectedMelody, playbackState.totalRealMs + 140);
+}
+
+let keyboardOsc = null;
+let keyboardGain = null;
+
+function playKeyboardNote(midi, degree) {
+  const ctx = ensureSynthContext();
+  stopKeyboardNote();
+  keyboardOsc = ctx.createOscillator();
+  keyboardGain = ctx.createGain();
+  keyboardOsc.type = 'triangle';
+  keyboardOsc.frequency.value = midiToFreq(midi);
+  keyboardGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  keyboardGain.gain.linearRampToValueAtTime(0.09, ctx.currentTime + 0.02);
+  keyboardOsc.connect(keyboardGain);
+  keyboardGain.connect(ctx.destination);
+  keyboardOsc.start();
+}
+
+function stopKeyboardNote() {
+  if (!keyboardOsc || !keyboardGain || !synthCtx) return;
+  keyboardGain.gain.cancelScheduledValues(synthCtx.currentTime);
+  keyboardGain.gain.setValueAtTime(keyboardGain.gain.value, synthCtx.currentTime);
+  keyboardGain.gain.exponentialRampToValueAtTime(0.0001, synthCtx.currentTime + 0.08);
+  keyboardOsc.stop(synthCtx.currentTime + 0.1);
+  keyboardOsc = null;
+  keyboardGain = null;
+}
+
+function getRecordingExtension(mimeType) {
+  if (!mimeType) return 'webm';
+  if (mimeType.includes('ogg')) return 'ogg';
+  if (mimeType.includes('mp4')) return 'm4a';
+  return 'webm';
+}
+
+function downloadBlob(filename, blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function buildAnalysisSnapshot() {
+  const absClusters = computeAbsoluteClusters();
+  return {
+    createdAt: new Date().toISOString(),
+    takeId: activeTakeId,
+    scale: bestMode ? {
+      mode: bestMode.modeName,
+      family: bestMode.family,
+      centerHint: bestMode.tonicName,
+      confidence: Math.round(bestMode.confidence * 100),
+    } : null,
+    midiClusters: absClusters.map((cluster) => ({
+      centerMidi: Math.round(cluster.center * 100) / 100,
+      note: cluster.note,
+      pitchClass: cluster.pitchClass,
+      count: cluster.count,
+      spread: Math.round((cluster.max - cluster.min) * 100) / 100,
+    })),
+    modeCandidates: modeCandidates.map((candidate) => ({
+      mode: candidate.modeName,
+      family: candidate.family,
+      centerHint: candidate.tonicName,
+      confidence: Math.round(candidate.confidence * 100),
+    })),
+    notes: noteEvents.map((note) => {
+      const info = infoForMidi(note.midi, bestMode);
+      const label = noteFromMidi(note.midi);
+      return {
+        startMs: Math.round(note.startTime - noteEvents[0].startTime),
+        durationMs: Math.round(note.durationMs),
+        midi: Math.round(note.midi * 100) / 100,
+        note: `${label.name}${label.octave}`,
+        degree: info?.degree ?? null,
+      };
+    }),
+  };
+}
+
+async function probeCaptureServer(force = false) {
+  if (!force && captureServerChecked) return captureServerAvailable;
+  captureServerChecked = true;
+  captureServerAvailable = false;
+  if (location.protocol === 'file:' || typeof fetch !== 'function') return false;
+  try {
+    const response = await fetch(CAPTURE_SERVER_HEALTH_PATH, { cache: 'no-store' });
+    captureServerAvailable = response.ok;
+  } catch (err) {
+    captureServerAvailable = false;
+  }
+  return captureServerAvailable;
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      resolve(result.includes(',') ? result.split(',')[1] : result);
+    };
+    reader.onerror = () => reject(reader.error || new Error('Could not read blob.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function uploadTakeIfPossible() {
+  if (!recordedBlob || !activeTakeId) return;
+  const ready = await probeCaptureServer();
+  if (!ready) return;
+  const payload = {
+    takeId: activeTakeId,
+    uploadedAt: new Date().toISOString(),
+    analysisFilename: `whistle-relative-${activeTakeId}-analysis.json`,
+    analysis: buildAnalysisSnapshot(),
+    recordingFilename: `whistle-relative-${activeTakeId}.${getRecordingExtension(recordedBlob.type)}`,
+    recordingMimeType: recordedBlob.type,
+    recordingBase64: await blobToBase64(recordedBlob),
+  };
+  try {
+    await fetch(CAPTURE_SERVER_UPLOAD_PATH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function downloadRecording() {
+  if (!recordedBlob || !activeTakeId) return;
+  downloadBlob(`whistle-relative-${activeTakeId}.${getRecordingExtension(recordedBlob.type)}`, recordedBlob);
+}
+
+function downloadAnalysis() {
+  const snapshot = buildAnalysisSnapshot();
+  if (!snapshot.notes.length) return;
+  downloadBlob(
+    `whistle-relative-${activeTakeId || 'take'}-analysis.json`,
+    new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' })
+  );
+}
+
+function startMediaRecorder(stream) {
+  const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+  recordingMimeType = candidates.find((mime) => MediaRecorder.isTypeSupported?.(mime)) || '';
+  try {
+    mediaRecorder = recordingMimeType ? new MediaRecorder(stream, { mimeType: recordingMimeType }) : new MediaRecorder(stream);
+  } catch (err) {
+    mediaRecorder = null;
+    return;
+  }
+  recordedChunks = [];
+  mediaRecorder.ondataavailable = (event) => {
+    if (event.data && event.data.size > 0) recordedChunks.push(event.data);
+  };
+  mediaRecorder.onstop = async () => {
+    if (!recordedChunks.length) return;
+    recordedBlob = new Blob(recordedChunks, { type: recordingMimeType || recordedChunks[0].type || 'audio/webm' });
+    document.getElementById('downloadRecordingBtn').disabled = false;
+    document.getElementById('downloadAnalysisBtn').disabled = noteEvents.length === 0;
+    await uploadTakeIfPossible();
+  };
+  mediaRecorder.start();
+}
+
+function stopMediaRecorder() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+}
+
+async function startListening() {
+  stopDetectedMelody();
+  await probeCaptureServer();
+  activeTakeId = buildTakeId();
+  recordedBlob = null;
+  frameObservations.length = 0;
+  noteEvents.length = 0;
+  contourFrames.length = 0;
+  modeCandidates = [];
+  bestMode = null;
+  currentStableMidi = null;
+  pendingMidi = null;
+  silenceSince = null;
+  lastDisplayInfo = null;
+
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  mediaStream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+    },
+  });
+  const source = audioCtx.createMediaStreamSource(mediaStream);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  analyser.smoothingTimeConstant = 0.02;
+  source.connect(analyser);
+  timeBuffer = new Float32Array(analyser.fftSize);
+  freqDbBuffer = new Float32Array(analyser.frequencyBinCount);
+
+  if (typeof MediaRecorder !== 'undefined') startMediaRecorder(mediaStream);
+
+  isListening = true;
+  document.getElementById('listenBtn').textContent = 'Stop Listening';
+  document.getElementById('listenBtn').className = 'btn-recording';
+  document.getElementById('statusPill').textContent = 'Listening';
+  renderDegree(0, 0, null);
+  updateUI([]);
+  processAudio();
+}
+
+function stopListening() {
+  isListening = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  finalizeCurrentNote(performance.now());
+  stopMediaRecorder();
+  if (mediaStream) mediaStream.getTracks().forEach((track) => track.stop());
+  if (audioCtx) audioCtx.close();
+  audioCtx = null;
+  mediaStream = null;
+  analyser = null;
+  document.getElementById('listenBtn').textContent = 'Start Listening';
+  document.getElementById('listenBtn').className = 'btn-primary';
+  document.getElementById('statusPill').textContent = 'Stopped';
+  document.getElementById('downloadAnalysisBtn').disabled = noteEvents.length === 0;
+  updateUI(computeAbsoluteClusters());
+}
+
+async function toggleListening() {
+  if (isListening) {
+    stopListening();
+    return;
+  }
+  try {
+    await startListening();
+  } catch (err) {
+    console.error(err);
+    alert('Microphone access failed.');
+  }
+}
+
+function clearSession() {
+  if (isListening) stopListening();
+  stopDetectedMelody();
+  activeTakeId = null;
+  recordedBlob = null;
+  frameObservations.length = 0;
+  noteEvents.length = 0;
+  contourFrames.length = 0;
+  modeCandidates = [];
+  bestMode = null;
+  document.getElementById('statusPill').textContent = 'Idle';
+  document.getElementById('downloadRecordingBtn').disabled = true;
+  document.getElementById('downloadAnalysisBtn').disabled = true;
+  renderDegree(0, 0, null);
+  updateInputStatus(0);
+  updateUI([]);
+  updatePlayButton();
+}
+
+window.addEventListener('resize', drawContour);
+probeCaptureServer();
+clearSession();
+</script>
+</body>
+</html>
