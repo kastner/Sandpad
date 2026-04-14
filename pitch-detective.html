@@ -1096,7 +1096,7 @@ const TONAL_SCALE_NAMES = [
 const IDEAS_STORAGE_KEY = 'pitch-detective-ideas-v2';
 const SMOOTH_FACTOR = 0.38;
 const NOTE_SWITCH_FRAMES = 3;
-const PITCH_CLASS_MERGE_GAP_MS = 220;
+const PITCH_CLASS_MERGE_GAP_MS = 80;
 const PHRASE_GAP_MS = 900;
 const MIN_NOTE_MS = 120;
 const TRANSITION_NOTE_MS = 165;
@@ -1126,7 +1126,7 @@ const SPECTRUM_MIN_DB = -72;
 const SPECTRUM_MIN_PROMINENCE_DB = 4;
 const MAX_TRANSIENT_SEMITONES = 0;
 const MIDI_CLUSTER_WINDOW_MS = 2600;
-const MIDI_CLUSTER_TOLERANCE = 0.9;
+const MIDI_CLUSTER_TOLERANCE = 0.55;
 const MIDI_CLUSTER_MIN_FRAMES = 4;
 
 function freqToMidi(freq) {
@@ -1224,15 +1224,17 @@ function detectPitchFromAutocorr(buffer, sampleRate) {
     }
   }
 
-  // If the chosen peak is likely an upper partial, prefer the lower-frequency
-  // octave candidate when its correlation is nearly as strong.
-  let correctedPos = maxPos;
-  while (correctedPos * 2 <= maxLag) {
-    const lowerCandidate = correctedPos * 2;
-    if (c[lowerCandidate] >= c[correctedPos] * 0.92) correctedPos = lowerCandidate;
-    else break;
+  // Only attempt a sub-octave correction when the detected frequency is ABOVE
+  // half the expected top range (i.e. > DETECT_MAX_FREQ/2 ≈ 1600 Hz).
+  // For near-pure tones (whistles), c[lag*2] ≈ c[lag] for any valid lag, so
+  // the old while-loop correction always fired and systematically halved the
+  // detected frequency (e.g. C#6→C#5). Restricting to high-frequency detections
+  // limits correction to cases where an upper partial was likely picked.
+  const candidateHz = sampleRate / maxPos;
+  if (candidateHz > DETECT_MAX_FREQ / 2 && maxPos * 2 <= maxLag) {
+    const lowerLag = maxPos * 2;
+    if (c[lowerLag] >= c[maxPos] * 0.88) maxPos = lowerLag;
   }
-  maxPos = correctedPos;
 
   if (maxPos <= 0 || maxPos >= N - 1) return -1;
   if (maxVal < 0.01) return -1;
@@ -1367,6 +1369,7 @@ let currentPhraseId = null;
 let pendingMidi = null;
 let pendingPitchClass = null;
 let pendingMidiFrames = 0;
+let pendingOnsetStartTime = null; // time when current pendingPitchClass first appeared (onset guard)
 let silenceStartedAt = null;
 let noteIdCounter = 1;
 let phraseIdCounter = 1;
@@ -1503,7 +1506,11 @@ function computeMidiClusters(frames, tolerance = MIDI_CLUSTER_TOLERANCE, minFram
     }
 
     const center = cluster.sum / cluster.count;
-    if (Math.abs(frame.midi - center) <= tolerance || Math.abs(frame.midi - cluster.max) <= tolerance * 0.75) {
+    // Only merge into a cluster if within tolerance of the cluster CENTER.
+    // The old second condition (distance to cluster.max) allowed unbounded
+    // chain-merging: frames 0.4 semitones apart would all merge even if the
+    // cluster spanned many semitones. Remove it to bound cluster width.
+    if (Math.abs(frame.midi - center) <= tolerance) {
       cluster.sum += frame.midi;
       cluster.count += 1;
       cluster.min = Math.min(cluster.min, frame.midi);
@@ -1603,11 +1610,31 @@ function framesNeededForNoteSwitch(currentMidi, nextMidi) {
 
 function handleStableDetectedNote(note, now) {
   silenceStartedAt = null;
+
   if (!currentNoteEvent) {
-    startCapturedNote(note, now);
-    pendingMidi = null;
-    pendingPitchClass = null;
-    pendingMidiFrames = 0;
+    // ── Phrase onset guard ────────────────────────────────────────────────
+    // When starting from silence, don't commit the first note immediately.
+    // Whistles have a pitch glide during attack (G#5→A5→A#5→B5 in ~150ms)
+    // that would otherwise be captured as multiple separate note events.
+    // Require the same pitch class for NOTE_SWITCH_FRAMES consecutive frames
+    // before the note is considered stable enough to record. The cluster snap
+    // (which fires after MIDI_CLUSTER_MIN_FRAMES=4 frames) means that once
+    // the first cluster forms, A#5/B5 oscillation collapses to a single PC.
+    if (pendingPitchClass === note.pitchClass) {
+      pendingMidiFrames += 1;
+      if (pendingMidiFrames >= NOTE_SWITCH_FRAMES) {
+        startCapturedNote(note, pendingOnsetStartTime ?? now);
+        pendingMidi = null;
+        pendingPitchClass = null;
+        pendingMidiFrames = 0;
+        pendingOnsetStartTime = null;
+      }
+    } else {
+      pendingPitchClass = note.pitchClass;
+      pendingMidi = note.midi;
+      pendingMidiFrames = 1;
+      pendingOnsetStartTime = now; // remember when this PC first appeared
+    }
     return;
   }
 
@@ -1656,7 +1683,15 @@ function handleSilence(now) {
   pendingMidi = null;
   pendingPitchClass = null;
   pendingMidiFrames = 0;
+  pendingOnsetStartTime = null;
   resetPitchLock();
+  // Reset the exponential smoother immediately on first silent frame so that
+  // when the next note starts, smoothedFreq initialises fresh from the new
+  // raw pitch instead of blending with the previous note's stale frequency.
+  // Without this, a 150ms gap (shorter than UI_FADE_MS=300ms) between notes
+  // caused phantom "transition" notes: e.g. B5→(gap)→E6 was detected as
+  // B5 → C#6(ghost, 62%×B5+38%×E6) → E6 because the timer never fired.
+  smoothedFreq = -1;
   if (currentNoteEvent) finishCapturedNote(now);
   if (silenceStartedAt === null) silenceStartedAt = now;
   if (currentPhraseId !== null && now - silenceStartedAt >= PHRASE_GAP_MS) {
@@ -1675,6 +1710,7 @@ function resetCaptureState() {
   pendingMidi = null;
   pendingPitchClass = null;
   pendingMidiFrames = 0;
+  pendingOnsetStartTime = null;
   silenceStartedAt = null;
   noteIdCounter = 1;
   phraseIdCounter = 1;
@@ -2351,7 +2387,10 @@ function applyTonalCleanup(notes) {
       const nextDistance = Math.abs(next.midi - note.midi);
       const bridgeDistance = Math.abs(prev.midi - next.midi);
 
-      if (prev.pitchClass === next.pitchClass || bridgeDistance <= 2) {
+      // Absorb the short note only when prev and next are genuinely the same pitch.
+      // bridgeDistance <= 2 was too loose: a D#6→short→D6 sequence was collapsed
+      // because D#6 and D6 differ by 1 semitone. Use pitchClass equality only.
+      if (prev.pitchClass === next.pitchClass) {
         prev.endTime = Math.max(prev.endTime, note.endTime);
         prev.durationMs = prev.endTime - prev.startTime;
         continue;
@@ -2384,7 +2423,11 @@ function normalizeCapturedNotes(notes = recordedNotes) {
   for (const note of normalized) {
     const prev = merged[merged.length - 1];
     const gap = prev ? note.startTime - prev.endTime : Infinity;
-    if (prev && prev.midi === note.midi && gap <= 120) {
+    // Only glue exact-MIDI duplicates when the gap is sub-frame (≤ 35ms, ~2 RAF frames).
+    // The old 120ms threshold was merging intentionally re-articulated notes:
+    // e.g. two D#6 notes with a 112ms breath-gap were collapsed into one blob,
+    // then the transition filter extended that blob to swallow the notes after it.
+    if (prev && prev.midi === note.midi && gap <= 35) {
       prev.endTime = Math.max(prev.endTime, note.endTime);
       prev.durationMs = prev.endTime - prev.startTime;
       continue;
@@ -2403,7 +2446,10 @@ function normalizeCapturedNotes(notes = recordedNotes) {
     const prevDistance = Math.abs(note.midi - prev.midi);
     const nextDistance = Math.abs(note.midi - next.midi);
 
-    if (prevNextDistance <= 1 && (prevDistance >= 4 || nextDistance >= 4)) {
+    // Only bridge a short note when prev and next are the SAME pitch (not just adjacent).
+    // The old `<= 1` was absorbing genuinely different notes: a 1-semitone neighbour was
+    // being counted as "same enough" and the short note + its successor were both removed.
+    if (prevNextDistance === 0 && (prevDistance >= 4 || nextDistance >= 4)) {
       prev.endTime = Math.max(prev.endTime, next.endTime);
       prev.durationMs = prev.endTime - prev.startTime;
       merged.splice(i, 2);
@@ -2446,7 +2492,11 @@ function normalizeCapturedNotes(notes = recordedNotes) {
     durationMs: Math.max(MIN_NOTE_MS, note.endTime - note.startTime),
   }));
 
-  return applyTonalCleanup(normalizedNotes);
+  // applyTonalCleanup() did more harm than good: it snapped intentional
+  // out-of-scale notes (e.g. G#5 → G5 → C6 via degree cleanup) and merged
+  // notes that should stay separate. Cluster stabilisation already handles
+  // pitch accuracy. Return the normalised notes as-is.
+  return normalizedNotes;
 }
 
 function getNormalizedPhraseData(notes = normalizeCapturedNotes()) {
@@ -3248,8 +3298,22 @@ function processAudio() {
   updateInputMeter(computeRms(timeDomainBuffer));
   drawViz(timeDomainBuffer, freqBuffer);
 
-  const rawFreq = detectPitch(timeDomainBuffer, floatFreqBuffer, audioCtx.sampleRate);
+  let rawFreq = detectPitch(timeDomainBuffer, floatFreqBuffer, audioCtx.sampleRate);
   const now = getNowMs();
+
+  // ── Harmonic spike gate ──────────────────────────────────────────────────
+  // If the detected frequency is near exactly 2× the current smoothed pitch
+  // (i.e. ratio in [1.88, 2.12] ≈ within 1 semitone of an octave doubling),
+  // it is almost certainly a 2nd-harmonic flash rather than a real note.
+  // Discard it so it cannot corrupt the cluster window or contour.
+  // We leave the upward ratio check broad (1.75–2.25) to catch slightly
+  // detuned harmonics, but only trigger when smoothedFreq is already stable.
+  if (rawFreq > 0 && smoothedFreq > 0) {
+    const ratio = rawFreq / smoothedFreq;
+    if (ratio > 1.75 && ratio < 2.25) {
+      rawFreq = -1; // treat as unvoiced this frame
+    }
+  }
 
   if (rawFreq > 0) {
     recordVoicedMidiFrame(rawFreq, now);

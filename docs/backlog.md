@@ -13,15 +13,22 @@ Legend: 🔴 High · 🟡 Medium · 🟢 Low · 🔬 Research needed
 - [x] Piano roll overlay on contour — semi-transparent quantized notes over raw trace
 - [x] Scale confidence fix — less eager, shows top-3 alternatives
 - [x] AGENTS.md + CLAUDE.md + docs/ — project documentation
+- [x] Feedback bundle (Save Feedback button) — saves recording WAV + playback WAV + verbose JSON for offline analysis
+- [x] Pitch detection overhaul — fixed systematic octave-halving on pure whistles (see `docs/pitch-detection-findings-2026-04-14.md`)
+- [x] Ghost note fix — `smoothedFreq` reset on first silent frame, not after 300ms timer
+- [x] Onset attack guard — 3-frame stability required before committing first note of a phrase
+- [x] Cluster chain-merge fix — removed `cluster.max` proximity condition that allowed unbounded spread
+- [x] Same-MIDI merge threshold — 120ms → 35ms to preserve re-articulated notes
+- [x] Removed `applyTonalCleanup` — was re-composing melodies through an imperfect scale lens
 
 ---
 
 ## Pitch Detection
 
-- 🔴 **Octave stability** — the autocorr detector still occasionally doubles or halves the frequency on breathy whistle attacks. Investigate YIN threshold tuning or a short-term octave-consistency check.
+- 🟡 **Vibrato / ornament detection** — A#5/B5 wobble (±50 cents) still forms two clusters at 0.55 st tolerance, causing note flips mid-sustain. Tag frames oscillating at > ±20 cents as "ornament" rather than note changes.
 - 🟡 **Voiced/unvoiced confidence score** — return a confidence value from `detectPitch()` and use it to gate cluster updates (don't update clusters from low-confidence frames).
 - 🟡 **Expand frequency range option** — a UI toggle for "instrument mode" (80–3200 Hz) vs "whistle mode" (350–3200 Hz) to support humming or guitar input.
-- 🟢 **Vibrato / ornament detection** — tag frames that are vibrating (> ±20 cents oscillation at 4–8 Hz) as "ornament" rather than note changes, to avoid spurious note splits.
+- 🟢 **Onset latency** — the 3-frame onset guard (~50 ms) silently discards the attack; very short intended notes at phrase start may register late. Consider backdating note start to the first voiced frame of the winning pitch class.
 
 ---
 
@@ -95,7 +102,8 @@ Legend: 🔴 High · 🟡 Medium · 🟢 Low · 🔬 Research needed
 ## Known Bugs / Rough Edges
 
 - Scale detection with very short (< 3-note) phrases can show confident but wrong results.
-- The `normalizeCapturedNotes()` tonal cleanup occasionally removes a note that was intentionally outside the scale (passing tones).
+- `applyTonalCleanup` and `applyDegreeMelodyCleanup` still exist in the code but are no longer called from `normalizeCapturedNotes`. They could be removed or repurposed for an opt-in "snap to scale" export mode.
 - On some Android Chrome builds, `MediaRecorder` produces 0-byte chunks; the app falls back to trace-only silently but this is not surfaced to the user.
 - The waveform visualizer sometimes goes black on resume from browser background tab; it recovers on the next frame but looks odd.
 - Saved ideas in localStorage are not bounded; a user who saves hundreds of ideas will eventually hit the ~5MB limit without a clear error.
+- A#5/B5 boundary wobble: cluster tolerance 0.55 st sometimes splits a slightly sharp A#5 into two clusters (A#5 and B5), causing note flips during a sustained tone.
