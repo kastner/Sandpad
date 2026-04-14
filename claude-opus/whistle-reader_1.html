@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whistle Reader</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0c0c0f;
+    --surface: #16161b;
+    --surface2: #1e1e25;
+    --border: #2a2a35;
+    --text: #e8e8ed;
+    --text-dim: #6e6e7a;
+    --accent: #5b8def;
+    --accent-glow: #5b8def33;
+    --green: #4ade80;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --degree-1: #5b8def;
+    --degree-2: #8b5cf6;
+    --degree-3: #ec4899;
+    --degree-4: #f97316;
+    --degree-5: #4ade80;
+    --degree-6: #fbbf24;
+    --degree-7: #f87171;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .app {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  header { margin-bottom: 48px; }
+
+  header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+
+  header p {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  button:hover { background: var(--surface2); border-color: var(--accent); }
+
+  button.recording {
+    background: #f8717122;
+    border-color: var(--red);
+    color: var(--red);
+    animation: pulse-border 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 0 0 transparent; }
+    50% { box-shadow: 0 0 0 4px #f8717122; }
+  }
+
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: #4a7ddf; }
+
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red);
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  .key-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 10px 16px;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-left: auto;
+  }
+
+  .key-display span { color: var(--accent); font-weight: 600; }
+  .key-display .low-conf { color: var(--amber); }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+  }
+
+  .contour-section { margin-bottom: 32px; }
+
+  .contour-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  #contourCanvas { width: 100%; height: 220px; display: block; }
+
+  .degree-section { margin-bottom: 32px; }
+
+  .current-degree {
+    display: flex; align-items: center; gap: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    min-height: 100px;
+  }
+
+  .degree-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 64px; font-weight: 700; line-height: 1;
+    min-width: 80px; text-align: center;
+    transition: color 0.1s;
+  }
+
+  .degree-info { flex: 1; }
+  .degree-name { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+  .degree-freq { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-dim); }
+  .degree-cents { font-family: 'JetBrains Mono', monospace; font-size: 12px; margin-top: 4px; }
+
+  .cents-sharp { color: var(--amber); }
+  .cents-flat { color: var(--accent); }
+  .cents-good { color: var(--green); }
+
+  .sequence-section { margin-bottom: 32px; }
+
+  .note-sequence {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    min-height: 70px;
+    align-items: center;
+    align-content: flex-start;
+  }
+
+  .note-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px; font-weight: 600;
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    animation: chip-in 0.15s ease-out;
+  }
+
+  @keyframes chip-in {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .note-chip.rest {
+    color: var(--text-dim); font-size: 11px; width: 20px;
+    background: transparent; border: 1px dashed var(--border);
+  }
+
+  .chroma-section { margin-bottom: 32px; }
+
+  .chroma-grid {
+    display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .chroma-bar { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+  .chroma-fill {
+    width: 100%; height: 60px; border-radius: 4px;
+    background: var(--surface2); position: relative; overflow: hidden;
+  }
+
+  .chroma-fill-inner {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    border-radius: 4px; transition: height 0.2s;
+  }
+
+  .chroma-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--text-dim); font-weight: 500;
+  }
+
+  .chroma-label.in-scale { color: var(--accent); font-weight: 700; }
+
+  .hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--text-dim);
+    text-align: center; padding: 12px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    margin-bottom: 32px;
+    display: none;
+  }
+
+  .hint.visible { display: block; }
+
+  @media (max-width: 600px) {
+    .app { padding: 24px 16px; }
+    header h1 { font-size: 22px; }
+    .degree-number { font-size: 48px; min-width: 60px; }
+    .controls { gap: 8px; }
+    .key-display { margin-left: 0; width: 100%; text-align: center; }
+    .chroma-grid { grid-template-columns: repeat(6, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>whistle → scale degree</h1>
+    <p>Whistle a melody. The app detects pitches, infers the key, and shows you scale degrees in real time.</p>
+  </header>
+
+  <div class="controls">
+    <button id="startBtn" class="primary" onclick="toggleRecording()">start listening</button>
+    <button onclick="clearAll()">clear</button>
+    <div class="key-display" id="keyDisplay">key: <span>—</span></div>
+  </div>
+
+  <div class="hint" id="hint"></div>
+
+  <div class="contour-section">
+    <div class="section-label">pitch contour</div>
+    <div class="contour-wrap"><canvas id="contourCanvas"></canvas></div>
+  </div>
+
+  <div class="degree-section">
+    <div class="section-label">current</div>
+    <div class="current-degree">
+      <div class="degree-number" id="degreeNumber">—</div>
+      <div class="degree-info">
+        <div class="degree-name" id="degreeName">waiting...</div>
+        <div class="degree-freq" id="degreeFreq"></div>
+        <div class="degree-cents" id="degreeCents"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sequence-section">
+    <div class="section-label">sequence</div>
+    <div class="note-sequence" id="noteSequence"></div>
+  </div>
+
+  <div class="chroma-section">
+    <div class="section-label">pitch class histogram</div>
+    <div class="chroma-grid" id="chromaGrid"></div>
+  </div>
+</div>
+
+<script>
+// ── Constants ──
+const NOTE_NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const DEGREE_NAMES = ['tonic','supertonic','mediant','subdominant','dominant','submediant','leading tone'];
+const DEGREE_SOLFEGE = ['do','re','mi','fa','sol','la','ti'];
+const MAJOR_PROFILE = [6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88];
+const MINOR_PROFILE = [6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17];
+const MAJOR_SCALE = [0,2,4,5,7,9,11];
+const MINOR_SCALE = [0,2,3,5,7,8,10];
+const DEGREE_COLORS_RAW = ['#5b8def','#8b5cf6','#ec4899','#f97316','#4ade80','#fbbf24','#f87171'];
+
+// ── State ──
+let audioCtx, analyser, mediaStream, animFrame;
+let isRecording = false;
+let buffer, bufferSize = 2048;
+
+// Note stabilization
+const SMOOTH_ALPHA = 0.25;
+const MIN_NOTE_DURATION_MS = 90;
+const PITCH_CHANGE_THRESHOLD = 0.8; // semitones
+const SILENCE_GAP_MS = 200;
+
+let currentNoteMidi = null;
+let currentNoteStart = 0;
+let pendingMidi = null;
+let pendingStart = 0;
+
+// Chroma
+let chromaHist = new Float64Array(12);
+let totalChromaFrames = 0;
+let distinctPCs = new Set();
+
+let detectedKey = null;
+let noteSequence = [];
+let contourData = [];
+let lastSequenceDegree = null;
+let inSilence = false;
+let silenceStart = 0;
+let startTime = 0;
+
+// Smooth contour Y range
+let displayMinMidi = 60;
+let displayMaxMidi = 80;
+
+// ── YIN pitch detection ──
+function detectPitch(buf, sampleRate) {
+  const SIZE = buf.length;
+  const MAX_LAG = Math.floor(sampleRate / 80);
+  const MIN_LAG = Math.floor(sampleRate / 2500);
+
+  let rms = 0;
+  for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+  rms = Math.sqrt(rms / SIZE);
+  if (rms < 0.008) return -1;
+
+  const diff = new Float32Array(MAX_LAG);
+  for (let lag = MIN_LAG; lag < MAX_LAG; lag++) {
+    let sum = 0;
+    for (let i = 0; i < SIZE - MAX_LAG; i++) {
+      const d = buf[i] - buf[i + lag];
+      sum += d * d;
+    }
+    diff[lag] = sum;
+  }
+
+  const cmnd = new Float32Array(MAX_LAG);
+  cmnd[MIN_LAG] = 1;
+  let runSum = diff[MIN_LAG];
+  for (let lag = MIN_LAG + 1; lag < MAX_LAG; lag++) {
+    runSum += diff[lag];
+    cmnd[lag] = diff[lag] * (lag - MIN_LAG + 1) / runSum;
+  }
+
+  let bestLag = -1;
+  for (let lag = MIN_LAG; lag < MAX_LAG - 1; lag++) {
+    if (cmnd[lag] < 0.15) {
+      while (lag + 1 < MAX_LAG && cmnd[lag + 1] < cmnd[lag]) lag++;
+      bestLag = lag;
+      break;
+    }
+  }
+
+  if (bestLag === -1) {
+    let minVal = Infinity;
+    for (let lag = MIN_LAG; lag < MAX_LAG; lag++) {
+      if (cmnd[lag] < minVal) { minVal = cmnd[lag]; bestLag = lag; }
+    }
+    if (minVal > 0.4) return -1;
+  }
+
+  if (bestLag > 0 && bestLag < MAX_LAG - 1) {
+    const a = cmnd[bestLag - 1], b = cmnd[bestLag], c = cmnd[bestLag + 1];
+    const den = a - 2 * b + c;
+    if (Math.abs(den) > 1e-10) bestLag += 0.5 * (a - c) / den;
+  }
+
+  return sampleRate / bestLag;
+}
+
+function freqToMidi(f) { return 69 + 12 * Math.log2(f / 440); }
+function midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+// ── Key detection (Krumhansl-Schmuckler) ──
+function detectKeyFromChroma(chroma) {
+  const total = chroma.reduce((a, b) => a + b, 0);
+  if (total < 1) return null;
+
+  const norm = Array.from(chroma).map(v => v / total);
+  let bestCorr = -Infinity, bestRoot = 0, bestMode = 'major';
+
+  for (let root = 0; root < 12; root++) {
+    for (const [profile, mode] of [[MAJOR_PROFILE, 'major'], [MINOR_PROFILE, 'minor']]) {
+      let sXY = 0, sX = 0, sY = 0, sX2 = 0, sY2 = 0;
+      for (let i = 0; i < 12; i++) {
+        const x = norm[(i + root) % 12], y = profile[i];
+        sXY += x * y; sX += x; sY += y; sX2 += x * x; sY2 += y * y;
+      }
+      const den = Math.sqrt((12*sX2 - sX*sX) * (12*sY2 - sY*sY));
+      if (den < 1e-10) continue;
+      const corr = (12*sXY - sX*sY) / den;
+      if (corr > bestCorr) { bestCorr = corr; bestRoot = root; bestMode = mode; }
+    }
+  }
+
+  // Fit ratio: how much energy lands on scale tones
+  const scale = bestMode === 'major' ? MAJOR_SCALE : MINOR_SCALE;
+  const scaleSet = new Set(scale.map(s => (bestRoot + s) % 12));
+  let onScale = 0;
+  for (let i = 0; i < 12; i++) if (scaleSet.has(i)) onScale += chroma[i];
+
+  return { root: bestRoot, mode: bestMode, confidence: bestCorr, fitRatio: total > 0 ? onScale / total : 0 };
+}
+
+// ── Scale degree ──
+function getScaleDegree(midi, key) {
+  const scale = key.mode === 'major' ? MAJOR_SCALE : MINOR_SCALE;
+  const pcFrac = ((midi % 12) + 12) % 12;
+  let bestD = 0, bestDist = Infinity;
+
+  for (let d = 0; d < scale.length; d++) {
+    const scalePc = (key.root + scale[d]) % 12;
+    let dist = Math.abs(pcFrac - scalePc);
+    if (dist > 6) dist = 12 - dist;
+    if (dist < bestDist) { bestDist = dist; bestD = d; }
+  }
+
+  const idealPc = (key.root + scale[bestD]) % 12;
+  let cents = (pcFrac - idealPc) * 100;
+  if (cents > 600) cents -= 1200;
+  if (cents < -600) cents += 1200;
+
+  return { degree: bestD + 1, cents, noteName: NOTE_NAMES[idealPc], dist: bestDist };
+}
+
+// ── Note stabilization ──
+function processNoteStability(midi, now) {
+  if (currentNoteMidi === null) {
+    currentNoteMidi = midi;
+    currentNoteStart = now;
+    pendingMidi = null;
+    return null;
+  }
+
+  const dist = Math.abs(midi - currentNoteMidi);
+
+  if (dist < PITCH_CHANGE_THRESHOLD) {
+    // Same note — gentle EMA
+    currentNoteMidi += (midi - currentNoteMidi) * SMOOTH_ALPHA * 0.3;
+    pendingMidi = null;
+    return { midi: currentNoteMidi, isNew: false };
+  }
+
+  // Pitch moved — track candidate
+  if (pendingMidi === null || Math.abs(midi - pendingMidi) > PITCH_CHANGE_THRESHOLD) {
+    pendingMidi = midi;
+    pendingStart = now;
+    return { midi: currentNoteMidi, isNew: false };
+  }
+
+  pendingMidi += (midi - pendingMidi) * SMOOTH_ALPHA;
+
+  if (now - pendingStart >= MIN_NOTE_DURATION_MS) {
+    currentNoteMidi = pendingMidi;
+    currentNoteStart = now;
+    pendingMidi = null;
+    return { midi: currentNoteMidi, isNew: true };
+  }
+
+  return { midi: currentNoteMidi, isNew: false };
+}
+
+// ── UI Updates ──
+function updateCurrentDegree(freq, midi, info) {
+  const numEl = document.getElementById('degreeNumber');
+  const nameEl = document.getElementById('degreeName');
+  const freqEl = document.getElementById('degreeFreq');
+  const centsEl = document.getElementById('degreeCents');
+
+  if (!info) {
+    numEl.textContent = '—';
+    numEl.style.color = 'var(--text-dim)';
+    nameEl.textContent = 'waiting...';
+    freqEl.textContent = '';
+    centsEl.textContent = '';
+    return;
+  }
+
+  const d = info.degree;
+  numEl.textContent = d + '\u0302';
+  numEl.style.color = DEGREE_COLORS_RAW[d - 1];
+  nameEl.textContent = `${info.noteName} — ${DEGREE_SOLFEGE[d-1]} (${DEGREE_NAMES[d-1]})`;
+  freqEl.textContent = `${freq.toFixed(1)} Hz  ·  MIDI ${midi.toFixed(1)}`;
+
+  const c = Math.round(info.cents);
+  if (Math.abs(c) < 10) {
+    centsEl.textContent = '● in tune';
+    centsEl.className = 'degree-cents cents-good';
+  } else if (c > 0) {
+    centsEl.textContent = `▲ ${c}¢ sharp`;
+    centsEl.className = 'degree-cents cents-sharp';
+  } else {
+    centsEl.textContent = `▼ ${Math.abs(c)}¢ flat`;
+    centsEl.className = 'degree-cents cents-flat';
+  }
+}
+
+function addToSequence(degree, now) {
+  if (inSilence && lastSequenceDegree !== null && now - silenceStart > SILENCE_GAP_MS) {
+    noteSequence.push({ degree: 0, time: now });
+  }
+  if (degree !== lastSequenceDegree) {
+    noteSequence.push({ degree, time: now });
+    lastSequenceDegree = degree;
+    inSilence = false;
+    renderSequence();
+  }
+}
+
+function renderSequence() {
+  const el = document.getElementById('noteSequence');
+  const recent = noteSequence.slice(-80);
+  el.innerHTML = recent.map(n => {
+    if (n.degree === 0) return `<div class="note-chip rest">·</div>`;
+    const c = DEGREE_COLORS_RAW[n.degree - 1];
+    return `<div class="note-chip" style="color:${c};border-color:${c}33">${n.degree}\u0302</div>`;
+  }).join('');
+}
+
+function updateHint() {
+  const el = document.getElementById('hint');
+  if (!isRecording) { el.classList.remove('visible'); return; }
+  const n = distinctPCs.size;
+  if (n === 0) {
+    el.textContent = '♪ start whistling...';
+    el.classList.add('visible');
+  } else if (n < 4) {
+    el.textContent = `${n} pitch class${n>1?'es':''} detected — keep whistling for better key detection (need ≥ 4)`;
+    el.classList.add('visible');
+  } else if (detectedKey && detectedKey.confidence < 0.5) {
+    el.textContent = `key confidence low (${Math.round(detectedKey.confidence*100)}%) — keep going...`;
+    el.classList.add('visible');
+  } else {
+    el.classList.remove('visible');
+  }
+}
+
+function updateKeyDisplay() {
+  const el = document.getElementById('keyDisplay');
+  if (!detectedKey) { el.innerHTML = 'key: <span>—</span>'; return; }
+  const name = NOTE_NAMES[detectedKey.root];
+  const mode = detectedKey.mode;
+  const conf = Math.round(detectedKey.confidence * 100);
+  const uncertain = detectedKey.confidence < 0.5 || distinctPCs.size < 3;
+  el.innerHTML = `key: <span class="${uncertain?'low-conf':''}">${name} ${mode}${uncertain?'?':''}</span> <span style="color:var(--text-dim)">(${conf}%)</span>`;
+}
+
+function updateChromaGrid() {
+  const el = document.getElementById('chromaGrid');
+  const max = Math.max(...chromaHist, 0.001);
+  const scaleNotes = new Set();
+  if (detectedKey && detectedKey.confidence >= 0.3) {
+    const s = detectedKey.mode === 'major' ? MAJOR_SCALE : MINOR_SCALE;
+    s.forEach(x => scaleNotes.add((detectedKey.root + x) % 12));
+  }
+  let html = '';
+  for (let i = 0; i < 12; i++) {
+    const pct = (chromaHist[i] / max) * 100;
+    const inS = scaleNotes.has(i);
+    const bg = inS ? 'background:var(--accent);opacity:0.85' : 'background:var(--text-dim);opacity:0.25';
+    html += `<div class="chroma-bar"><div class="chroma-fill"><div class="chroma-fill-inner" style="height:${pct}%;${bg}"></div></div><div class="chroma-label ${inS?'in-scale':''}">${NOTE_NAMES[i]}</div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ── Contour ──
+function drawContour() {
+  const canvas = document.getElementById('contourCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+  const PL = 36, PT = 8, PB = 8;
+  const DH = H - PT - PB, DW = W - PL;
+
+  ctx.clearRect(0, 0, W, H);
+  if (contourData.length < 2) return;
+
+  const now = performance.now();
+  const winMs = 10000;
+  const recent = contourData.filter(d => now - d.time < winMs);
+  if (recent.length < 2) return;
+
+  const midis = recent.map(d => d.midi).filter(m => m > 0);
+  if (midis.length === 0) return;
+
+  let tMin = Math.min(...midis) - 3, tMax = Math.max(...midis) + 3;
+  if (tMax - tMin < 10) { const c = (tMax + tMin) / 2; tMin = c - 5; tMax = c + 5; }
+
+  displayMinMidi += (tMin - displayMinMidi) * 0.05;
+  displayMaxMidi += (tMax - displayMaxMidi) * 0.05;
+
+  const minM = displayMinMidi, maxM = displayMaxMidi;
+  const toY = m => PT + DH - ((m - minM) / (maxM - minM)) * DH;
+  const toX = t => PL + ((t - (now - winMs)) / winMs) * DW;
+
+  // Scale degree lines
+  if (detectedKey && detectedKey.confidence >= 0.3) {
+    const scale = detectedKey.mode === 'major' ? MAJOR_SCALE : MINOR_SCALE;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.font = '500 11px JetBrains Mono';
+
+    for (let oct = 2; oct <= 9; oct++) {
+      for (let d = 0; d < scale.length; d++) {
+        const midi = oct * 12 + detectedKey.root + scale[d];
+        if (midi < minM - 1 || midi > maxM + 1) continue;
+        const y = toY(midi);
+        if (y < PT || y > H - PB) continue;
+
+        ctx.strokeStyle = d === 0 ? '#ffffff18' : '#ffffff0a';
+        ctx.lineWidth = d === 0 ? 1.5 : 1;
+        ctx.setLineDash(d === 0 ? [] : [4, 4]);
+        ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W, y); ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = DEGREE_COLORS_RAW[d] + 'aa';
+        ctx.fillText(`${d+1}\u0302`, PL - 6, y);
+      }
+    }
+  }
+
+  // Pitch line
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  let px = null, py = null;
+  for (const d of recent) {
+    if (d.midi <= 0) { px = null; continue; }
+    const x = toX(d.time), y = toY(d.midi);
+    if (px !== null) {
+      const col = d.degree ? DEGREE_COLORS_RAW[d.degree - 1] : '#888';
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 6;
+      ctx.strokeStyle = col;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+    px = x; py = y;
+  }
+}
+
+// ── Main loop ──
+function processAudio() {
+  if (!isRecording) return;
+
+  analyser.getFloatTimeDomainData(buffer);
+  const freq = detectPitch(buffer, audioCtx.sampleRate);
+  const now = performance.now();
+
+  if (freq > 0) {
+    const rawMidi = freqToMidi(freq);
+    const noteResult = processNoteStability(rawMidi, now);
+
+    if (noteResult) {
+      const midi = noteResult.midi;
+      const pc = ((Math.round(midi) % 12) + 12) % 12;
+
+      chromaHist[pc] += 1;
+      totalChromaFrames++;
+      distinctPCs.add(pc);
+
+      detectedKey = detectKeyFromChroma(chromaHist);
+      updateKeyDisplay();
+      updateHint();
+
+      let degreeInfo = null;
+      if (detectedKey && (detectedKey.confidence > 0.35 || distinctPCs.size >= 3)) {
+        degreeInfo = getScaleDegree(midi, detectedKey);
+        if (noteResult.isNew || lastSequenceDegree === null) {
+          addToSequence(degreeInfo.degree, now);
+        }
+        contourData.push({ time: now, midi, degree: degreeInfo.degree });
+      } else {
+        contourData.push({ time: now, midi, degree: null });
+      }
+
+      updateCurrentDegree(midiToFreq(midi), midi, degreeInfo);
+      inSilence = false;
+    }
+  } else {
+    if (!inSilence) { inSilence = true; silenceStart = now; }
+    if (now - silenceStart > 150) { currentNoteMidi = null; pendingMidi = null; }
+    contourData.push({ time: now, midi: 0, degree: null });
+    if (now - silenceStart > 300) updateCurrentDegree(0, 0, null);
+  }
+
+  if (contourData.length > 3000) contourData = contourData.slice(-2000);
+
+  updateChromaGrid();
+  drawContour();
+  animFrame = requestAnimationFrame(processAudio);
+}
+
+// ── Controls ──
+async function toggleRecording() {
+  if (isRecording) { stopRecording(); return; }
+  try {
+    audioCtx = new AudioContext();
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+    });
+    const source = audioCtx.createMediaStreamSource(mediaStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = bufferSize;
+    buffer = new Float32Array(bufferSize);
+    source.connect(analyser);
+    isRecording = true;
+    startTime = performance.now();
+    document.getElementById('startBtn').classList.add('recording');
+    document.getElementById('startBtn').innerHTML = '<span class="dot"></span> stop listening';
+    updateHint();
+    processAudio();
+  } catch (e) {
+    console.error('Mic error:', e);
+    alert('Could not access microphone. Please allow microphone access and try again.');
+  }
+}
+
+function stopRecording() {
+  isRecording = false;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  const btn = document.getElementById('startBtn');
+  btn.classList.remove('recording');
+  btn.innerHTML = 'start listening';
+  updateHint();
+}
+
+function clearAll() {
+  chromaHist = new Float64Array(12);
+  totalChromaFrames = 0;
+  distinctPCs = new Set();
+  detectedKey = null;
+  noteSequence = [];
+  contourData = [];
+  lastSequenceDegree = null;
+  currentNoteMidi = null;
+  pendingMidi = null;
+  inSilence = false;
+  displayMinMidi = 60;
+  displayMaxMidi = 80;
+  updateKeyDisplay();
+  updateHint();
+  updateCurrentDegree(0, 0, null);
+  document.getElementById('noteSequence').innerHTML = '';
+  updateChromaGrid();
+  const c = document.getElementById('contourCanvas').getContext('2d');
+  c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+}
+
+updateChromaGrid();
+window.addEventListener('resize', () => { if (contourData.length > 0) drawContour(); });
+</script>
+</body>
+</html>

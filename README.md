@@ -29,18 +29,37 @@ The UI is deliberately self-contained:
 - a scrollable piano-roll timeline
 - phrase-aware scale detection with confidence and degree labels
 - rough ABC/MIDI export plus local saved ideas
+- optional local auto-upload when served by `dev_server.py`
 
 ## Running It
 
-Run a static file server and visit the page from `localhost` or GitHub Pages. On first use, allow microphone access.
+The long-term target is still a completely static site, but local tuning is easier with a tiny same-origin capture server.
 
-For local testing:
+For local tuning with automatic take uploads into `captures/`:
+
+```bash
+python3 dev_server.py --port 4173
+```
+
+Then open `http://127.0.0.1:4173/pitch-detective.html`. When you stop a take, the browser will still let you download the recording and trace manually, but it will also auto-upload them into `captures/` if the local server is present.
+
+For a purely static run:
 
 ```bash
 python3 -m http.server 4173
 ```
 
-Then open `http://127.0.0.1:4173/pitch-detective.html`.
+That serves the same page without auto-upload. The app still works; you just keep using the download buttons.
+
+## Offline Analysis
+
+The browser detector is intentionally lightweight. For debugging a take outside the page, use:
+
+```bash
+python3 scripts/analyze_capture.py pitch-detective-2026-04-14T01-08-00-415Z
+```
+
+The script searches `captures/`, the repo root, and `~/Downloads`, decodes the audio with `ffmpeg`, runs a whistle-oriented offline pitch pass, and compares that result with the app's saved trace JSON when present.
 
 If you want a quick phone-shareable URL from a machine that already has authenticated GitHub CLI access:
 
@@ -62,4 +81,4 @@ The raw `audit.jsonl` is intentionally not committed. It includes the full agent
 - Scale detection is still heuristic. It is now phrase-aware, but it is not doing full tonal analysis or tempo detection.
 - MIDI and ABC export are intentionally rough first passes, meant for sketch capture rather than notation-quality transcription.
 - Saved ideas live in browser local storage for now.
-- There is no backend, persistence layer, or build step.
+- There is no production backend or build step. `dev_server.py` exists only for local capture/debugging.

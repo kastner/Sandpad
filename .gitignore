@@ -1,2 +1,4 @@
 .DS_Store
 audit.jsonl
+captures/
+__pycache__/

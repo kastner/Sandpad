@@ -66,6 +66,19 @@
       padding: 8px 0;
     }
 
+    .transport-card {
+      width: 100%;
+      position: sticky;
+      top: 10px;
+      z-index: 3;
+      border-radius: 20px;
+      background: rgba(14,14,40,0.84);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 10px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    }
+
     .logo {
       display: flex;
       align-items: center;
@@ -121,6 +134,47 @@
       color: var(--subtext);
       letter-spacing: 1px;
       text-transform: uppercase;
+    }
+
+    .input-meter {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px 14px;
+    }
+
+    .input-meter-label {
+      min-width: 54px;
+      font-size: 10px;
+      color: var(--subtext);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .input-meter-bar {
+      flex: 1;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.05);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .input-meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--green), var(--yellow), var(--pink));
+      box-shadow: 0 0 16px rgba(0,245,255,0.18);
+      transition: width 0.08s linear;
+    }
+
+    .input-meter-status {
+      min-width: 78px;
+      font-size: 11px;
+      color: var(--subtext);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
     }
 
     /* Main note display */
@@ -197,6 +251,68 @@
     .freq-display span {
       color: var(--cyan);
       font-weight: 600;
+    }
+
+    .pitch-lock {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.03);
+      transition: background 0.18s ease, border-color 0.18s ease;
+    }
+
+    .pitch-lock.searching {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .pitch-lock.tracking {
+      background: rgba(255,214,10,0.08);
+      border-color: rgba(255,214,10,0.18);
+    }
+
+    .pitch-lock.locked {
+      background: rgba(48,209,88,0.1);
+      border-color: rgba(48,209,88,0.2);
+    }
+
+    .pitch-lock-label {
+      font-size: 11px;
+      color: var(--subtext);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .pitch-lock-state {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .pitch-lock-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--subtext);
+      box-shadow: none;
+      transition: all 0.18s ease;
+    }
+
+    .pitch-lock-dot.good {
+      background: var(--green);
+      box-shadow: 0 0 14px rgba(48,209,88,0.45);
+    }
+
+    .pitch-lock-dot.warn {
+      background: var(--yellow);
+      box-shadow: 0 0 14px rgba(255,214,10,0.32);
     }
 
     /* Tuner meter */
@@ -509,6 +625,12 @@
       gap: 10px;
     }
 
+    .recording-status {
+      font-size: 12px;
+      color: var(--subtext);
+      line-height: 1.45;
+    }
+
     .btn-secondary {
       padding: 12px 14px;
       border-radius: 14px;
@@ -721,10 +843,27 @@
     </div>
   </header>
 
+  <div class="transport-card">
+    <div class="controls">
+      <button class="btn-start" id="btn-start" onclick="toggleListening()">
+        <span id="btn-icon">🎤</span>
+        <span id="btn-text">Start Listening</span>
+      </button>
+      <button class="btn-clear" onclick="clearHistory()" title="Clear">🗑</button>
+    </div>
+  </div>
+
   <!-- Waveform visualizer -->
   <div class="visualizer-card">
     <canvas id="viz-canvas"></canvas>
     <div class="viz-label">Waveform</div>
+    <div class="input-meter">
+      <div class="input-meter-label">Input</div>
+      <div class="input-meter-bar">
+        <div class="input-meter-fill" id="input-meter-fill"></div>
+      </div>
+      <div class="input-meter-status" id="input-meter-status">Idle</div>
+    </div>
   </div>
 
   <!-- Main note display -->
@@ -740,6 +879,13 @@
         <div class="tuner-needle" id="tuner-needle"></div>
       </div>
       <div class="cents-label" id="cents-label">— cents</div>
+    </div>
+    <div class="pitch-lock">
+      <div class="pitch-lock-label">Pitch Lock</div>
+      <div class="pitch-lock-state">
+        <span class="pitch-lock-dot" id="pitch-lock-dot"></span>
+        <span id="pitch-lock-text">Waiting for a stable note</span>
+      </div>
     </div>
     <div class="silence-msg" id="silence-msg">Whistle or sing to begin…</div>
   </div>
@@ -794,18 +940,12 @@
       <button class="btn-secondary primary" onclick="saveIdea()">Save Idea</button>
       <button class="btn-secondary" onclick="copyABC()">Copy ABC</button>
       <button class="btn-secondary" onclick="downloadCurrentMIDI()">Download MIDI</button>
+      <button class="btn-secondary" onclick="downloadCurrentRecording()">Download Recording</button>
+      <button class="btn-secondary" onclick="downloadAnalysisJSON()">Download Trace JSON</button>
     </div>
+    <div class="recording-status" id="recording-status">Press Start Listening to capture audio and the detected-note trace together.</div>
     <div class="export-preview" id="export-preview">ABC export will appear here once you capture a few notes.</div>
     <div class="saved-ideas" id="saved-ideas"></div>
-  </div>
-
-  <!-- Controls -->
-  <div class="controls">
-    <button class="btn-start" id="btn-start" onclick="toggleListening()">
-      <span id="btn-icon">🎤</span>
-      <span id="btn-text">Start Listening</span>
-    </button>
-    <button class="btn-clear" onclick="clearHistory()" title="Clear">🗑</button>
   </div>
 
   <div class="error-msg" id="error-msg"></div>
@@ -846,13 +986,37 @@ const SCALES = {
   'Whole Tone':      [0,2,4,6,8,10],
   'Diminished':      [0,2,3,5,6,8,9,11],
 };
+const TONAL_SCALE_NAMES = [
+  'Major',
+  'Natural Minor',
+  'Harmonic Minor',
+  'Dorian',
+  'Mixolydian',
+  'Lydian',
+  'Phrygian',
+  'Pentatonic Maj',
+  'Pentatonic Min',
+];
 
 const IDEAS_STORAGE_KEY = 'pitch-detective-ideas-v2';
-const SMOOTH_FACTOR = 0.25;
+const SMOOTH_FACTOR = 0.38;
 const NOTE_SWITCH_FRAMES = 3;
+const PITCH_CLASS_MERGE_GAP_MS = 220;
 const PHRASE_GAP_MS = 900;
 const MIN_NOTE_MS = 120;
+const TRANSITION_NOTE_MS = 165;
+const SCALE_LOCK_FRAMES_ACTIVE = 10;
+const SCALE_LOCK_FRAMES_IDLE = 4;
+const SCALE_MIN_NOTES_ACTIVE = 6;
+const SCALE_MIN_NOTES_IDLE = 4;
+const SCALE_MIN_CONFIDENCE_ACTIVE = 72;
+const SCALE_MIN_CONFIDENCE_IDLE = 62;
 const UI_FADE_MS = 300;
+const RMS_SILENCE_THRESHOLD = 0.003;
+const INPUT_TOO_QUIET_THRESHOLD = 0.007;
+const INPUT_GOOD_THRESHOLD = 0.018;
+const DETECT_MIN_FREQ = 350;
+const DETECT_MAX_FREQ = 3200;
 const ROLL_MIN_MIDI = 48;
 const ROLL_MAX_MIDI = 84;
 const ROLL_ROW_PX = 8;
@@ -861,9 +1025,25 @@ const MIN_NOTE_WIDTH_PX = 16;
 const EXPORT_UNIT_MS = 240;
 const EXPORT_TEMPO_BPM = 120;
 const MIDI_PPQ = 480;
+const CAPTURE_SERVER_HEALTH_PATH = '/api/health';
+const CAPTURE_SERVER_UPLOAD_PATH = '/api/upload';
+const SPECTRUM_MIN_DB = -72;
+const SPECTRUM_MIN_PROMINENCE_DB = 4;
+const MAX_TRANSIENT_SEMITONES = 0;
+const MIDI_CLUSTER_WINDOW_MS = 2600;
+const MIDI_CLUSTER_TOLERANCE = 0.9;
+const MIDI_CLUSTER_MIN_FRAMES = 4;
 
 function freqToMidi(freq) {
   return 12 * Math.log2(freq / 440) + 69;
+}
+
+function midiToFreqValue(midi) {
+  return 440 * (2 ** ((midi - 69) / 12));
+}
+
+function midiValueToNote(midi) {
+  return freqToNote(midiToFreqValue(midi));
 }
 
 function freqToNote(freq) {
@@ -882,16 +1062,20 @@ function freqToNote(freq) {
   };
 }
 
-function detectPitch(buffer, sampleRate) {
-  const SIZE = buffer.length;
+function computeRms(buffer) {
   let rms = 0;
-  for (let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
-  rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.005) return -1;
+  for (let i = 0; i < buffer.length; i++) rms += buffer[i] * buffer[i];
+  return Math.sqrt(rms / buffer.length);
+}
+
+function detectPitchFromAutocorr(buffer, sampleRate) {
+  const SIZE = buffer.length;
+  const rms = computeRms(buffer);
+  if (rms < RMS_SILENCE_THRESHOLD) return -1;
 
   let r1 = 0;
   let r2 = SIZE - 1;
-  const thres = 0.2;
+  const thres = Math.max(0.015, Math.min(0.08, rms * 3.2));
   for (let i = 0; i < SIZE / 2; i++) {
     if (Math.abs(buffer[i]) > thres) {
       r1 = i;
@@ -907,6 +1091,9 @@ function detectPitch(buffer, sampleRate) {
 
   const buf = buffer.slice(r1, r2 + 1);
   const N = buf.length;
+  const minLag = Math.max(2, Math.floor(sampleRate / DETECT_MAX_FREQ));
+  const maxLag = Math.min(N - 2, Math.ceil(sampleRate / DETECT_MIN_FREQ));
+  if (maxLag <= minLag + 2) return -1;
   const c = new Float32Array(N);
 
   for (let lag = 0; lag < N; lag++) {
@@ -915,20 +1102,44 @@ function detectPitch(buffer, sampleRate) {
     }
   }
 
-  let d = 0;
+  let d = minLag;
   while (d < N - 1 && c[d] > c[d + 1]) d++;
   if (d >= N - 2) return -1;
 
   let maxVal = -Infinity;
-  let maxPos = d;
-  for (let i = d; i < N; i++) {
+  let strongestPos = d;
+  const peaks = [];
+  for (let i = d + 1; i < maxLag; i++) {
     if (c[i] > maxVal) {
       maxVal = c[i];
-      maxPos = i;
+      strongestPos = i;
+    }
+    if (c[i] > c[i - 1] && c[i] >= c[i + 1]) {
+      peaks.push(i);
     }
   }
 
-  if (maxPos === 0 || maxPos === N - 1) return -1;
+  if (!peaks.length) peaks.push(strongestPos);
+  let maxPos = strongestPos;
+  const peakThreshold = maxVal * 0.9;
+  for (const peak of peaks) {
+    if (c[peak] >= peakThreshold) {
+      maxPos = peak;
+      break;
+    }
+  }
+
+  // If the chosen peak is likely an upper partial, prefer the lower-frequency
+  // octave candidate when its correlation is nearly as strong.
+  let correctedPos = maxPos;
+  while (correctedPos * 2 <= maxLag) {
+    const lowerCandidate = correctedPos * 2;
+    if (c[lowerCandidate] >= c[correctedPos] * 0.92) correctedPos = lowerCandidate;
+    else break;
+  }
+  maxPos = correctedPos;
+
+  if (maxPos <= 0 || maxPos >= N - 1) return -1;
   if (maxVal < 0.01) return -1;
 
   const prev = c[maxPos - 1];
@@ -941,9 +1152,100 @@ function detectPitch(buffer, sampleRate) {
   }
 
   const freq = sampleRate / refined;
-  if (freq < 60 || freq > 4200) return -1;
+  if (freq < DETECT_MIN_FREQ || freq > DETECT_MAX_FREQ) return -1;
 
   return freq;
+}
+
+function interpolatePeakBin(magnitudes, index) {
+  if (index <= 0 || index >= magnitudes.length - 1) return index;
+  const prev = magnitudes[index - 1];
+  const curr = magnitudes[index];
+  const next = magnitudes[index + 1];
+  const denom = prev - 2 * curr + next;
+  if (Math.abs(denom) < 1e-6) return index;
+  const offset = 0.5 * (prev - next) / denom;
+  return index + Math.max(-0.5, Math.min(0.5, offset));
+}
+
+function scoreSpectralCandidate(freqDbBuffer, index) {
+  let score = freqDbBuffer[index];
+  const harmonicWeights = [
+    [2, 0.32],
+    [3, 0.18],
+    [4, 0.1],
+  ];
+  for (const [factor, weight] of harmonicWeights) {
+    const harmonicIndex = index * factor;
+    if (harmonicIndex >= freqDbBuffer.length) break;
+    score += Math.max(SPECTRUM_MIN_DB, freqDbBuffer[harmonicIndex]) * weight;
+  }
+  return score;
+}
+
+function detectPitchFromSpectrum(freqDbBuffer, sampleRate) {
+  if (!freqDbBuffer?.length) return -1;
+
+  const binHz = sampleRate / (freqDbBuffer.length * 2);
+  const minBin = Math.max(2, Math.floor(DETECT_MIN_FREQ / binHz));
+  const maxBin = Math.min(freqDbBuffer.length - 3, Math.ceil(DETECT_MAX_FREQ / binHz));
+  if (maxBin <= minBin + 2) return -1;
+
+  let bestIndex = -1;
+  let bestScore = -Infinity;
+  let bestDb = -Infinity;
+  for (let i = minBin + 1; i < maxBin; i++) {
+    const db = freqDbBuffer[i];
+    if (db < SPECTRUM_MIN_DB) continue;
+    if (db < freqDbBuffer[i - 1] || db < freqDbBuffer[i + 1]) continue;
+
+    const prominence = db - Math.max(freqDbBuffer[i - 1], freqDbBuffer[i + 1]);
+    if (prominence < SPECTRUM_MIN_PROMINENCE_DB) continue;
+
+    let score = scoreSpectralCandidate(freqDbBuffer, i) + prominence * 1.7;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestIndex = i;
+      bestDb = db;
+    }
+  }
+
+  if (bestIndex < 0) return -1;
+
+  const halfIndex = Math.round(bestIndex / 2);
+  if (halfIndex >= minBin && halfIndex < maxBin && freqDbBuffer[halfIndex] >= bestDb - 11) {
+    const halfScore = scoreSpectralCandidate(freqDbBuffer, halfIndex) + freqDbBuffer[halfIndex] * 0.35;
+    if (halfScore >= bestScore * 0.92) {
+      bestIndex = halfIndex;
+    }
+  }
+
+  const magnitudes = new Float32Array(freqDbBuffer.length);
+  for (let i = minBin; i <= maxBin; i++) {
+    magnitudes[i] = 10 ** (freqDbBuffer[i] / 20);
+  }
+  const refinedBin = interpolatePeakBin(magnitudes, bestIndex);
+  const freq = refinedBin * binHz;
+  if (freq < DETECT_MIN_FREQ || freq > DETECT_MAX_FREQ) return -1;
+  return freq;
+}
+
+function detectPitch(timeBuffer, freqDbBuffer, sampleRate) {
+  const rms = computeRms(timeBuffer);
+  if (rms < RMS_SILENCE_THRESHOLD) return -1;
+
+  const spectralFreq = detectPitchFromSpectrum(freqDbBuffer, sampleRate);
+  const autocorrFreq = detectPitchFromAutocorr(timeBuffer, sampleRate);
+
+  if (spectralFreq > 0 && autocorrFreq > 0) {
+    const semitoneGap = Math.abs(12 * Math.log2(spectralFreq / autocorrFreq));
+    if (semitoneGap <= 0.8) return spectralFreq * 0.7 + autocorrFreq * 0.3;
+    return spectralFreq;
+  }
+
+  if (spectralFreq > 0) return spectralFreq;
+  return autocorrFreq;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -953,11 +1255,14 @@ function detectPitch(buffer, sampleRate) {
 let audioCtx = null;
 let analyser = null;
 let source = null;
+let highpass = null;
+let lowpass = null;
 let stream = null;
 let rafId = null;
 let isListening = false;
 let timeDomainBuffer = null;
 let freqBuffer = null;
+let floatFreqBuffer = null;
 let smoothedFreq = -1;
 let silenceTimer = null;
 let lastDetectedNote = null;
@@ -965,14 +1270,35 @@ let captureOriginMs = null;
 let currentNoteEvent = null;
 let currentPhraseId = null;
 let pendingMidi = null;
+let pendingPitchClass = null;
 let pendingMidiFrames = 0;
 let silenceStartedAt = null;
 let noteIdCounter = 1;
 let phraseIdCounter = 1;
 let lastIdeaRenderAt = 0;
+let mediaRecorder = null;
+let mediaRecorderMimeType = '';
+let recorderChunks = [];
+let lastRecordingBlob = null;
+let lastRecordingFilename = '';
+let activeTakeId = null;
+let currentInputRms = 0;
+let pitchLockFrames = 0;
+let pitchLockPitchClass = null;
+let lastStableFreq = -1;
+let committedScale = null;
+let pendingScale = null;
+let pendingScaleKey = null;
+let pendingScaleFrames = 0;
+let captureServerAvailable = false;
+let captureServerChecked = false;
+let takeUploadPromise = null;
+let takeUploadTakeId = null;
 
 const recordedNotes = [];
 const phrases = [];
+const voicedMidiFrames = [];
+const uploadedTakeIds = new Set();
 
 function getNowMs() {
   return performance.now();
@@ -1040,41 +1366,201 @@ function finishCapturedNote(endTime) {
   currentNoteEvent = null;
 }
 
+function maybeUpdateEventMidi(event, note) {
+  if (!event) return;
+  const semitoneDistance = Math.abs(note.midi - event.midi);
+  if (semitoneDistance <= 2) {
+    event.midi = note.midi;
+    event.name = note.name;
+    event.octave = note.octave;
+  }
+  event.cents = note.cents;
+}
+
+function recordVoicedMidiFrame(freq, time) {
+  if (freq <= 0) return;
+  voicedMidiFrames.push({
+    time,
+    midi: freqToMidi(freq),
+  });
+}
+
+function getRecentVoicedMidiFrames(now = getNowMs(), windowMs = MIDI_CLUSTER_WINDOW_MS) {
+  return voicedMidiFrames.filter((frame) => now - frame.time <= windowMs);
+}
+
+function computeMidiClusters(frames, tolerance = MIDI_CLUSTER_TOLERANCE, minFrames = MIDI_CLUSTER_MIN_FRAMES) {
+  if (!frames.length) return [];
+  const sorted = [...frames].sort((a, b) => a.midi - b.midi);
+  const clusters = [];
+
+  for (const frame of sorted) {
+    const cluster = clusters[clusters.length - 1];
+    if (!cluster) {
+      clusters.push({
+        sum: frame.midi,
+        count: 1,
+        min: frame.midi,
+        max: frame.midi,
+      });
+      continue;
+    }
+
+    const center = cluster.sum / cluster.count;
+    if (Math.abs(frame.midi - center) <= tolerance || Math.abs(frame.midi - cluster.max) <= tolerance * 0.75) {
+      cluster.sum += frame.midi;
+      cluster.count += 1;
+      cluster.min = Math.min(cluster.min, frame.midi);
+      cluster.max = Math.max(cluster.max, frame.midi);
+      continue;
+    }
+
+    clusters.push({
+      sum: frame.midi,
+      count: 1,
+      min: frame.midi,
+      max: frame.midi,
+    });
+  }
+
+  return clusters
+    .map((cluster) => {
+      const centerMidi = cluster.sum / cluster.count;
+      const note = midiValueToNote(centerMidi);
+      return {
+        centerMidi,
+        count: cluster.count,
+        minMidi: cluster.min,
+        maxMidi: cluster.max,
+        pitchClass: note.pitchClass,
+        note: `${note.name}${note.octave}`,
+      };
+    })
+    .filter((cluster) => cluster.count >= minFrames)
+    .sort((a, b) => a.centerMidi - b.centerMidi);
+}
+
+function stabilizeNoteToClusters(rawFreq, now) {
+  const rawMidi = freqToMidi(rawFreq);
+  const rawNote = freqToNote(rawFreq);
+  const clusters = computeMidiClusters(getRecentVoicedMidiFrames(now));
+  if (!clusters.length) return rawNote;
+
+  let bestCluster = null;
+  let bestDistance = Infinity;
+  for (const cluster of clusters) {
+    const distance = Math.abs(cluster.centerMidi - rawMidi);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestCluster = cluster;
+    }
+  }
+
+  if (!bestCluster) return rawNote;
+  if (bestDistance > 1.25) return rawNote;
+  if (bestDistance > 0.9 && bestCluster.count < 7) return rawNote;
+
+  const snappedNote = midiValueToNote(bestCluster.centerMidi);
+  return {
+    ...snappedNote,
+    clusterMidi: bestCluster.centerMidi,
+    clusterCount: bestCluster.count,
+    rawMidi,
+  };
+}
+
+function resetPitchLock() {
+  pitchLockFrames = 0;
+  pitchLockPitchClass = null;
+  lastStableFreq = -1;
+}
+
+function updatePitchLockState(note, rawFreq) {
+  if (!note || rawFreq <= 0 || currentInputRms < INPUT_TOO_QUIET_THRESHOLD) {
+    resetPitchLock();
+    return;
+  }
+
+  const centsDelta = lastStableFreq > 0
+    ? Math.abs(1200 * Math.log2(rawFreq / lastStableFreq))
+    : 0;
+
+  if (pitchLockPitchClass === note.pitchClass && centsDelta <= 45) {
+    pitchLockFrames = Math.min(12, pitchLockFrames + 1);
+  } else if (pitchLockPitchClass === note.pitchClass && centsDelta <= 80) {
+    pitchLockFrames = Math.max(1, pitchLockFrames);
+  } else {
+    pitchLockPitchClass = note.pitchClass;
+    pitchLockFrames = 1;
+  }
+
+  pitchLockPitchClass = note.pitchClass;
+  lastStableFreq = rawFreq;
+}
+
+function framesNeededForNoteSwitch(currentMidi, nextMidi) {
+  const interval = Math.abs(nextMidi - currentMidi);
+  if (interval >= 4) return 2;
+  if (interval >= 2) return NOTE_SWITCH_FRAMES;
+  return NOTE_SWITCH_FRAMES + 1;
+}
+
 function handleStableDetectedNote(note, now) {
   silenceStartedAt = null;
   if (!currentNoteEvent) {
     startCapturedNote(note, now);
     pendingMidi = null;
+    pendingPitchClass = null;
     pendingMidiFrames = 0;
     return;
   }
 
-  if (note.midi === currentNoteEvent.midi) {
+  if (note.pitchClass === currentNoteEvent.pitchClass) {
+    currentNoteEvent.endTime = now;
+    maybeUpdateEventMidi(currentNoteEvent, note);
+    pendingMidi = null;
+    pendingPitchClass = null;
+    pendingMidiFrames = 0;
+    return;
+  }
+
+  if (Math.abs(note.midi - currentNoteEvent.midi) <= MAX_TRANSIENT_SEMITONES) {
     currentNoteEvent.endTime = now;
     currentNoteEvent.cents = note.cents;
     pendingMidi = null;
+    pendingPitchClass = null;
     pendingMidiFrames = 0;
     return;
   }
 
-  if (pendingMidi === note.midi) {
-    pendingMidiFrames += 1;
-    if (pendingMidiFrames >= NOTE_SWITCH_FRAMES) {
+  if (pendingPitchClass === note.pitchClass) {
+    if (pendingMidi !== null && Math.abs(note.midi - pendingMidi) <= 1) {
+      pendingMidi = note.midi;
+      pendingMidiFrames += 1;
+    } else {
+      pendingMidi = note.midi;
+      pendingMidiFrames = 1;
+    }
+    if (pendingMidiFrames >= framesNeededForNoteSwitch(currentNoteEvent.midi, note.midi)) {
       finishCapturedNote(now);
       startCapturedNote(note, now);
       pendingMidi = null;
+      pendingPitchClass = null;
       pendingMidiFrames = 0;
     }
     return;
   }
 
   pendingMidi = note.midi;
+  pendingPitchClass = note.pitchClass;
   pendingMidiFrames = 1;
 }
 
 function handleSilence(now) {
   pendingMidi = null;
+  pendingPitchClass = null;
   pendingMidiFrames = 0;
+  resetPitchLock();
   if (currentNoteEvent) finishCapturedNote(now);
   if (silenceStartedAt === null) silenceStartedAt = now;
   if (currentPhraseId !== null && now - silenceStartedAt >= PHRASE_GAP_MS) {
@@ -1085,15 +1571,185 @@ function handleSilence(now) {
 function resetCaptureState() {
   recordedNotes.length = 0;
   phrases.length = 0;
+  voicedMidiFrames.length = 0;
   captureOriginMs = null;
   currentNoteEvent = null;
   currentPhraseId = null;
   pendingMidi = null;
+  pendingPitchClass = null;
   pendingMidiFrames = 0;
   silenceStartedAt = null;
   noteIdCounter = 1;
   phraseIdCounter = 1;
   lastDetectedNote = null;
+  resetPitchLock();
+  resetScaleTracking();
+}
+
+function buildTakeId() {
+  return new Date().toISOString().replace(/[:.]/g, '-');
+}
+
+function getRecordingExtension(mimeType) {
+  if (!mimeType) return 'webm';
+  if (mimeType.includes('mp4')) return 'm4a';
+  if (mimeType.includes('ogg')) return 'ogg';
+  if (mimeType.includes('wav')) return 'wav';
+  return 'webm';
+}
+
+function updateRecordingStatus(message) {
+  document.getElementById('recording-status').textContent = message;
+}
+
+function buildAnalysisFilename(takeId = activeTakeId) {
+  return `pitch-detective-${takeId || 'take'}-analysis.json`;
+}
+
+async function probeCaptureServer(force = false) {
+  if (!force && captureServerChecked) return captureServerAvailable;
+  captureServerChecked = true;
+  captureServerAvailable = false;
+  if (location.protocol === 'file:' || typeof fetch !== 'function') return false;
+  try {
+    const response = await fetch(CAPTURE_SERVER_HEALTH_PATH, { cache: 'no-store' });
+    captureServerAvailable = response.ok;
+  } catch (err) {
+    captureServerAvailable = false;
+  }
+  return captureServerAvailable;
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      resolve(result.includes(',') ? result.split(',')[1] : result);
+    };
+    reader.onerror = () => reject(reader.error || new Error('Could not serialize the recording blob.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function maybeUploadCurrentTake(takeId = activeTakeId) {
+  if (!takeId) return false;
+  if (uploadedTakeIds.has(takeId)) return true;
+  if (takeUploadPromise && takeUploadTakeId === takeId) return takeUploadPromise;
+  const serverReady = await probeCaptureServer();
+  if (!serverReady) return false;
+
+  const snapshot = buildAnalysisSnapshot(undefined, takeId);
+  const analysisFilename = buildAnalysisFilename(takeId);
+  updateRecordingStatus(
+    lastRecordingBlob
+      ? `Recording ready: ${lastRecordingFilename}. Uploading the take into the local capture server…`
+      : `Uploading the trace for ${takeId} into the local capture server…`
+  );
+
+  takeUploadTakeId = takeId;
+  takeUploadPromise = (async () => {
+    const payload = {
+      takeId,
+      uploadedAt: new Date().toISOString(),
+      analysisFilename,
+      analysis: snapshot,
+      recordingFilename: lastRecordingFilename || null,
+      recordingMimeType: lastRecordingBlob?.type || null,
+      recordingBase64: lastRecordingBlob ? await blobToBase64(lastRecordingBlob) : null,
+    };
+
+    const response = await fetch(CAPTURE_SERVER_UPLOAD_PATH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(`Upload failed with ${response.status}`);
+    const result = await response.json();
+    uploadedTakeIds.add(takeId);
+    if (result.recordingPath) {
+      updateRecordingStatus(
+        `Auto-saved ${result.recordingPath} and ${result.analysisPath}. Manual download buttons still work.`
+      );
+    } else {
+      updateRecordingStatus(`Auto-saved ${result.analysisPath}. Manual download buttons still work.`);
+    }
+    return true;
+  })()
+    .catch((err) => {
+      console.error(err);
+      updateRecordingStatus(
+        `Upload failed for ${takeId}. Use Download Recording and Download Trace JSON as fallback.`
+      );
+      return false;
+    })
+    .finally(() => {
+      takeUploadPromise = null;
+      takeUploadTakeId = null;
+    });
+
+  return takeUploadPromise;
+}
+
+function startSessionRecording(inputStream, takeId) {
+  if (typeof MediaRecorder === 'undefined') {
+    updateRecordingStatus('This browser does not expose MediaRecorder, so only the note trace will be saved.');
+    return;
+  }
+
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/ogg;codecs=opus',
+  ];
+
+  mediaRecorderMimeType = candidates.find((mime) => MediaRecorder.isTypeSupported?.(mime)) || '';
+  try {
+    mediaRecorder = mediaRecorderMimeType ? new MediaRecorder(inputStream, { mimeType: mediaRecorderMimeType }) : new MediaRecorder(inputStream);
+  } catch (err) {
+    console.error(err);
+    mediaRecorder = null;
+    updateRecordingStatus('Recording could not be started in this browser, but note capture is still active.');
+    return;
+  }
+
+  recorderChunks = [];
+  mediaRecorder.ondataavailable = (event) => {
+    if (event.data && event.data.size > 0) recorderChunks.push(event.data);
+  };
+  mediaRecorder.onstop = async () => {
+    if (!recorderChunks.length) {
+      mediaRecorder = null;
+      updateRecordingStatus('No audio chunks were captured for the last take.');
+      await maybeUploadCurrentTake(takeId);
+      return;
+    }
+    lastRecordingBlob = new Blob(recorderChunks, {
+      type: mediaRecorderMimeType || recorderChunks[0]?.type || 'audio/webm',
+    });
+    lastRecordingFilename = `pitch-detective-${takeId}.${getRecordingExtension(lastRecordingBlob.type)}`;
+    mediaRecorder = null;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await maybeUploadCurrentTake(takeId);
+    if (!uploadedTakeIds.has(takeId)) {
+      updateRecordingStatus(
+        `Recording ready: ${lastRecordingFilename}. Download it with the trace JSON for offline comparison.`
+      );
+    }
+  };
+  mediaRecorder.start();
+  updateRecordingStatus(
+    captureServerAvailable
+      ? 'Recording this listening session. When you stop, the take will auto-upload into captures/.'
+      : 'Recording this listening session alongside the detected-note trace.'
+  );
+}
+
+function stopSessionRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1113,7 +1769,8 @@ function phraseBoundaryBonus(interval) {
 }
 
 function getScaleContext() {
-  const phraseData = getNonEmptyPhrases();
+  const notes = normalizeCapturedNotes();
+  const phraseData = getNormalizedPhraseData(notes);
   const activePhrase = phraseData.find((phrase) => phrase.id === currentPhraseId && phrase.notes.length >= 3);
   if (activePhrase) {
     return {
@@ -1132,10 +1789,10 @@ function getScaleContext() {
     };
   }
 
-  if (recordedNotes.length >= 3) {
+  if (notes.length >= 3) {
     return {
       label: 'Whole idea',
-      notes: recordedNotes.slice(),
+      notes,
       phraseData,
     };
   }
@@ -1197,7 +1854,8 @@ function detectScale() {
   let secondBest = null;
 
   for (let root = 0; root < 12; root++) {
-    for (const [scaleName, intervals] of Object.entries(SCALES)) {
+    for (const scaleName of TONAL_SCALE_NAMES) {
+      const intervals = SCALES[scaleName];
       const candidate = evaluateScaleCandidate(root, scaleName, intervals, context);
       if (candidate.coverage < 0.55) continue;
 
@@ -1232,6 +1890,72 @@ function detectScale() {
   };
 }
 
+function scaleKey(scaleResult) {
+  if (!scaleResult) return '';
+  return `${scaleResult.root}:${scaleResult.scale}`;
+}
+
+function cloneScale(scaleResult) {
+  return scaleResult ? { ...scaleResult, intervals: [...scaleResult.intervals] } : null;
+}
+
+function resetScaleTracking() {
+  committedScale = null;
+  pendingScale = null;
+  pendingScaleKey = null;
+  pendingScaleFrames = 0;
+}
+
+function updateScaleTracking(rawCandidate) {
+  const activePhrase = currentPhraseId !== null;
+  const neededFrames = activePhrase ? SCALE_LOCK_FRAMES_ACTIVE : SCALE_LOCK_FRAMES_IDLE;
+  const minNotes = activePhrase ? SCALE_MIN_NOTES_ACTIVE : SCALE_MIN_NOTES_IDLE;
+  const minConfidence = activePhrase ? SCALE_MIN_CONFIDENCE_ACTIVE : SCALE_MIN_CONFIDENCE_IDLE;
+
+  if (!rawCandidate || rawCandidate.noteCount < 4) {
+    pendingScale = null;
+    pendingScaleKey = null;
+    pendingScaleFrames = 0;
+    return {
+      displayScale: committedScale,
+      rawCandidate: null,
+      state: committedScale ? 'holding' : 'none',
+    };
+  }
+
+  const key = scaleKey(rawCandidate);
+  if (key === pendingScaleKey) {
+    pendingScaleFrames += 1;
+    pendingScale = cloneScale(rawCandidate);
+  } else {
+    pendingScaleKey = key;
+    pendingScale = cloneScale(rawCandidate);
+    pendingScaleFrames = 1;
+  }
+
+  if (pendingScaleFrames >= neededFrames) {
+    committedScale = cloneScale(rawCandidate);
+  }
+
+  const candidateReady =
+    rawCandidate.noteCount >= minNotes &&
+    rawCandidate.confidence >= minConfidence &&
+    pendingScaleFrames >= Math.max(4, Math.floor(neededFrames / 2));
+
+  const displayScale = committedScale || (candidateReady ? pendingScale : null);
+  const state = committedScale
+    ? (key === scaleKey(committedScale) ? 'committed' : 'holding')
+    : 'warming';
+
+  return {
+    displayScale,
+    rawCandidate,
+    state,
+    pendingFrames: pendingScaleFrames,
+    neededFrames,
+  };
+}
+
 function degreeInfoForPitchClass(pitchClass, scaleResult) {
   if (!scaleResult) return null;
   const interval = ((pitchClass - scaleResult.root) + 12) % 12;
@@ -1251,17 +1975,381 @@ function formatScaleName(scaleResult) {
   return `${NOTE_NAMES[scaleResult.root]} ${scaleResult.scale}`;
 }
 
+function scaleFamilyLabel(scaleName) {
+  if (scaleName === 'Major') return 'Major family';
+  if (scaleName === 'Natural Minor') return 'Minor family';
+  if (scaleName === 'Harmonic Minor') return 'Minor family (harmonic)';
+  if (scaleName === 'Dorian') return 'Minor family (Dorian)';
+  if (scaleName === 'Phrygian') return 'Minor family (Phrygian)';
+  if (scaleName === 'Mixolydian') return 'Major family (Mixolydian)';
+  if (scaleName === 'Lydian') return 'Major family (Lydian)';
+  if (scaleName === 'Pentatonic Maj') return 'Major pentatonic';
+  if (scaleName === 'Pentatonic Min') return 'Minor pentatonic';
+  return scaleName;
+}
+
+function formatScaleFamily(scaleResult) {
+  if (!scaleResult) return 'Unknown';
+  return scaleFamilyLabel(scaleResult.scale);
+}
+
+function formatScaleCenterHint(scaleResult) {
+  if (!scaleResult) return '';
+  return `center near ${NOTE_NAMES[scaleResult.root]}`;
+}
+
+function detectScaleForNotes(notes, scaleNames = TONAL_SCALE_NAMES) {
+  const phraseData = getNormalizedPhraseData(notes);
+  if (!notes.length || !phraseData.length) return null;
+
+  const context = {
+    label: 'Whole idea',
+    notes,
+    phraseData,
+  };
+
+  let best = null;
+  let secondBest = null;
+  for (let root = 0; root < 12; root++) {
+    for (const scaleName of scaleNames) {
+      const intervals = SCALES[scaleName];
+      const candidate = evaluateScaleCandidate(root, scaleName, intervals, context);
+      if (candidate.coverage < 0.5) continue;
+
+      const enriched = {
+        root,
+        scale: scaleName,
+        intervals,
+        score: candidate.finalScore,
+        coverage: candidate.coverage,
+      };
+
+      if (!best || enriched.score > best.score) {
+        secondBest = best;
+        best = enriched;
+      } else if (!secondBest || enriched.score > secondBest.score) {
+        secondBest = enriched;
+      }
+    }
+  }
+
+  if (!best) return null;
+  const spread = secondBest ? Math.max(0, best.score - secondBest.score) : best.score;
+  return {
+    ...best,
+    confidence: Math.min(99, Math.round(best.coverage * 60 + Math.min(28, spread * 5) + 12)),
+    scopeLabel: 'Whole idea',
+    phraseCount: phraseData.length,
+    noteCount: notes.length,
+  };
+}
+
+function isPitchClassInScale(pitchClass, scaleResult) {
+  if (!scaleResult) return true;
+  return scaleResult.intervals.includes(((pitchClass - scaleResult.root) + 12) % 12);
+}
+
+function nearestScaleMidi(midi, scaleResult) {
+  if (!scaleResult) return midi;
+  let bestMidi = midi;
+  let bestDistance = Infinity;
+  for (let delta = -6; delta <= 6; delta++) {
+    const candidateMidi = midi + delta;
+    const pitchClass = ((candidateMidi % 12) + 12) % 12;
+    if (!isPitchClassInScale(pitchClass, scaleResult)) continue;
+    const distance = Math.abs(delta);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestMidi = candidateMidi;
+    }
+  }
+  return bestMidi;
+}
+
+function noteFromMidi(midi) {
+  const pitchClass = ((midi % 12) + 12) % 12;
+  return {
+    midi,
+    pitchClass,
+    name: NOTE_NAMES[pitchClass],
+    octave: Math.floor(midi / 12) - 1,
+  };
+}
+
+function scaleDegreeIndexForNote(note, scaleResult) {
+  const info = degreeInfoForPitchClass(note.pitchClass, scaleResult);
+  return info?.inScale ? info.degreeIndex : null;
+}
+
+function snapNoteToDegree(note, degreeIndex, scaleResult) {
+  if (!scaleResult || degreeIndex === null || degreeIndex < 1 || degreeIndex > scaleResult.intervals.length) {
+    return { ...note };
+  }
+  const targetInterval = scaleResult.intervals[degreeIndex - 1];
+  const targetPitchClass = (scaleResult.root + targetInterval) % 12;
+  let bestMidi = note.midi;
+  let bestDistance = Infinity;
+  for (let delta = -12; delta <= 12; delta++) {
+    const candidateMidi = note.midi + delta;
+    const candidatePitchClass = ((candidateMidi % 12) + 12) % 12;
+    if (candidatePitchClass !== targetPitchClass) continue;
+    const distance = Math.abs(delta);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestMidi = candidateMidi;
+    }
+  }
+  const snappedNote = noteFromMidi(bestMidi);
+  return {
+    ...note,
+    midi: snappedNote.midi,
+    pitchClass: snappedNote.pitchClass,
+    name: snappedNote.name,
+    octave: snappedNote.octave,
+  };
+}
+
+function mergeConsecutivePitchClasses(notes) {
+  const merged = [];
+  for (const note of notes) {
+    const prev = merged[merged.length - 1];
+    const gap = prev ? note.startTime - prev.endTime : Infinity;
+    if (prev && prev.phraseId === note.phraseId && prev.pitchClass === note.pitchClass && gap <= PITCH_CLASS_MERGE_GAP_MS) {
+      prev.endTime = Math.max(prev.endTime, note.endTime);
+      prev.durationMs = prev.endTime - prev.startTime;
+      if (Math.abs(note.midi - prev.midi) <= 2) {
+        prev.midi = note.midi;
+        prev.name = note.name;
+        prev.octave = note.octave;
+      }
+      continue;
+    }
+    merged.push({ ...note });
+  }
+  return merged.map((note) => ({
+    ...note,
+    durationMs: Math.max(MIN_NOTE_MS, note.endTime - note.startTime),
+  }));
+}
+
+function applyDegreeMelodyCleanup(notes, scaleResult) {
+  if (!scaleResult || notes.length < 5) return mergeConsecutivePitchClasses(notes);
+
+  const cleaned = [];
+  for (let i = 0; i < notes.length; i++) {
+    const note = { ...notes[i] };
+    const prev = cleaned[cleaned.length - 1];
+    const next = notes[i + 1];
+    const short = note.durationMs <= TRANSITION_NOTE_MS + 120;
+
+    if (!prev || !next || prev.phraseId !== note.phraseId || next.phraseId !== note.phraseId) {
+      cleaned.push(note);
+      continue;
+    }
+
+    const prevDegree = scaleDegreeIndexForNote(prev, scaleResult);
+    const noteDegree = scaleDegreeIndexForNote(note, scaleResult);
+    const nextDegree = scaleDegreeIndexForNote(next, scaleResult);
+    if (prevDegree === null || noteDegree === null || nextDegree === null) {
+      cleaned.push(note);
+      continue;
+    }
+
+    const prevGap = Math.abs(noteDegree - prevDegree);
+    const nextGap = Math.abs(noteDegree - nextDegree);
+    const bridgeGap = Math.abs(prevDegree - nextDegree);
+
+    if (short && prevDegree === nextDegree) {
+      prev.endTime = Math.max(prev.endTime, note.endTime);
+      prev.durationMs = prev.endTime - prev.startTime;
+      continue;
+    }
+
+    if (short && bridgeGap <= 1 && prevGap >= 2 && nextGap >= 2) {
+      prev.endTime = Math.max(prev.endTime, note.endTime);
+      prev.durationMs = prev.endTime - prev.startTime;
+      continue;
+    }
+
+    if (short && bridgeGap === 2 && prevGap === 1 && nextGap === 1) {
+      const targetDegree = Math.min(prevDegree, nextDegree) + 1;
+      cleaned.push(snapNoteToDegree(note, targetDegree, scaleResult));
+      continue;
+    }
+
+    if (short && bridgeGap >= 3 && prevGap >= 2 && nextGap >= 2) {
+      const targetDegree = prevGap <= nextGap ? prevDegree : nextDegree;
+      cleaned.push(snapNoteToDegree(note, targetDegree, scaleResult));
+      continue;
+    }
+
+    cleaned.push(note);
+  }
+
+  return mergeConsecutivePitchClasses(cleaned);
+}
+
+function applyTonalCleanup(notes) {
+  if (notes.length < 4) return notes.map((note) => ({ ...note }));
+  const scaleResult = detectScaleForNotes(notes, TONAL_SCALE_NAMES);
+  if (!scaleResult) return notes.map((note) => ({ ...note }));
+
+  const snapped = notes.map((note) => {
+    if (isPitchClassInScale(note.pitchClass, scaleResult)) return { ...note };
+    const nearestMidi = nearestScaleMidi(note.midi, scaleResult);
+    const distance = Math.abs(nearestMidi - note.midi);
+    const short = note.durationMs <= TRANSITION_NOTE_MS + 55;
+    if (distance > 1 && !short) return { ...note };
+    if (distance > 2) return { ...note };
+    const snappedNote = noteFromMidi(nearestMidi);
+    return {
+      ...note,
+      midi: snappedNote.midi,
+      pitchClass: snappedNote.pitchClass,
+      name: snappedNote.name,
+      octave: snappedNote.octave,
+    };
+  });
+
+  const pruned = [];
+  for (let i = 0; i < snapped.length; i++) {
+    const note = { ...snapped[i] };
+    const prev = pruned[pruned.length - 1];
+    const next = snapped[i + 1];
+    const short = note.durationMs <= TRANSITION_NOTE_MS + 55;
+    const inScale = isPitchClassInScale(note.pitchClass, scaleResult);
+
+    if (
+      short &&
+      prev &&
+      next &&
+      prev.phraseId === note.phraseId &&
+      next.phraseId === note.phraseId
+    ) {
+      const prevDistance = Math.abs(prev.midi - note.midi);
+      const nextDistance = Math.abs(next.midi - note.midi);
+      const bridgeDistance = Math.abs(prev.midi - next.midi);
+
+      if (prev.pitchClass === next.pitchClass || bridgeDistance <= 2) {
+        prev.endTime = Math.max(prev.endTime, note.endTime);
+        prev.durationMs = prev.endTime - prev.startTime;
+        continue;
+      }
+
+      if (!inScale && prevDistance >= 3 && nextDistance >= 3) {
+        continue;
+      }
+    }
+
+    pruned.push(note);
+  }
+
+  return applyDegreeMelodyCleanup(pruned, scaleResult);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS AND SAVED IDEAS
 // ─────────────────────────────────────────────────────────────────────────────
 
 function normalizeCapturedNotes(notes = recordedNotes) {
-  return notes
+  const normalized = notes
     .map((note) => ({
       ...note,
       durationMs: note.durationMs || Math.max(MIN_NOTE_MS, note.endTime - note.startTime),
     }))
     .sort((a, b) => a.startTime - b.startTime);
+
+  const merged = [];
+  for (const note of normalized) {
+    const prev = merged[merged.length - 1];
+    const gap = prev ? note.startTime - prev.endTime : Infinity;
+    if (prev && prev.midi === note.midi && gap <= 120) {
+      prev.endTime = Math.max(prev.endTime, note.endTime);
+      prev.durationMs = prev.endTime - prev.startTime;
+      continue;
+    }
+    merged.push({ ...note });
+  }
+
+  for (let i = 0; i < merged.length; i++) {
+    const note = merged[i];
+    const prev = merged[i - 1];
+    const next = merged[i + 1];
+    const isShort = note.durationMs <= TRANSITION_NOTE_MS;
+    if (!isShort || !prev || !next) continue;
+
+    const prevNextDistance = Math.abs(prev.midi - next.midi);
+    const prevDistance = Math.abs(note.midi - prev.midi);
+    const nextDistance = Math.abs(note.midi - next.midi);
+
+    if (prevNextDistance <= 1 && (prevDistance >= 4 || nextDistance >= 4)) {
+      prev.endTime = Math.max(prev.endTime, next.endTime);
+      prev.durationMs = prev.endTime - prev.startTime;
+      merged.splice(i, 2);
+      i -= 1;
+      continue;
+    }
+
+    if (prevNextDistance <= 3 && prevDistance <= 2 && nextDistance <= 2) {
+      merged.splice(i, 1);
+      i -= 1;
+      continue;
+    }
+
+    if (prevDistance >= 12 && nextDistance >= 12) {
+      merged.splice(i, 1);
+      i -= 1;
+    }
+  }
+
+  const pitchClassMerged = [];
+  for (const note of merged) {
+    const prev = pitchClassMerged[pitchClassMerged.length - 1];
+    const gap = prev ? note.startTime - prev.endTime : Infinity;
+    if (prev && prev.phraseId === note.phraseId && prev.pitchClass === note.pitchClass && gap <= PITCH_CLASS_MERGE_GAP_MS) {
+      prev.endTime = Math.max(prev.endTime, note.endTime);
+      prev.durationMs = prev.endTime - prev.startTime;
+      if (Math.abs(note.midi - prev.midi) <= 2) {
+        prev.midi = note.midi;
+        prev.name = note.name;
+        prev.octave = note.octave;
+      }
+      prev.cents = note.cents;
+      continue;
+    }
+    pitchClassMerged.push({ ...note });
+  }
+
+  const normalizedNotes = pitchClassMerged.map((note) => ({
+    ...note,
+    durationMs: Math.max(MIN_NOTE_MS, note.endTime - note.startTime),
+  }));
+
+  return applyTonalCleanup(normalizedNotes);
+}
+
+function getNormalizedPhraseData(notes = normalizeCapturedNotes()) {
+  const phraseMap = new Map();
+  for (const note of notes) {
+    if (!phraseMap.has(note.phraseId)) {
+      const phrase = getPhraseById(note.phraseId);
+      phraseMap.set(note.phraseId, {
+        id: note.phraseId,
+        index: phrase ? phrases.indexOf(phrase) : phraseMap.size,
+        startTime: note.startTime,
+        endTime: note.endTime,
+        notes: [],
+      });
+    }
+    const entry = phraseMap.get(note.phraseId);
+    entry.notes.push(note);
+    entry.startTime = Math.min(entry.startTime, note.startTime);
+    entry.endTime = Math.max(entry.endTime, note.endTime);
+  }
+  return [...phraseMap.values()]
+    .filter((phrase) => phrase.notes.length > 0)
+    .sort((a, b) => a.startTime - b.startTime)
+    .map((phrase, index) => ({ ...phrase, index }));
 }
 
 function quantizeUnits(ms) {
@@ -1416,20 +2504,86 @@ function createMidiBytes(notes = normalizeCapturedNotes()) {
 
 function buildIdeaSnapshot(scaleResult = detectScale()) {
   const notes = normalizeCapturedNotes();
+  const phraseData = getNormalizedPhraseData(notes);
   return {
     id: (crypto.randomUUID && crypto.randomUUID()) || `idea-${Date.now()}`,
     savedAt: new Date().toISOString(),
     scale: scaleResult ? {
       root: scaleResult.root,
       scale: scaleResult.scale,
+      family: formatScaleFamily(scaleResult),
       confidence: scaleResult.confidence,
       scopeLabel: scaleResult.scopeLabel,
     } : null,
-    phraseCount: getNonEmptyPhrases().length,
+    phraseCount: phraseData.length,
     noteCount: notes.length,
     notes,
+    phrases: phraseData.map((phrase) => ({
+      id: phrase.id,
+      startTime: phrase.startTime,
+      endTime: phrase.endTime,
+      noteCount: phrase.notes.length,
+    })),
     degreeSketch: buildDegreeSketch(scaleResult, notes),
     abc: buildABCNotation(scaleResult, notes),
+  };
+}
+
+function buildAnalysisSnapshot(scaleResult = detectScale(), takeId = activeTakeId) {
+  const notes = normalizeCapturedNotes();
+  const phraseData = getNormalizedPhraseData(notes);
+  const midiClusters = computeMidiClusters(voicedMidiFrames, 0.95, 6);
+  return {
+    createdAt: new Date().toISOString(),
+    takeId,
+    recording: lastRecordingBlob ? {
+      filename: lastRecordingFilename,
+      mimeType: lastRecordingBlob.type,
+      bytes: lastRecordingBlob.size,
+    } : null,
+    scale: scaleResult ? {
+      root: scaleResult.root,
+      rootName: NOTE_NAMES[scaleResult.root],
+      scale: scaleResult.scale,
+      family: formatScaleFamily(scaleResult),
+      confidence: scaleResult.confidence,
+      scopeLabel: scaleResult.scopeLabel,
+    } : null,
+    degreeSketch: buildDegreeSketch(scaleResult, notes),
+    abc: buildABCNotation(scaleResult, notes),
+    midiClusters: midiClusters.map((cluster) => ({
+      centerMidi: Math.round(cluster.centerMidi * 100) / 100,
+      note: cluster.note,
+      pitchClass: cluster.pitchClass,
+      count: cluster.count,
+      spread: Math.round((cluster.maxMidi - cluster.minMidi) * 100) / 100,
+    })),
+    rawNotes: recordedNotes.map((note) => ({
+      phraseId: note.phraseId,
+      startMs: Math.round(note.startTime - (captureOriginMs ?? note.startTime)),
+      endMs: Math.round(note.endTime - (captureOriginMs ?? note.startTime)),
+      midi: note.midi,
+      pitchClass: note.pitchClass,
+      note: `${note.name}${note.octave}`,
+    })),
+    notes: notes.map((note) => ({
+      phraseId: note.phraseId,
+      startMs: Math.round(note.startTime - (captureOriginMs ?? note.startTime)),
+      durationMs: Math.round(note.durationMs),
+      midi: note.midi,
+      pitchClass: note.pitchClass,
+      note: `${note.name}${note.octave}`,
+    })),
+    phrases: phraseData.map((phrase) => ({
+      phraseId: phrase.id,
+      startMs: Math.round(phrase.startTime - (captureOriginMs ?? phrase.startTime)),
+      endMs: Math.round(phrase.endTime - (captureOriginMs ?? phrase.startTime)),
+      noteCount: phrase.notes.length,
+      degrees: phrase.notes.map((note) => {
+        const info = degreeInfoForPitchClass(note.pitchClass, scaleResult);
+        return info?.inScale ? info.degreeShort : note.name;
+      }),
+    })),
   };
 }
 
@@ -1503,6 +2657,24 @@ function downloadCurrentMIDI() {
   downloadBlob('pitch-detective-idea.mid', new Blob([bytes], { type: 'audio/midi' }));
 }
 
+function downloadCurrentRecording() {
+  if (!lastRecordingBlob) {
+    showError('Stop a listening pass first so the browser can finalize the recording.');
+    return;
+  }
+  downloadBlob(lastRecordingFilename || 'pitch-detective-recording.webm', lastRecordingBlob);
+}
+
+function downloadAnalysisJSON() {
+  const snapshot = buildAnalysisSnapshot();
+  if (!snapshot.notes.length) {
+    showError('Capture a phrase before exporting the trace JSON.');
+    return;
+  }
+  const filename = buildAnalysisFilename();
+  downloadBlob(filename, new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' }));
+}
+
 function copySavedABC(id) {
   const idea = findSavedIdea(id);
   if (!idea?.abc) {
@@ -1562,6 +2734,7 @@ function renderSavedIdeas() {
 
 async function startListening() {
   try {
+    await probeCaptureServer();
     stream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: false,
@@ -1572,17 +2745,36 @@ async function startListening() {
 
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 4096;
-    analyser.smoothingTimeConstant = 0.1;
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.02;
 
     source = audioCtx.createMediaStreamSource(stream);
-    source.connect(analyser);
+    highpass = audioCtx.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.value = 420;
+    highpass.Q.value = 0.6;
+
+    lowpass = audioCtx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 2600;
+    lowpass.Q.value = 0.7;
+
+    source.connect(highpass);
+    highpass.connect(lowpass);
+    lowpass.connect(analyser);
 
     timeDomainBuffer = new Float32Array(analyser.fftSize);
     freqBuffer = new Uint8Array(analyser.frequencyBinCount);
+    floatFreqBuffer = new Float32Array(analyser.frequencyBinCount);
+    resetCaptureState();
+    activeTakeId = buildTakeId();
+    lastRecordingBlob = null;
+    lastRecordingFilename = '';
+    startSessionRecording(stream, activeTakeId);
 
     isListening = true;
     updateListeningUI(true);
+    refreshIdeaUI(true);
     processAudio();
   } catch (err) {
     console.error(err);
@@ -1592,15 +2784,23 @@ async function startListening() {
 
 function stopListening() {
   const now = getNowMs();
+  const takeId = activeTakeId;
+  const recorderWillFinalize = Boolean(mediaRecorder && mediaRecorder.state !== 'inactive');
   isListening = false;
   if (rafId) cancelAnimationFrame(rafId);
+  stopSessionRecording();
   if (source) source.disconnect();
+  if (highpass) highpass.disconnect();
+  if (lowpass) lowpass.disconnect();
   if (stream) stream.getTracks().forEach((track) => track.stop());
   if (audioCtx) audioCtx.close();
   audioCtx = null;
   analyser = null;
   source = null;
+  highpass = null;
+  lowpass = null;
   stream = null;
+  floatFreqBuffer = null;
   smoothedFreq = -1;
   finishCapturedNote(now);
   closeCurrentPhrase(now);
@@ -1611,6 +2811,9 @@ function stopListening() {
   setNoteDisplay(null);
   drawIdleViz();
   refreshIdeaUI(true);
+  if (!recorderWillFinalize) {
+    void maybeUploadCurrentTake(takeId);
+  }
 }
 
 function toggleListening() {
@@ -1624,15 +2827,19 @@ function processAudio() {
 
   analyser.getFloatTimeDomainData(timeDomainBuffer);
   analyser.getByteFrequencyData(freqBuffer);
+  analyser.getFloatFrequencyData(floatFreqBuffer);
+  updateInputMeter(computeRms(timeDomainBuffer));
   drawViz(timeDomainBuffer, freqBuffer);
 
-  const rawFreq = detectPitch(timeDomainBuffer, audioCtx.sampleRate);
+  const rawFreq = detectPitch(timeDomainBuffer, floatFreqBuffer, audioCtx.sampleRate);
   const now = getNowMs();
 
   if (rawFreq > 0) {
+    recordVoicedMidiFrame(rawFreq, now);
     smoothedFreq = smoothedFreq < 0 ? rawFreq : (smoothedFreq * (1 - SMOOTH_FACTOR) + rawFreq * SMOOTH_FACTOR);
-    const note = freqToNote(smoothedFreq);
+    const note = stabilizeNoteToClusters(smoothedFreq, now);
     lastDetectedNote = note;
+    updatePitchLockState(note, rawFreq);
     handleStableDetectedNote(note, now);
     clearTimeout(silenceTimer);
     silenceTimer = null;
@@ -1640,10 +2847,11 @@ function processAudio() {
     document.getElementById('note-card').classList.add('active');
     document.getElementById('note-card').classList.remove('idle-state');
     document.getElementById('note-card').classList.add('active-state');
-    setNoteDisplay(note, smoothedFreq);
+    setNoteDisplay(note, midiToFreqValue(note.clusterMidi ?? note.midi));
     refreshIdeaUI();
   } else {
     handleSilence(now);
+    updatePitchLockUI();
     if (!silenceTimer) {
       silenceTimer = setTimeout(() => {
         smoothedFreq = -1;
@@ -1692,7 +2900,70 @@ function setNoteDisplay(note, freq) {
   else needle.className = 'tuner-needle flat';
 }
 
-function updateScaleDisplay(scaleResult, currentNote) {
+function updateInputMeter(rms = 0) {
+  currentInputRms = rms;
+  const fill = document.getElementById('input-meter-fill');
+  const status = document.getElementById('input-meter-status');
+  const normalized = Math.max(0, Math.min(1, rms / 0.03));
+  fill.style.width = `${normalized * 100}%`;
+
+  if (!isListening && rms <= 0.0005) {
+    status.textContent = 'Idle';
+    status.style.color = 'var(--subtext)';
+    return;
+  }
+
+  if (rms < INPUT_TOO_QUIET_THRESHOLD) {
+    status.textContent = 'Too quiet';
+    status.style.color = 'var(--subtext)';
+    return;
+  }
+
+  if (rms < INPUT_GOOD_THRESHOLD) {
+    status.textContent = 'Good';
+    status.style.color = 'var(--green)';
+    return;
+  }
+
+  status.textContent = 'Hot';
+  status.style.color = 'var(--yellow)';
+}
+
+function updatePitchLockUI() {
+  const card = document.querySelector('.pitch-lock');
+  const dot = document.getElementById('pitch-lock-dot');
+  const text = document.getElementById('pitch-lock-text');
+
+  dot.className = 'pitch-lock-dot';
+  card.className = 'pitch-lock searching';
+  if (!isListening || !lastDetectedNote) {
+    text.textContent = 'Not locked';
+    return;
+  }
+
+  if (currentInputRms < INPUT_TOO_QUIET_THRESHOLD) {
+    text.textContent = 'Too quiet to lock';
+    return;
+  }
+
+  if (pitchLockFrames >= 5) {
+    card.className = 'pitch-lock locked';
+    dot.classList.add('good');
+    text.textContent = 'Locked';
+    return;
+  }
+
+  if (pitchLockFrames >= 2) {
+    card.className = 'pitch-lock tracking';
+    dot.classList.add('warn');
+    text.textContent = 'Tracking';
+    return;
+  }
+
+  text.textContent = 'Searching';
+}
+
+function updateScaleDisplay(scaleResult, currentNote, scaleTracking) {
   const scaleCard = document.getElementById('scale-card');
   scaleCard.classList.remove('idle-state');
   scaleCard.classList.add('active-state');
@@ -1700,7 +2971,12 @@ function updateScaleDisplay(scaleResult, currentNote) {
   if (!scaleResult) {
     document.getElementById('scale-root').textContent = '?';
     document.getElementById('scale-type').textContent = ' — listening…';
-    document.getElementById('scale-scope').textContent = 'Need at least a short phrase before degree-first mode can lock onto a scale.';
+    if (scaleTracking?.rawCandidate) {
+      document.getElementById('scale-scope').textContent =
+        `Listening for a stable scale candidate (${scaleTracking.pendingFrames}/${scaleTracking.neededFrames}).`;
+    } else {
+      document.getElementById('scale-scope').textContent = 'Need at least a short phrase before degree-first mode can lock onto a scale.';
+    }
     document.getElementById('degree-badge').textContent = '—';
     document.getElementById('degree-name').textContent = 'Keep whistling';
     document.getElementById('degree-roman').textContent = 'No phrase context yet';
@@ -1709,10 +2985,15 @@ function updateScaleDisplay(scaleResult, currentNote) {
     return;
   }
 
-  document.getElementById('scale-root').textContent = NOTE_NAMES[scaleResult.root];
-  document.getElementById('scale-type').textContent = ` ${scaleResult.scale}`;
+  document.getElementById('scale-root').textContent = `≈${NOTE_NAMES[scaleResult.root]}`;
+  document.getElementById('scale-type').textContent = ` ${formatScaleFamily(scaleResult)}`;
+  const lockLabel = scaleTracking?.state === 'committed'
+    ? 'Scale locked'
+    : scaleTracking?.state === 'holding'
+      ? 'Holding previous lock'
+      : 'Candidate only';
   document.getElementById('scale-scope').textContent =
-    `${scaleResult.scopeLabel} · ${scaleResult.noteCount} notes · ${scaleResult.phraseCount} phrase${scaleResult.phraseCount === 1 ? '' : 's'}`;
+    `${lockLabel} · ${formatScaleCenterHint(scaleResult)} · ${scaleResult.scopeLabel} · ${scaleResult.noteCount} notes · ${scaleResult.phraseCount} phrase${scaleResult.phraseCount === 1 ? '' : 's'}`;
   document.getElementById('confidence').textContent = `${scaleResult.confidence}%`;
 
   if (currentNote) {
@@ -1778,6 +3059,7 @@ function renderPianoRoll(scaleResult, now = getNowMs()) {
   const grid = document.getElementById('piano-roll-grid');
   const roll = document.getElementById('piano-roll');
   const notes = normalizeCapturedNotes();
+  const phraseData = getNormalizedPhraseData(notes);
   const height = (ROLL_MAX_MIDI - ROLL_MIN_MIDI + 1) * ROLL_ROW_PX;
   grid.style.height = `${height}px`;
 
@@ -1788,13 +3070,12 @@ function renderPianoRoll(scaleResult, now = getNowMs()) {
     return;
   }
 
-  const nonEmptyPhrases = getNonEmptyPhrases();
   const elapsedEnd = Math.max(...notes.map((note) => note.endTime), now);
   const totalMs = Math.max(2600, elapsedEnd - captureOriginMs + 900);
   const width = Math.max(roll.clientWidth - 6, totalMs * ROLL_PX_PER_MS);
   grid.style.width = `${width}px`;
 
-  const phraseBands = nonEmptyPhrases.map((phrase) => {
+  const phraseBands = phraseData.map((phrase) => {
     const left = Math.max(0, (phrase.startTime - captureOriginMs) * ROLL_PX_PER_MS);
     const bandWidth = Math.max(6, (phrase.endTime - phrase.startTime) * ROLL_PX_PER_MS);
     return `<div class="phrase-band" style="left:${left}px;width:${bandWidth}px"></div>`;
@@ -1819,9 +3100,9 @@ function renderPianoRoll(scaleResult, now = getNowMs()) {
   grid.innerHTML = `${phraseBands}${notesHtml}<div class="roll-playhead" style="left:${playheadLeft}px"></div>`;
 
   document.getElementById('roll-meta').textContent =
-    `${notes.length} notes · ${nonEmptyPhrases.length} phrase${nonEmptyPhrases.length === 1 ? '' : 's'}`;
+    `${notes.length} notes · ${phraseData.length} phrase${phraseData.length === 1 ? '' : 's'}`;
   document.getElementById('roll-mode').textContent =
-    scaleResult ? `Degrees in ${formatScaleName(scaleResult)}` : 'Absolute fallback';
+    scaleResult ? `Degrees in ${formatScaleFamily(scaleResult)}` : 'Absolute fallback';
 
   if (isListening) {
     roll.scrollLeft = Math.max(0, grid.scrollWidth - roll.clientWidth);
@@ -1829,11 +3110,12 @@ function renderPianoRoll(scaleResult, now = getNowMs()) {
 }
 
 function renderPhraseSummary(scaleResult) {
-  const phrasesWithNotes = getNonEmptyPhrases();
+  const notes = normalizeCapturedNotes();
+  const phrasesWithNotes = getNormalizedPhraseData(notes);
   const currentPhrase = phrasesWithNotes.find((phrase) => phrase.id === currentPhraseId);
   const summary = document.getElementById('phrase-summary');
 
-  if (!recordedNotes.length) {
+  if (!notes.length) {
     summary.textContent = 'Start listening and whistle a phrase. Silence and stop/start become phrase boundaries.';
     return;
   }
@@ -1841,7 +3123,7 @@ function renderPhraseSummary(scaleResult) {
   if (scaleResult) {
     const phraseLabel = currentPhrase ? `You are in phrase ${currentPhrase.index + 1}.` : 'The current take is segmented into phrases.';
     summary.textContent =
-      `${phraseLabel} Degree-first mode is anchored to ${formatScaleName(scaleResult)} using ${scaleResult.scopeLabel.toLowerCase()} as context.`;
+      `${phraseLabel} Degree-first mode is following ${formatScaleFamily(scaleResult)} using ${scaleResult.scopeLabel.toLowerCase()} as context. ${formatScaleCenterHint(scaleResult)} is only a rough reference.`;
     return;
   }
 
@@ -1852,13 +3134,16 @@ function renderPhraseSummary(scaleResult) {
 function renderExportPreview(scaleResult) {
   const preview = document.getElementById('export-preview');
   const snapshot = buildIdeaSnapshot(scaleResult);
+  const midiClusters = computeMidiClusters(voicedMidiFrames, 0.95, 6);
   if (!snapshot.notes.length) {
     preview.textContent = 'ABC export will appear here once you capture a few notes.';
     return;
   }
 
   const lines = [
-    `Scale: ${scaleResult ? formatScaleName(scaleResult) : 'Unresolved'}`,
+    `Scale family: ${scaleResult ? formatScaleFamily(scaleResult) : 'Unresolved'}`,
+    `${scaleResult ? `Center hint: ${formatScaleCenterHint(scaleResult)}` : 'Center hint: unresolved'}`,
+    `Clusters: ${midiClusters.length ? midiClusters.map((cluster) => `${cluster.centerMidi.toFixed(2)} (${cluster.note})`).join(', ') : 'warming up'}`,
     `Degree sketch: ${snapshot.degreeSketch || 'Not enough context yet'}`,
     '',
     snapshot.abc || 'Not enough notes for ABC yet.',
@@ -1870,8 +3155,10 @@ function refreshIdeaUI(force = false) {
   const now = getNowMs();
   if (!force && now - lastIdeaRenderAt < 120) return;
   lastIdeaRenderAt = now;
-  const scaleResult = detectScale();
-  updateScaleDisplay(scaleResult, lastDetectedNote);
+  const scaleTracking = updateScaleTracking(detectScale());
+  const scaleResult = scaleTracking.displayScale;
+  updatePitchLockUI();
+  updateScaleDisplay(scaleResult, lastDetectedNote, scaleTracking);
   renderPhraseSummary(scaleResult);
   renderPianoRoll(scaleResult, now);
   renderExportPreview(scaleResult);
@@ -1879,9 +3166,10 @@ function refreshIdeaUI(force = false) {
 
 function clearHistory() {
   resetCaptureState();
+  updateInputMeter(0);
   refreshIdeaUI(true);
   document.getElementById('scale-root').textContent = '?';
-  document.getElementById('scale-type').textContent = ' Major';
+  document.getElementById('scale-type').textContent = ' Scale family';
   document.getElementById('scale-scope').textContent = 'Phrase-aware scale inference will appear here.';
   document.getElementById('degree-badge').textContent = '—';
   document.getElementById('degree-name').textContent = '—';
@@ -1913,6 +3201,7 @@ function updateListeningUI(active) {
     document.getElementById('note-card').classList.remove('active-state');
     document.getElementById('scale-card').classList.add('idle-state');
     document.getElementById('scale-card').classList.remove('active-state');
+    updateInputMeter(0);
   }
 }
 
@@ -2050,6 +3339,13 @@ renderRollLabels();
 renderSavedIdeas();
 refreshIdeaUI(true);
 document.getElementById('silence-msg').style.opacity = '1';
+probeCaptureServer().then((available) => {
+  if (available) {
+    updateRecordingStatus(
+      'Local capture server connected. Stopped takes will auto-upload into captures/. Manual download buttons still work.'
+    );
+  }
+});
 </script>
 </body>
 </html>

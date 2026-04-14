@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whistle Reader</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0c0c0f; --surface: #16161b; --surface2: #1e1e25;
+    --border: #2a2a35; --text: #e8e8ed; --text-dim: #6e6e7a;
+    --accent: #5b8def; --green: #4ade80; --amber: #fbbf24; --red: #f87171;
+    --degree-1: #5b8def; --degree-2: #8b5cf6; --degree-3: #ec4899;
+    --degree-4: #f97316; --degree-5: #4ade80; --degree-6: #fbbf24; --degree-7: #f87171;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+  .app { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+  header { margin-bottom: 48px; }
+  header h1 { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 28px; letter-spacing: -0.5px; margin-bottom: 8px; }
+  header p { color: var(--text-dim); font-size: 15px; line-height: 1.5; }
+  .controls { display: flex; gap: 12px; margin-bottom: 32px; align-items: center; flex-wrap: wrap; }
+  button { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 8px; }
+  button:hover { background: var(--surface2); border-color: var(--accent); }
+  button:disabled { opacity: 0.4; cursor: default; }
+  button.recording { background: #f8717122; border-color: var(--red); color: var(--red); animation: pulse-border 1.5s ease-in-out infinite; }
+  @keyframes pulse-border { 0%,100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 4px #f8717122; } }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: #4a7ddf; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+  .key-display { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-dim); padding: 10px 16px; background: var(--surface); border-radius: 8px; border: 1px solid var(--border); margin-left: auto; }
+  .key-display span { color: var(--accent); font-weight: 600; }
+  .key-display .low-conf { color: var(--amber); }
+  .section-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+  .contour-section { margin-bottom: 32px; }
+  .contour-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; overflow: hidden; }
+  #contourCanvas { width: 100%; height: 220px; display: block; }
+  .degree-section { margin-bottom: 32px; }
+  .current-degree { display: flex; align-items: center; gap: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; min-height: 100px; }
+  .degree-number { font-family: 'JetBrains Mono', monospace; font-size: 64px; font-weight: 700; line-height: 1; min-width: 80px; text-align: center; transition: color 0.1s; }
+  .degree-info { flex: 1; }
+  .degree-name { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+  .degree-freq { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-dim); }
+  .degree-cents { font-family: 'JetBrains Mono', monospace; font-size: 12px; margin-top: 4px; }
+  .cents-sharp { color: var(--amber); } .cents-flat { color: var(--accent); } .cents-good { color: var(--green); }
+  .sequence-section { margin-bottom: 32px; }
+  .note-sequence { display: flex; flex-wrap: wrap; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; min-height: 70px; align-items: center; align-content: flex-start; }
+  .note-chip { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--surface2); border: 1px solid var(--border); transition: color 0.3s, border-color 0.3s; }
+  .note-chip.new { animation: chip-in 0.15s ease-out; }
+  @keyframes chip-in { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .note-chip.rest { color: var(--text-dim); font-size: 11px; width: 20px; background: transparent; border: 1px dashed var(--border); }
+  .chroma-section { margin-bottom: 32px; }
+  .chroma-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .chroma-bar { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .chroma-fill { width: 100%; height: 60px; border-radius: 4px; background: var(--surface2); position: relative; overflow: hidden; }
+  .chroma-fill-inner { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 4px; transition: height 0.2s; }
+  .chroma-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); font-weight: 500; }
+  .chroma-label.in-scale { color: var(--accent); font-weight: 700; }
+  .hint { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-dim); text-align: center; padding: 12px; background: var(--surface); border: 1px dashed var(--border); border-radius: 8px; margin-bottom: 32px; display: none; }
+  .hint.visible { display: block; }
+  @media (max-width: 600px) {
+    .app { padding: 24px 16px; } header h1 { font-size: 22px; }
+    .degree-number { font-size: 48px; min-width: 60px; }
+    .controls { gap: 8px; } .key-display { margin-left: 0; width: 100%; text-align: center; }
+    .chroma-grid { grid-template-columns: repeat(6, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>whistle → scale degree</h1>
+    <p>Whistle a melody. The app clusters your pitches, infers the key, and shows scale degrees — even with imperfect intonation.</p>
+  </header>
+  <div class="controls">
+    <button id="startBtn" class="primary" onclick="toggleRecording()">start listening</button>
+    <button onclick="clearAll()">clear</button>
+    <button id="downloadBtn" onclick="downloadAudio()" disabled>download wav</button>
+    <div class="key-display" id="keyDisplay">key: <span>—</span></div>
+  </div>
+  <div class="hint" id="hint"></div>
+  <div class="contour-section">
+    <div class="section-label">pitch contour</div>
+    <div class="contour-wrap"><canvas id="contourCanvas"></canvas></div>
+  </div>
+  <div class="degree-section">
+    <div class="section-label">current</div>
+    <div class="current-degree">
+      <div class="degree-number" id="degreeNumber">—</div>
+      <div class="degree-info">
+        <div class="degree-name" id="degreeName">waiting...</div>
+        <div class="degree-freq" id="degreeFreq"></div>
+        <div class="degree-cents" id="degreeCents"></div>
+      </div>
+    </div>
+  </div>
+  <div class="sequence-section">
+    <div class="section-label">sequence</div>
+    <div class="note-sequence" id="noteSequence"></div>
+  </div>
+  <div class="chroma-section">
+    <div class="section-label">detected pitch centers</div>
+    <div class="chroma-grid" id="chromaGrid"></div>
+  </div>
+</div>
+<script>
+const NOTE_NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const DEGREE_NAMES = ['tonic','supertonic','mediant','subdominant','dominant','submediant','leading tone'];
+const DEGREE_SOLFEGE = ['do','re','mi','fa','sol','la','ti'];
+const MAJOR_SCALE = [0,2,4,5,7,9,11];
+const MINOR_SCALE = [0,2,3,5,7,8,10];
+const COLORS = ['#5b8def','#8b5cf6','#ec4899','#f97316','#4ade80','#fbbf24','#f87171'];
+
+// ── State ──
+let audioCtx, analyser, mediaStream, animFrame;
+let isRecording = false;
+let buffer, bufferSize = 2048;
+let mediaRecorder = null, audioChunks = [], recordedBlob = null;
+
+// Note stabilization
+const SMOOTH_ALPHA = 0.25;
+const MIN_NOTE_DURATION_MS = 90;
+const PITCH_CHANGE_THRESHOLD = 0.8;
+const SILENCE_GAP_MS = 200;
+const MAX_PITCH_JUMP = 12;
+
+let currentNoteMidi = null, currentNoteStart = 0;
+let pendingMidi = null, pendingStart = 0;
+let lastRawMidi = null;
+
+// ── NEW: Pitch clustering approach ──
+// Store all stable note observations as (midi, duration) pairs
+let noteObservations = []; // [{midi, duration, isOnset, time}]
+let pitchClusters = [];    // [{center, count, totalDuration}]
+let detectedKey = null;    // {tonic, mode, confidence, scaleMidis}
+
+let noteSequence = [];
+let contourData = [];
+let lastSequenceDegree = null;
+let lastSequenceMidi = null;
+let inSilence = false, silenceStart = 0;
+let afterSilence = true;
+let startTime = 0;
+let displayMinMidi = 60, displayMaxMidi = 80;
+let keyUpdateCounter = 0;
+
+// ── YIN pitch detection ──
+function detectPitch(buf, sampleRate) {
+  const SIZE = buf.length;
+  const MAX_LAG = Math.floor(sampleRate / 80);
+  const MIN_LAG = Math.floor(sampleRate / 2500);
+  let rms = 0;
+  for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+  rms = Math.sqrt(rms / SIZE);
+  if (rms < 0.008) return -1;
+  const diff = new Float32Array(MAX_LAG);
+  for (let lag = MIN_LAG; lag < MAX_LAG; lag++) {
+    let sum = 0;
+    for (let i = 0; i < SIZE - MAX_LAG; i++) { const d = buf[i] - buf[i+lag]; sum += d*d; }
+    diff[lag] = sum;
+  }
+  const cmnd = new Float32Array(MAX_LAG);
+  cmnd[MIN_LAG] = 1;
+  let rs = diff[MIN_LAG];
+  for (let lag = MIN_LAG+1; lag < MAX_LAG; lag++) { rs += diff[lag]; cmnd[lag] = diff[lag]*(lag-MIN_LAG+1)/rs; }
+  let best = -1;
+  for (let lag = MIN_LAG; lag < MAX_LAG-1; lag++) {
+    if (cmnd[lag] < 0.15) { while (lag+1<MAX_LAG && cmnd[lag+1]<cmnd[lag]) lag++; best=lag; break; }
+  }
+  if (best === -1) { let mv=Infinity; for (let lag=MIN_LAG;lag<MAX_LAG;lag++) if(cmnd[lag]<mv){mv=cmnd[lag];best=lag;} if(mv>0.4) return -1; }
+  if (best>0 && best<MAX_LAG-1) { const a=cmnd[best-1],b=cmnd[best],c=cmnd[best+1],den=a-2*b+c; if(Math.abs(den)>1e-10) best+=0.5*(a-c)/den; }
+  return sampleRate / best;
+}
+
+function freqToMidi(f) { return 69+12*Math.log2(f/440); }
+function midiToFreq(m) { return 440*Math.pow(2,(m-69)/12); }
+
+// ── Pitch clustering ──
+// Instead of a chromatic histogram, cluster raw MIDI values
+function clusterPitches() {
+  if (noteObservations.length < 2) return [];
+
+  // Collect (midi, weight) — onset notes get 3x weight
+  const points = noteObservations.map(o => ({
+    midi: o.midi,
+    weight: o.isOnset ? 3 : 1
+  }));
+
+  // Sort by MIDI
+  points.sort((a, b) => a.midi - b.midi);
+
+  // Agglomerative clustering: merge adjacent points within 1.2 semitones
+  const clusters = [];
+  let cur = { midis: [points[0].midi], weights: [points[0].weight] };
+
+  for (let i = 1; i < points.length; i++) {
+    const wMean = cur.midis.reduce((s,m,j) => s + m*cur.weights[j], 0) / cur.weights.reduce((a,b)=>a+b,0);
+    if (Math.abs(points[i].midi - wMean) < 1.5) {
+      cur.midis.push(points[i].midi);
+      cur.weights.push(points[i].weight);
+    } else {
+      clusters.push(cur);
+      cur = { midis: [points[i].midi], weights: [points[i].weight] };
+    }
+  }
+  clusters.push(cur);
+
+  // Compute weighted center for each cluster
+  return clusters.map(c => {
+    const totalW = c.weights.reduce((a,b)=>a+b,0);
+    const center = c.midis.reduce((s,m,i) => s + m*c.weights[i], 0) / totalW;
+    return { center, count: c.midis.length, totalWeight: totalW };
+  }).filter(c => c.count >= 2); // need at least 2 observations
+}
+
+// ── Key detection from clusters ──
+function detectKeyFromClusters(clusters) {
+  if (clusters.length < 2) return null;
+
+  // Get cluster centers as pitch classes (fractional, not rounded)
+  const centers = clusters.map(c => c.center);
+
+  // Try every possible tonic (each cluster center) and both modes
+  let bestScore = -Infinity;
+  let bestResult = null;
+
+  for (const [scaleIntervals, mode] of [[MAJOR_SCALE, 'major'], [MINOR_SCALE, 'minor']]) {
+    // Try each cluster as each possible scale degree
+    for (let tonicDegree = 0; tonicDegree < 7; tonicDegree++) {
+      for (let ci = 0; ci < centers.length; ci++) {
+        // If cluster ci is scale degree tonicDegree, then tonic MIDI = centers[ci] - scaleIntervals[tonicDegree]
+        const tonicMidi = centers[ci] - scaleIntervals[tonicDegree];
+        const tonicPC = ((tonicMidi % 12) + 12) % 12;
+
+        // Build the scale MIDIs for the octave range we're in
+        // Score: how well do all cluster centers match scale tones?
+        let totalScore = 0;
+        let allMatch = true;
+        const assignments = [];
+
+        for (const cluster of clusters) {
+          // Find the closest scale tone to this cluster center
+          let bestDist = Infinity;
+          let bestDeg = 0;
+
+          for (let d = 0; d < scaleIntervals.length; d++) {
+            // Check multiple octaves
+            for (let oct = -1; oct <= 1; oct++) {
+              const scaleMidi = tonicMidi + scaleIntervals[d] + oct * 12;
+              const dist = Math.abs(cluster.center - scaleMidi);
+              if (dist < bestDist) {
+                bestDist = dist;
+                bestDeg = d;
+              }
+            }
+          }
+
+          if (bestDist > 0.75) {
+            // This cluster doesn't fit the scale well
+            allMatch = false;
+            totalScore -= bestDist * cluster.totalWeight;
+          } else {
+            // Good fit — score by closeness × weight
+            totalScore += (1 - bestDist) * cluster.totalWeight;
+          }
+
+          assignments.push({ cluster, degree: bestDeg + 1, dist: bestDist });
+        }
+
+        // Bonus for tonic heuristics
+        // First/last notes of the melody
+        if (noteObservations.length > 0) {
+          const firstMidi = noteObservations[0].midi;
+          const lastMidi = noteObservations[noteObservations.length - 1].midi;
+
+          // Check if first note is tonic (1), third (3), or fifth (5)
+          for (const degIdx of [0, 2, 4]) {
+            for (let oct = -1; oct <= 1; oct++) {
+              const scaleMidi = tonicMidi + scaleIntervals[degIdx] + oct * 12;
+              if (Math.abs(firstMidi - scaleMidi) < 1) {
+                totalScore += 2;
+              }
+            }
+          }
+
+          // Last note bonus — strongly favors tonic
+          for (let oct = -1; oct <= 1; oct++) {
+            const tonicTarget = tonicMidi + oct * 12;
+            if (Math.abs(lastMidi - tonicTarget) < 1) {
+              totalScore += 5;
+            }
+          }
+        }
+
+        if (totalScore > bestScore) {
+          bestScore = totalScore;
+          bestResult = {
+            tonic: tonicPC,
+            tonicMidi: tonicMidi,
+            mode,
+            confidence: totalScore,
+            assignments,
+            scaleIntervals
+          };
+        }
+      }
+    }
+  }
+
+  if (!bestResult) return null;
+
+  // Normalize confidence to 0-1 range
+  const maxPossible = clusters.reduce((s, c) => s + c.totalWeight, 0) + 7;
+  bestResult.confidence = Math.min(1, Math.max(0, bestResult.confidence / maxPossible));
+
+  return bestResult;
+}
+
+// ── Scale degree from key ──
+function getScaleDegree(midi, key) {
+  const scaleIntervals = key.mode === 'major' ? MAJOR_SCALE : MINOR_SCALE;
+  let bestDeg = 0, bestDist = Infinity;
+
+  for (let d = 0; d < scaleIntervals.length; d++) {
+    for (let oct = -2; oct <= 2; oct++) {
+      const target = key.tonicMidi + scaleIntervals[d] + oct * 12;
+      const dist = Math.abs(midi - target);
+      if (dist < bestDist) { bestDist = dist; bestDeg = d; }
+    }
+  }
+
+  // Compute cents deviation
+  const idealInterval = scaleIntervals[bestDeg];
+  let closestIdeal = key.tonicMidi + idealInterval;
+  // Find the right octave
+  while (closestIdeal < midi - 6) closestIdeal += 12;
+  while (closestIdeal > midi + 6) closestIdeal -= 12;
+  const cents = (midi - closestIdeal) * 100;
+
+  const idealPC = Math.round(key.tonic + idealInterval) % 12;
+
+  return {
+    degree: bestDeg + 1,
+    cents: cents,
+    noteName: NOTE_NAMES[(idealPC + 12) % 12],
+    dist: bestDist
+  };
+}
+
+// ── Note stabilization ──
+function processNoteStability(midi, now) {
+  if (lastRawMidi !== null && Math.abs(midi - lastRawMidi) > MAX_PITCH_JUMP) return null;
+  lastRawMidi = midi;
+  if (currentNoteMidi === null) { currentNoteMidi = midi; currentNoteStart = now; pendingMidi = null; return null; }
+  const dist = Math.abs(midi - currentNoteMidi);
+  if (dist < PITCH_CHANGE_THRESHOLD) {
+    currentNoteMidi += (midi - currentNoteMidi) * SMOOTH_ALPHA * 0.3;
+    pendingMidi = null;
+    return { midi: currentNoteMidi, isNew: false };
+  }
+  if (pendingMidi === null || Math.abs(midi - pendingMidi) > PITCH_CHANGE_THRESHOLD) {
+    pendingMidi = midi; pendingStart = now;
+    return { midi: currentNoteMidi, isNew: false };
+  }
+  pendingMidi += (midi - pendingMidi) * SMOOTH_ALPHA;
+  if (now - pendingStart >= MIN_NOTE_DURATION_MS) {
+    currentNoteMidi = pendingMidi; currentNoteStart = now; pendingMidi = null;
+    return { midi: currentNoteMidi, isNew: true };
+  }
+  return { midi: currentNoteMidi, isNew: false };
+}
+
+// ── Reassign all degrees when key changes ──
+function reassignDegrees() {
+  if (!detectedKey) return;
+  let changed = false;
+  for (const n of noteSequence) {
+    if (n.degree === 0) continue;
+    const info = getScaleDegree(n.midi, detectedKey);
+    if (info.degree !== n.degree) { n.degree = info.degree; changed = true; }
+  }
+  for (const c of contourData) {
+    if (c.midi > 0) { c.degree = getScaleDegree(c.midi, detectedKey).degree; }
+  }
+  if (changed) renderSequence(false);
+}
+
+// ── UI ──
+function updateCurrentDegree(freq, midi, info) {
+  const n = document.getElementById('degreeNumber');
+  const nm = document.getElementById('degreeName');
+  const fr = document.getElementById('degreeFreq');
+  const ce = document.getElementById('degreeCents');
+  if (!info) { n.textContent='—'; n.style.color='var(--text-dim)'; nm.textContent='waiting...'; fr.textContent=''; ce.textContent=''; return; }
+  const d = info.degree;
+  n.textContent = d+'\u0302'; n.style.color = COLORS[d-1];
+  nm.textContent = `${info.noteName} — ${DEGREE_SOLFEGE[d-1]} (${DEGREE_NAMES[d-1]})`;
+  fr.textContent = `${freq.toFixed(1)} Hz  ·  MIDI ${midi.toFixed(1)}`;
+  const c = Math.round(info.cents);
+  if (Math.abs(c)<10) { ce.textContent='● in tune'; ce.className='degree-cents cents-good'; }
+  else if (c>0) { ce.textContent=`▲ ${c}¢ sharp`; ce.className='degree-cents cents-sharp'; }
+  else { ce.textContent=`▼ ${Math.abs(c)}¢ flat`; ce.className='degree-cents cents-flat'; }
+}
+
+function addToSequence(midi, degree, now) {
+  if (inSilence && noteSequence.length > 0 && now - silenceStart > SILENCE_GAP_MS) {
+    noteSequence.push({ midi:0, degree:0, time:now });
+  }
+  if (degree !== lastSequenceDegree || Math.abs(midi-(lastSequenceMidi||0)) > 1.5) {
+    noteSequence.push({ midi, degree, time:now });
+    lastSequenceDegree = degree;
+    lastSequenceMidi = midi;
+    inSilence = false;
+    renderSequence(true);
+  }
+}
+
+function renderSequence(animateNew) {
+  const el = document.getElementById('noteSequence');
+  const recent = noteSequence.slice(-80);
+  el.innerHTML = recent.map((n,i) => {
+    if (n.degree===0) return `<div class="note-chip rest">·</div>`;
+    const c = COLORS[n.degree-1];
+    const isLast = animateNew && i===recent.length-1;
+    return `<div class="note-chip ${isLast?'new':''}" style="color:${c};border-color:${c}33">${n.degree}\u0302</div>`;
+  }).join('');
+}
+
+function updateHint() {
+  const el = document.getElementById('hint');
+  if (!isRecording) { el.classList.remove('visible'); return; }
+  const nc = pitchClusters.length;
+  if (noteObservations.length === 0) {
+    el.textContent = '♪ start whistling...'; el.classList.add('visible');
+  } else if (nc < 3) {
+    el.textContent = `${nc} distinct pitch${nc!==1?'es':''} detected — keep whistling for key detection`;
+    el.classList.add('visible');
+  } else if (detectedKey && detectedKey.confidence < 0.4) {
+    el.textContent = `key settling... (${Math.round(detectedKey.confidence*100)}% confidence)`;
+    el.classList.add('visible');
+  } else {
+    el.classList.remove('visible');
+  }
+}
+
+function updateKeyDisplay() {
+  const el = document.getElementById('keyDisplay');
+  if (!detectedKey) { el.innerHTML = 'key: <span>—</span>'; return; }
+  const name = NOTE_NAMES[Math.round(detectedKey.tonic) % 12];
+  const mode = detectedKey.mode;
+  const conf = Math.round(detectedKey.confidence*100);
+  const uncertain = detectedKey.confidence < 0.4 || pitchClusters.length < 3;
+  el.innerHTML = `key: <span class="${uncertain?'low-conf':''}">${name} ${mode}${uncertain?'?':''}</span> <span style="color:var(--text-dim)">(${conf}%)</span>`;
+}
+
+function updateChromaGrid() {
+  const el = document.getElementById('chromaGrid');
+  if (pitchClusters.length === 0) {
+    // Show empty 12-slot grid
+    let html = '';
+    for (let i = 0; i < 12; i++) {
+      html += `<div class="chroma-bar"><div class="chroma-fill"><div class="chroma-fill-inner" style="height:0%"></div></div><div class="chroma-label">${NOTE_NAMES[i]}</div></div>`;
+    }
+    el.innerHTML = html;
+    return;
+  }
+
+  // Show clusters on the 12-slot grid by their nearest pitch class
+  const max = Math.max(...pitchClusters.map(c=>c.totalWeight), 0.001);
+  const clusterByPC = {};
+  const scaleNotes = new Set();
+
+  if (detectedKey) {
+    const si = detectedKey.mode === 'major' ? MAJOR_SCALE : MINOR_SCALE;
+    si.forEach(s => scaleNotes.add(Math.round(detectedKey.tonic + s) % 12));
+  }
+
+  for (const c of pitchClusters) {
+    const pc = ((Math.round(c.center) % 12) + 12) % 12;
+    if (!clusterByPC[pc] || c.totalWeight > clusterByPC[pc].totalWeight) {
+      clusterByPC[pc] = c;
+    }
+  }
+
+  let html = '';
+  for (let i = 0; i < 12; i++) {
+    const c = clusterByPC[i];
+    const pct = c ? (c.totalWeight / max) * 100 : 0;
+    const inS = scaleNotes.has(i);
+    const bg = c ? (inS ? 'background:#5b8def;opacity:0.85' : 'background:#6e6e7a;opacity:0.5') : 'background:#6e6e7a;opacity:0.15';
+    html += `<div class="chroma-bar"><div class="chroma-fill"><div class="chroma-fill-inner" style="height:${pct}%;${bg}"></div></div><div class="chroma-label ${inS?'in-scale':''}">${NOTE_NAMES[i]}</div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ── Contour ──
+function drawContour() {
+  const canvas = document.getElementById('contourCanvas');
+  const dpr = window.devicePixelRatio||1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width*dpr; canvas.height = rect.height*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const W=rect.width, H=rect.height, PL=36, PT=8, PB=8;
+  const DH=H-PT-PB, DW=W-PL;
+  ctx.clearRect(0,0,W,H);
+  if (contourData.length<2) return;
+  const now = performance.now();
+  const winMs = 10000;
+  const recent = contourData.filter(d => now-d.time < winMs);
+  if (recent.length<2) return;
+  const midis = recent.map(d=>d.midi).filter(m=>m>0);
+  if (midis.length===0) return;
+  let tMin=Math.min(...midis)-3, tMax=Math.max(...midis)+3;
+  if (tMax-tMin<10) { const c=(tMax+tMin)/2; tMin=c-5; tMax=c+5; }
+  displayMinMidi += (tMin-displayMinMidi)*0.05;
+  displayMaxMidi += (tMax-displayMaxMidi)*0.05;
+  const minM=displayMinMidi, maxM=displayMaxMidi;
+  const toY = m => PT+DH-((m-minM)/(maxM-minM))*DH;
+  const toX = t => PL+((t-(now-winMs))/winMs)*DW;
+
+  // Scale degree lines from cluster-based key
+  if (detectedKey) {
+    const si = detectedKey.mode === 'major' ? MAJOR_SCALE : MINOR_SCALE;
+    ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.font='500 11px JetBrains Mono';
+    for (let oct=-2; oct<=2; oct++) {
+      for (let d=0; d<si.length; d++) {
+        const midi = detectedKey.tonicMidi + si[d] + oct*12;
+        if (midi<minM-1||midi>maxM+1) continue;
+        const y = toY(midi);
+        if (y<PT||y>H-PB) continue;
+        ctx.strokeStyle = d===0?'#ffffff18':'#ffffff0a';
+        ctx.lineWidth = d===0?1.5:1;
+        ctx.setLineDash(d===0?[]:[4,4]);
+        ctx.beginPath(); ctx.moveTo(PL,y); ctx.lineTo(W,y); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = COLORS[d]+'aa';
+        ctx.fillText(`${d+1}\u0302`, PL-6, y);
+      }
+    }
+  }
+
+  ctx.lineWidth=3; ctx.lineJoin='round'; ctx.lineCap='round';
+  let px=null,py=null;
+  for (const d of recent) {
+    if (d.midi<=0) { px=null; continue; }
+    const x=toX(d.time), y=toY(d.midi);
+    if (px!==null) {
+      const col = d.degree?COLORS[d.degree-1]:'#888';
+      ctx.shadowColor=col; ctx.shadowBlur=6; ctx.strokeStyle=col;
+      ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y); ctx.stroke();
+      ctx.shadowBlur=0;
+    }
+    px=x; py=y;
+  }
+}
+
+// ── Main loop ──
+function processAudio() {
+  if (!isRecording) return;
+  analyser.getFloatTimeDomainData(buffer);
+  const freq = detectPitch(buffer, audioCtx.sampleRate);
+  const now = performance.now();
+
+  if (freq > 0) {
+    const rawMidi = freqToMidi(freq);
+    const noteResult = processNoteStability(rawMidi, now);
+
+    if (noteResult) {
+      const midi = noteResult.midi;
+
+      // Record observation
+      noteObservations.push({
+        midi, isOnset: noteResult.isNew, time: now
+      });
+
+      // Update clusters and key periodically or on new notes
+      keyUpdateCounter++;
+      if (noteResult.isNew || keyUpdateCounter % 15 === 0) {
+        pitchClusters = clusterPitches();
+        const newKey = detectKeyFromClusters(pitchClusters);
+
+        if (newKey) {
+          const keyChanged = !detectedKey ||
+            Math.round(newKey.tonic) !== Math.round(detectedKey.tonic) ||
+            newKey.mode !== detectedKey.mode;
+          detectedKey = newKey;
+          if (keyChanged) reassignDegrees();
+        }
+        updateKeyDisplay();
+        updateHint();
+      }
+
+      let degreeInfo = null;
+      if (detectedKey && pitchClusters.length >= 2) {
+        degreeInfo = getScaleDegree(midi, detectedKey);
+        if (noteResult.isNew || noteSequence.length === 0) {
+          addToSequence(midi, degreeInfo.degree, now);
+        }
+        contourData.push({ time: now, midi, degree: degreeInfo.degree });
+      } else {
+        contourData.push({ time: now, midi, degree: null });
+      }
+
+      updateCurrentDegree(midiToFreq(midi), midi, degreeInfo);
+      inSilence = false;
+    }
+  } else {
+    if (!inSilence) { inSilence = true; silenceStart = now; afterSilence = true; }
+    if (now - silenceStart > 150) { currentNoteMidi = null; pendingMidi = null; lastRawMidi = null; }
+    contourData.push({ time: now, midi: 0, degree: null });
+    if (now - silenceStart > 300) updateCurrentDegree(0, 0, null);
+  }
+
+  if (contourData.length > 3000) contourData = contourData.slice(-2000);
+  updateChromaGrid();
+  drawContour();
+  animFrame = requestAnimationFrame(processAudio);
+}
+
+// ── Audio recording ──
+function startAudioRecording(stream) {
+  audioChunks = [];
+  try { mediaRecorder = new MediaRecorder(stream, {mimeType:'audio/webm;codecs=opus'}); }
+  catch(e) { try { mediaRecorder = new MediaRecorder(stream); } catch(e2) { return; } }
+  mediaRecorder.ondataavailable = e => { if(e.data.size>0) audioChunks.push(e.data); };
+  mediaRecorder.onstop = () => { recordedBlob = new Blob(audioChunks, {type:mediaRecorder.mimeType||'audio/webm'}); document.getElementById('downloadBtn').disabled=false; };
+  mediaRecorder.start(100);
+}
+function stopAudioRecording() { if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop(); }
+
+async function downloadAudio() {
+  if (!recordedBlob) return;
+  try {
+    const ab = await recordedBlob.arrayBuffer();
+    const tc = new OfflineAudioContext(1,1,44100);
+    const decoded = await tc.decodeAudioData(ab);
+    const wc = new OfflineAudioContext(1,decoded.length,decoded.sampleRate);
+    const src = wc.createBufferSource(); src.buffer=decoded; src.connect(wc.destination); src.start();
+    const rendered = await wc.startRendering();
+    const wavBlob = bufToWav(rendered);
+    const url = URL.createObjectURL(wavBlob);
+    const a = document.createElement('a'); a.href=url;
+    a.download=`whistle-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.wav`;
+    a.click(); URL.revokeObjectURL(url);
+  } catch(e) {
+    const url = URL.createObjectURL(recordedBlob);
+    const a = document.createElement('a'); a.href=url;
+    a.download=`whistle-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.webm`;
+    a.click(); URL.revokeObjectURL(url);
+  }
+}
+
+function bufToWav(buf) {
+  const sr=buf.sampleRate, data=buf.getChannelData(0), dl=data.length*2, tl=44+dl;
+  const wav=new ArrayBuffer(tl), v=new DataView(wav);
+  function ws(o,s){for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));}
+  ws(0,'RIFF'); v.setUint32(4,tl-8,true); ws(8,'WAVE'); ws(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true);
+  v.setUint16(34,16,true); ws(36,'data'); v.setUint32(40,dl,true);
+  let o=44; for(let i=0;i<data.length;i++){const s=Math.max(-1,Math.min(1,data[i])); v.setInt16(o,s<0?s*0x8000:s*0x7FFF,true); o+=2;}
+  return new Blob([wav],{type:'audio/wav'});
+}
+
+// ── Controls ──
+async function toggleRecording() {
+  if (isRecording) { stopRecording(); return; }
+  try {
+    audioCtx = new AudioContext();
+    mediaStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const source = audioCtx.createMediaStreamSource(mediaStream);
+    analyser = audioCtx.createAnalyser(); analyser.fftSize = bufferSize;
+    buffer = new Float32Array(bufferSize); source.connect(analyser);
+    startAudioRecording(mediaStream);
+    isRecording = true; startTime = performance.now();
+    document.getElementById('startBtn').classList.add('recording');
+    document.getElementById('startBtn').innerHTML = '<span class="dot"></span> stop listening';
+    document.getElementById('downloadBtn').disabled = true;
+    updateHint(); processAudio();
+  } catch(e) { console.error('Mic error:',e); alert('Could not access microphone.'); }
+}
+
+function stopRecording() {
+  isRecording = false;
+  if(animFrame) cancelAnimationFrame(animFrame);
+  stopAudioRecording();
+  if(mediaStream) mediaStream.getTracks().forEach(t=>t.stop());
+  if(audioCtx) audioCtx.close();
+  document.getElementById('startBtn').classList.remove('recording');
+  document.getElementById('startBtn').innerHTML = 'start listening';
+  updateHint();
+}
+
+function clearAll() {
+  noteObservations=[]; pitchClusters=[]; detectedKey=null;
+  noteSequence=[]; contourData=[];
+  lastSequenceDegree=null; lastSequenceMidi=null;
+  currentNoteMidi=null; pendingMidi=null; lastRawMidi=null;
+  inSilence=false; afterSilence=true;
+  displayMinMidi=60; displayMaxMidi=80; keyUpdateCounter=0;
+  recordedBlob=null; audioChunks=[];
+  updateKeyDisplay(); updateHint(); updateCurrentDegree(0,0,null);
+  document.getElementById('noteSequence').innerHTML='';
+  document.getElementById('downloadBtn').disabled=true;
+  updateChromaGrid();
+  const c=document.getElementById('contourCanvas').getContext('2d');
+  c.clearRect(0,0,c.canvas.width,c.canvas.height);
+}
+
+updateChromaGrid();
+window.addEventListener('resize', ()=>{ if(contourData.length>0) drawContour(); });
+</script>
+</body>
+</html>
