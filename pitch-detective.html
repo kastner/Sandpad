@@ -3021,15 +3021,26 @@ async function saveFeedbackBundle() {
     const feedbackJson = buildFeedbackJson(takeId, recWavFilename, playWavFilename);
     const jsonBlob = new Blob([JSON.stringify(feedbackJson, null, 2)], { type: 'application/json' });
 
-    // Always download locally so you have them regardless of server state
+    // Downloads always happen first — server state cannot prevent them
     if (recWavBlob) downloadBlob(recWavFilename, recWavBlob);
     if (playWavBlob) downloadBlob(playWavFilename, playWavBlob);
     downloadBlob(jsonFilename, jsonBlob);
 
-    // Upload all three to the local capture server when available
-    const serverUp = await probeCaptureServer();
-    if (serverUp) {
-      setFeedbackStatus('Uploading to captures/…');
+    const downloadedList = [recWavBlob && recWavFilename, playWavBlob && playWavFilename, jsonFilename]
+      .filter(Boolean).join(', ');
+
+    // Force a fresh server probe every time — the cached value from startListening
+    // may be stale (server stopped between then and now).
+    const serverUp = await probeCaptureServer(true);
+    if (!serverUp) {
+      setFeedbackStatus(`Downloaded: ${downloadedList}`);
+      return;
+    }
+
+    // Upload to capture server in a separate try/catch so a dead or slow server
+    // never hides the fact that the downloads already succeeded.
+    setFeedbackStatus('Uploading to captures/…');
+    try {
       const payload = {
         takeId,
         uploadedAt: new Date().toISOString(),
@@ -3047,20 +3058,20 @@ async function saveFeedbackBundle() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const result = await resp.json();
       if (result.ok) {
-        const saved = [result.recordingPath, result.playbackPath, result.analysisPath].filter(Boolean).join(', ');
-        setFeedbackStatus(`Saved to captures/: ${saved}`);
+        const uploaded = [result.recordingPath, result.playbackPath, result.analysisPath].filter(Boolean).join(', ');
+        setFeedbackStatus(`Downloaded and saved to captures/: ${uploaded}`);
       } else {
-        setFeedbackStatus('Downloaded locally; server upload failed: ' + (result.error || '?'), true);
+        setFeedbackStatus(`Downloaded (${downloadedList}); server error: ${result.error || '?'}`, true);
       }
-    } else {
-      const saved = [recWavBlob && recWavFilename, playWavBlob && playWavFilename, jsonFilename].filter(Boolean).join(', ');
-      setFeedbackStatus(`Downloaded: ${saved}`);
+    } catch (uploadErr) {
+      setFeedbackStatus(`Downloaded (${downloadedList}); capture server unreachable: ${uploadErr.message}`, true);
     }
   } catch (err) {
     console.error('saveFeedbackBundle error:', err);
-    setFeedbackStatus('Error saving feedback bundle: ' + err.message, true);
+    setFeedbackStatus('Error building feedback bundle: ' + err.message, true);
   } finally {
     if (btn) btn.disabled = false;
   }
