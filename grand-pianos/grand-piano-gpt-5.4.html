@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>HTML Piano</title>
+    <style>
+      :root {
+        --bg: #111318;
+        --panel: #1b1f27;
+        --panel-2: #232938;
+        --text: #eef2ff;
+        --muted: #a9b3c9;
+        --accent: #7aa2ff;
+        --white-key: #f7f7f4;
+        --white-key-shadow: #d3d4d8;
+        --black-key: #15171d;
+        --black-key-top: #2b2f38;
+        --black-key-shadow: #090a0d;
+        --active-white: #c8daff;
+        --active-black: #5f8fff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family:
+          Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background:
+          radial-gradient(circle at top, #1e2431 0%, var(--bg) 45%),
+          linear-gradient(180deg, #12151c 0%, #0d0f14 100%);
+        color: var(--text);
+      }
+
+      .app {
+        width: min(1200px, 96vw);
+        background: linear-gradient(180deg, var(--panel) 0%, #12151c 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        box-shadow:
+          0 24px 60px rgba(0, 0, 0, 0.45),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+      }
+
+      .topbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px 22px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 20px;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.03),
+            rgba(255, 255, 255, 0)
+          ),
+          var(--panel-2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 1.1rem;
+        letter-spacing: 0.04em;
+      }
+
+      .brand p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 16px;
+        align-items: center;
+      }
+
+      .control {
+        display: grid;
+        gap: 6px;
+        min-width: 150px;
+      }
+
+      .control label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        letter-spacing: 0.03em;
+      }
+
+      .control input[type="range"] {
+        width: 100%;
+      }
+
+      .buttons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      button {
+        appearance: none;
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        color: white;
+        background: linear-gradient(180deg, #5d8cff 0%, #3b69db 100%);
+        cursor: pointer;
+        font-weight: 600;
+        box-shadow:
+          0 10px 20px rgba(49, 89, 189, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      }
+
+      button.secondary {
+        background: linear-gradient(180deg, #3b4254 0%, #262c39 100%);
+        box-shadow:
+          0 8px 18px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .info {
+        padding: 14px 20px 6px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .keyboard-wrap {
+        padding: 16px 16px 22px;
+        overflow-x: auto;
+      }
+
+      .keyboard {
+        position: relative;
+        width: max-content;
+        min-width: 100%;
+        height: 320px;
+        padding: 12px;
+        border-radius: 18px;
+        background:
+          linear-gradient(180deg, #2b2b31 0%, #14161c 8%, #171a21 100%);
+        box-shadow:
+          inset 0 2px 10px rgba(255, 255, 255, 0.05),
+          inset 0 -10px 20px rgba(0, 0, 0, 0.35);
+      }
+
+      .white-layer {
+        display: flex;
+        position: relative;
+        z-index: 1;
+      }
+
+      .white-key {
+        position: relative;
+        width: 64px;
+        height: 280px;
+        margin: 0;
+        border: 1px solid #b9bcc4;
+        border-bottom-width: 4px;
+        border-radius: 0 0 12px 12px;
+        background:
+          linear-gradient(180deg, #ffffff 0%, #fcfcfa 55%, #ececf0 100%);
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.65),
+          inset 0 -10px 14px rgba(0, 0, 0, 0.08),
+          0 2px 0 var(--white-key-shadow);
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .white-key:active,
+      .white-key.active {
+        background:
+          linear-gradient(180deg, #dce8ff 0%, #cddcff 55%, #b7cfff 100%);
+        box-shadow:
+          inset 0 2px 10px rgba(0, 0, 0, 0.08),
+          inset 0 -6px 10px rgba(255, 255, 255, 0.25),
+          0 1px 0 #95b3ef;
+      }
+
+      .black-key {
+        position: absolute;
+        z-index: 2;
+        width: 40px;
+        height: 170px;
+        border: 1px solid #000;
+        border-radius: 0 0 10px 10px;
+        background:
+          linear-gradient(
+            180deg,
+            #434855 0%,
+            var(--black-key-top) 6%,
+            var(--black-key) 35%,
+            #0d0f14 100%
+          );
+        box-shadow:
+          inset 0 -10px 15px rgba(255, 255, 255, 0.05),
+          inset 0 10px 10px rgba(255, 255, 255, 0.02),
+          0 5px 0 var(--black-key-shadow),
+          0 10px 16px rgba(0, 0, 0, 0.35);
+        cursor: pointer;
+      }
+
+      .black-key:active,
+      .black-key.active {
+        background:
+          linear-gradient(
+            180deg,
+            #7ea5ff 0%,
+            #4c76d8 12%,
+            #27418d 55%,
+            #162451 100%
+          );
+        box-shadow:
+          inset 0 -6px 8px rgba(255, 255, 255, 0.08),
+          0 3px 0 #0e1733,
+          0 8px 12px rgba(0, 0, 0, 0.35);
+      }
+
+      .key-label {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.8rem;
+        color: #5b6272;
+        font-weight: 700;
+        pointer-events: none;
+      }
+
+      .black-key .key-label {
+        bottom: 8px;
+        color: #dbe7ff;
+        font-size: 0.72rem;
+      }
+
+      .footer {
+        padding: 0 20px 18px;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      @media (max-width: 900px) {
+        .white-key {
+          width: 56px;
+          height: 250px;
+        }
+
+        .black-key {
+          width: 36px;
+          height: 152px;
+        }
+
+        .keyboard {
+          height: 290px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="topbar">
+        <div class="brand">
+          <h1>Grand Piano Synth</h1>
+          <p>
+            Click keys or use keyboard:
+            A W S E D F T G Y H U J K
+          </p>
+        </div>
+
+        <div class="controls">
+          <div class="control">
+            <label for="volume">Volume</label>
+            <input
+              id="volume"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.7"
+            />
+          </div>
+
+          <div class="control">
+            <label for="tone">Brightness</label>
+            <input
+              id="tone"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.58"
+            />
+          </div>
+
+          <div class="control">
+            <label for="reverb">Reverb</label>
+            <input
+              id="reverb"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.32"
+            />
+          </div>
+
+          <div class="buttons">
+            <button id="startButton">Enable Audio</button>
+            <button id="sustainButton" class="secondary">
+              Sustain: Off
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="info">
+        For best sound, use headphones or speakers. The first click enables
+        audio in the browser.
+      </div>
+
+      <div class="keyboard-wrap">
+        <div class="keyboard" id="keyboard">
+          <div class="white-layer" id="whiteKeys"></div>
+          <div id="blackKeys"></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        Notes span from C4 to C5. Touch, mouse, and computer keyboard supported.
+      </div>
+    </div>
+
+    <script>
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      let audioCtx;
+      let masterGain;
+      let dryGain;
+      let wetGain;
+      let convolver;
+      let limiter;
+      let toneFilter;
+      let resonanceBus;
+      let sustainEnabled = false;
+
+      const activeVoices = new Map();
+      const pressedKeys = new Set();
+
+      const whiteKeysEl = document.getElementById("whiteKeys");
+      const blackKeysEl = document.getElementById("blackKeys");
+      const keyboardEl = document.getElementById("keyboard");
+      const startButton = document.getElementById("startButton");
+      const sustainButton = document.getElementById("sustainButton");
+      const volumeEl = document.getElementById("volume");
+      const toneEl = document.getElementById("tone");
+      const reverbEl = document.getElementById("reverb");
+
+      const notes = [
+        { note: "C4", midi: 60, type: "white", key: "A" },
+        { note: "C#4", midi: 61, type: "black", key: "W", afterWhite: 0 },
+        { note: "D4", midi: 62, type: "white", key: "S" },
+        { note: "D#4", midi: 63, type: "black", key: "E", afterWhite: 1 },
+        { note: "E4", midi: 64, type: "white", key: "D" },
+        { note: "F4", midi: 65, type: "white", key: "F" },
+        { note: "F#4", midi: 66, type: "black", key: "T", afterWhite: 3 },
+        { note: "G4", midi: 67, type: "white", key: "G" },
+        { note: "G#4", midi: 68, type: "black", key: "Y", afterWhite: 4 },
+        { note: "A4", midi: 69, type: "white", key: "H" },
+        { note: "A#4", midi: 70, type: "black", key: "U", afterWhite: 5 },
+        { note: "B4", midi: 71, type: "white", key: "J" },
+        { note: "C5", midi: 72, type: "white", key: "K" },
+      ];
+
+      const keyMap = Object.fromEntries(
+        notes.map((n) => [n.key.toLowerCase(), n.note]),
+      );
+
+      function midiToFreq(midi) {
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      }
+
+      function createImpulseResponse(ctx, duration = 2.8, decay = 2.4) {
+        const rate = ctx.sampleRate;
+        const length = Math.floor(rate * duration);
+        const impulse = ctx.createBuffer(2, length, rate);
+
+        for (let ch = 0; ch < 2; ch++) {
+          const data = impulse.getChannelData(ch);
+          for (let i = 0; i < length; i++) {
+            const t = i / length;
+            const env = Math.pow(1 - t, decay);
+            const early = i < rate * 0.03 ? 1.4 : 1.0;
+            data[i] =
+              (Math.random() * 2 - 1) *
+              env *
+              early *
+              (0.65 + 0.35 * Math.sin((i / rate) * 1200));
+          }
+        }
+
+        return impulse;
+      }
+
+      function makeNoiseBuffer(ctx, seconds = 0.12) {
+        const length = Math.floor(ctx.sampleRate * seconds);
+        const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        let last = 0;
+        for (let i = 0; i < length; i++) {
+          const white = Math.random() * 2 - 1;
+          last = last * 0.82 + white * 0.18;
+          data[i] = last;
+        }
+
+        return buffer;
+      }
+
+      let noiseBuffer = null;
+
+      function initAudio() {
+        if (audioCtx) return;
+
+        audioCtx = new AudioContextClass();
+
+        masterGain = audioCtx.createGain();
+        dryGain = audioCtx.createGain();
+        wetGain = audioCtx.createGain();
+        convolver = audioCtx.createConvolver();
+        limiter = audioCtx.createDynamicsCompressor();
+        toneFilter = audioCtx.createBiquadFilter();
+        resonanceBus = audioCtx.createGain();
+
+        convolver.buffer = createImpulseResponse(audioCtx);
+        noiseBuffer = makeNoiseBuffer(audioCtx);
+
+        toneFilter.type = "lowpass";
+        toneFilter.frequency.value = 4200;
+        toneFilter.Q.value = 0.8;
+
+        limiter.threshold.value = -10;
+        limiter.knee.value = 18;
+        limiter.ratio.value = 10;
+        limiter.attack.value = 0.003;
+        limiter.release.value = 0.18;
+
+        masterGain.gain.value = Number(volumeEl.value);
+        dryGain.gain.value = 0.92;
+        wetGain.gain.value = Number(reverbEl.value);
+        resonanceBus.gain.value = 0.12;
+
+        dryGain.connect(toneFilter);
+        toneFilter.connect(limiter);
+        wetGain.connect(limiter);
+        limiter.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+
+        dryGain.connect(convolver);
+        convolver.connect(wetGain);
+
+        updateTone();
+      }
+
+      function updateTone() {
+        if (!audioCtx) return;
+        const x = Number(toneEl.value);
+        toneFilter.frequency.setTargetAtTime(
+          1800 + x * 5200,
+          audioCtx.currentTime,
+          0.02,
+        );
+        resonanceBus.gain.setTargetAtTime(
+          0.07 + x * 0.12,
+          audioCtx.currentTime,
+          0.03,
+        );
+      }
+
+      function setActiveVisual(note, isActive) {
+        const el = document.querySelector(`[data-note="${note}"]`);
+        if (el) {
+          el.classList.toggle("active", isActive);
+        }
+      }
+
+      function makeVoice(freq, velocity = 1) {
+        const now = audioCtx.currentTime;
+
+        const voiceGain = audioCtx.createGain();
+        const bodyGain = audioCtx.createGain();
+        const partialGain = audioCtx.createGain();
+        const hammerGain = audioCtx.createGain();
+        const bloomGain = audioCtx.createGain();
+
+        const bodyLP = audioCtx.createBiquadFilter();
+        const bodyHP = audioCtx.createBiquadFilter();
+        const hammerBP = audioCtx.createBiquadFilter();
+        const bloomLP = audioCtx.createBiquadFilter();
+
+        bodyLP.type = "lowpass";
+        bodyLP.frequency.value = 4200 + velocity * 1200;
+        bodyLP.Q.value = 0.5;
+
+        bodyHP.type = "highpass";
+        bodyHP.frequency.value = 35;
+        bodyHP.Q.value = 0.2;
+
+        hammerBP.type = "bandpass";
+        hammerBP.frequency.value = Math.min(7000, freq * 6);
+        hammerBP.Q.value = 1.2;
+
+        bloomLP.type = "lowpass";
+        bloomLP.frequency.value = 1800;
+        bloomLP.Q.value = 0.3;
+
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const osc3 = audioCtx.createOscillator();
+
+        osc1.type = "triangle";
+        osc2.type = "sine";
+        osc3.type = "sine";
+
+        osc1.frequency.value = freq;
+        osc2.frequency.value = freq * 2;
+        osc3.frequency.value = freq * 3;
+
+        const osc1Gain = audioCtx.createGain();
+        const osc2Gain = audioCtx.createGain();
+        const osc3Gain = audioCtx.createGain();
+
+        osc1Gain.gain.value = 0.62 * velocity;
+        osc2Gain.gain.value = 0.18 * velocity;
+        osc3Gain.gain.value = 0.06 * velocity;
+
+        const detune1 = audioCtx.createOscillator();
+        const detune2 = audioCtx.createOscillator();
+        detune1.type = "sine";
+        detune2.type = "sine";
+        detune1.frequency.value = freq * 0.997;
+        detune2.frequency.value = freq * 1.0035;
+
+        const detune1Gain = audioCtx.createGain();
+        const detune2Gain = audioCtx.createGain();
+        detune1Gain.gain.value = 0.12 * velocity;
+        detune2Gain.gain.value = 0.1 * velocity;
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = noiseBuffer;
+
+        voiceGain.gain.setValueAtTime(0.0001, now);
+        voiceGain.gain.exponentialRampToValueAtTime(
+          0.95 * velocity,
+          now + 0.006,
+        );
+        voiceGain.gain.exponentialRampToValueAtTime(
+          0.52 * velocity,
+          now + 0.09,
+        );
+        voiceGain.gain.exponentialRampToValueAtTime(
+          0.22 * velocity,
+          now + 1.0,
+        );
+        voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + 4.6);
+
+        bodyGain.gain.setValueAtTime(1, now);
+
+        partialGain.gain.setValueAtTime(0.75, now);
+        partialGain.gain.exponentialRampToValueAtTime(0.2, now + 0.4);
+        partialGain.gain.exponentialRampToValueAtTime(0.05, now + 2.0);
+
+        hammerGain.gain.setValueAtTime(0.0001, now);
+        hammerGain.gain.exponentialRampToValueAtTime(
+          0.45 * velocity,
+          now + 0.002,
+        );
+        hammerGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+
+        bloomGain.gain.setValueAtTime(0.0001, now);
+        bloomGain.gain.exponentialRampToValueAtTime(0.22, now + 0.03);
+        bloomGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+
+        osc1.connect(osc1Gain);
+        osc2.connect(osc2Gain);
+        osc3.connect(osc3Gain);
+        detune1.connect(detune1Gain);
+        detune2.connect(detune2Gain);
+
+        osc1Gain.connect(bodyGain);
+        detune1Gain.connect(bodyGain);
+        detune2Gain.connect(bodyGain);
+
+        osc2Gain.connect(partialGain);
+        osc3Gain.connect(partialGain);
+
+        noise.connect(hammerBP);
+        hammerBP.connect(hammerGain);
+
+        bodyGain.connect(bodyLP);
+        bodyLP.connect(bodyHP);
+
+        bodyHP.connect(voiceGain);
+        partialGain.connect(bloomLP);
+        bloomLP.connect(voiceGain);
+        hammerGain.connect(voiceGain);
+
+        voiceGain.connect(dryGain);
+
+        const reson1 = audioCtx.createOscillator();
+        const reson2 = audioCtx.createOscillator();
+        const resonGain = audioCtx.createGain();
+        const resonFilter = audioCtx.createBiquadFilter();
+
+        reson1.type = "sine";
+        reson2.type = "triangle";
+        reson1.frequency.value = freq * 2;
+        reson2.frequency.value = freq * 4;
+
+        resonFilter.type = "lowpass";
+        resonFilter.frequency.value = 2400;
+        resonGain.gain.setValueAtTime(0.0001, now);
+        resonGain.gain.exponentialRampToValueAtTime(0.05, now + 0.08);
+        resonGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
+
+        reson1.connect(resonGain);
+        reson2.connect(resonGain);
+        resonGain.connect(resonFilter);
+        resonFilter.connect(dryGain);
+        resonFilter.connect(convolver);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc3.start(now);
+        detune1.start(now);
+        detune2.start(now);
+        noise.start(now);
+        reson1.start(now);
+        reson2.start(now);
+
+        return {
+          release() {
+            const t = audioCtx.currentTime;
+            voiceGain.gain.cancelScheduledValues(t);
+            const current = Math.max(voiceGain.gain.value, 0.0001);
+            voiceGain.gain.setValueAtTime(current, t);
+            voiceGain.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+
+            resonGain.gain.cancelScheduledValues(t);
+            resonGain.gain.setValueAtTime(Math.max(resonGain.gain.value, 0.0001), t);
+            resonGain.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+
+            [
+              osc1,
+              osc2,
+              osc3,
+              detune1,
+              detune2,
+              noise,
+              reson1,
+              reson2,
+            ].forEach((node) => {
+              try {
+                node.stop(t + 1.8);
+              } catch (_) {}
+            });
+          },
+        };
+      }
+
+      function noteOn(noteName) {
+        initAudio();
+
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+
+        if (activeVoices.has(noteName)) return;
+
+        const note = notes.find((n) => n.note === noteName);
+        if (!note) return;
+
+        const freq = midiToFreq(note.midi);
+        const velocity = 0.88 + Math.random() * 0.12;
+        const voice = makeVoice(freq, velocity);
+        activeVoices.set(noteName, voice);
+        setActiveVisual(noteName, true);
+      }
+
+      function noteOff(noteName) {
+        const voice = activeVoices.get(noteName);
+        if (!voice) return;
+
+        if (sustainEnabled) return;
+
+        voice.release();
+        activeVoices.delete(noteName);
+        setActiveVisual(noteName, false);
+      }
+
+      function releaseAllSustained() {
+        for (const [noteName, voice] of activeVoices.entries()) {
+          if (!pressedKeys.has(noteName)) {
+            voice.release();
+            activeVoices.delete(noteName);
+            setActiveVisual(noteName, false);
+          }
+        }
+      }
+
+      function createKeyboard() {
+        const whiteNotes = notes.filter((n) => n.type === "white");
+        const blackNotes = notes.filter((n) => n.type === "black");
+
+        whiteNotes.forEach((n) => {
+          const btn = document.createElement("button");
+          btn.className = "white-key";
+          btn.dataset.note = n.note;
+          btn.type = "button";
+          btn.innerHTML = `<span class="key-label">${n.key}</span>`;
+          attachPointerEvents(btn, n.note);
+          whiteKeysEl.appendChild(btn);
+        });
+
+        blackNotes.forEach((n) => {
+          const btn = document.createElement("button");
+          btn.className = "black-key";
+          btn.dataset.note = n.note;
+          btn.type = "button";
+          btn.innerHTML = `<span class="key-label">${n.key}</span>`;
+
+          const whiteKeyWidth = 64;
+          const blackKeyOffset = 20;
+          btn.style.left = `${12 + (n.afterWhite + 1) * whiteKeyWidth - blackKeyOffset}px`;
+
+          attachPointerEvents(btn, n.note);
+          blackKeysEl.appendChild(btn);
+        });
+      }
+
+      function attachPointerEvents(el, noteName) {
+        const down = (e) => {
+          e.preventDefault();
+          pressedKeys.add(noteName);
+          noteOn(noteName);
+        };
+
+        const up = (e) => {
+          e.preventDefault();
+          pressedKeys.delete(noteName);
+          noteOff(noteName);
+        };
+
+        el.addEventListener("mousedown", down);
+        el.addEventListener("mouseup", up);
+        el.addEventListener("mouseleave", (e) => {
+          if (e.buttons) up(e);
+        });
+
+        el.addEventListener("touchstart", down, { passive: false });
+        el.addEventListener("touchend", up, { passive: false });
+        el.addEventListener("touchcancel", up, { passive: false });
+      }
+
+      startButton.addEventListener("click", async () => {
+        initAudio();
+        await audioCtx.resume();
+        startButton.textContent = "Audio Enabled";
+        startButton.disabled = true;
+      });
+
+      sustainButton.addEventListener("click", () => {
+        sustainEnabled = !sustainEnabled;
+        sustainButton.textContent = `Sustain: ${sustainEnabled ? "On" : "Off"}`;
+        if (!sustainEnabled) {
+          releaseAllSustained();
+        }
+      });
+
+      volumeEl.addEventListener("input", () => {
+        if (!audioCtx) return;
+        masterGain.gain.setTargetAtTime(
+          Number(volumeEl.value),
+          audioCtx.currentTime,
+          0.02,
+        );
+      });
+
+      toneEl.addEventListener("input", updateTone);
+
+      reverbEl.addEventListener("input", () => {
+        if (!audioCtx) return;
+        wetGain.gain.setTargetAtTime(
+          Number(reverbEl.value),
+          audioCtx.currentTime,
+          0.03,
+        );
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.repeat) return;
+        const noteName = keyMap[e.key.toLowerCase()];
+        if (!noteName) return;
+        pressedKeys.add(noteName);
+        noteOn(noteName);
+      });
+
+      document.addEventListener("keyup", (e) => {
+        const noteName = keyMap[e.key.toLowerCase()];
+        if (!noteName) return;
+        pressedKeys.delete(noteName);
+        noteOff(noteName);
+      });
+
+      createKeyboard();
+    </script>
+  </body>
+</html>

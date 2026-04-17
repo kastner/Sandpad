@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grand Piano Keyboard</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+  }
+
+  .piano-container {
+    position: relative;
+    background: linear-gradient(to bottom, #2d2d44, #1a1a2e);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 
+      0 20px 60px rgba(0,0,0,0.5),
+      inset 0 2px 4px rgba(255,255,255,0.1);
+  }
+
+  .piano-body {
+    background: linear-gradient(to bottom, #3e2723, #5d4037);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 
+      0 8px 25px rgba(0,0,0,0.6),
+      inset 0 2px 4px rgba(255,255,255,0.15);
+    position: relative;
+  }
+
+  .keyboard {
+    display: flex;
+    position: relative;
+    height: 220px;
+    user-select: none;
+  }
+
+  /* White keys */
+  .white-key {
+    position: relative;
+    width: 50px;
+    height: 200px;
+    background: linear-gradient(to bottom, #fafafa 0%, #e0e0e0 100%);
+    border: 1px solid #cccccc;
+    border-radius: 0 0 4px 4px;
+    cursor: pointer;
+    margin-right: 2px;
+    z-index: 1;
+    box-shadow: 
+      inset 0 1px 2px rgba(0,0,0,0.1),
+      0 2px 4px rgba(0,0,0,0.2);
+    transition: transform 0.05s ease;
+  }
+
+  .white-key:hover {
+    background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
+  }
+
+  .white-key.active {
+    transform: translateY(2px);
+    background: linear-gradient(to bottom, #e0e0e0 0%, #c8c8c8 100%);
+    box-shadow: 
+      inset 0 3px 6px rgba(0,0,0,0.2),
+      0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  /* Black keys */
+  .black-key {
+    position: absolute;
+    width: 34px;
+    height: 130px;
+    background: linear-gradient(to bottom, #333333 0%, #1a1a1a 100%);
+    border-radius: 0 0 3px 3px;
+    cursor: pointer;
+    margin-left: -17px;
+    z-index: 2;
+    box-shadow: 
+      inset 0 1px 2px rgba(255,255,255,0.1),
+      0 2px 4px rgba(0,0,0,0.4);
+    transition: transform 0.05s ease;
+  }
+
+  .black-key:hover {
+    background: linear-gradient(to bottom, #444444 0%, #2a2a2a 100%);
+  }
+
+  .black-key.active {
+    transform: translateY(2px);
+    background: linear-gradient(to bottom, #2a2a2a 0%, #0a0a0a 100%);
+    box-shadow: 
+      inset 0 2px 4px rgba(0,0,0,0.4),
+      0 1px 2px rgba(0,0,0,0.4);
+  }
+
+  .black-key:nth-child(9) { left: 62px; }
+  .black-key:nth-child(10) { left: 112px; }
+  .black-key:nth-child(12) { left: 212px; }
+  .black-key:nth-child(13) { left: 262px; }
+  .black-key:nth-child(15) { left: 362px; }
+  .black-key:nth-child(16) { left: 412px; }
+  .black-key:nth-child(18) { left: 512px; }
+  .black-key:nth-child(19) { left: 562px; }
+  .black-key:nth-child(21) { left: 662px; }
+  .black-key:nth-child(22) { left: 712px; }
+  .black-key:nth-child(24) { left: 812px; }
+  .black-key:nth-child(25) { left: 862px; }
+  .black-key:nth-child(27) { left: 962px; }
+  .black-key:nth-child(28) { left: 1012px; }
+
+  .key-label {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #666;
+    pointer-events: none;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+  }
+
+  .black-key .key-label {
+    color: #fff;
+    font-size: 8px;
+  }
+
+  .octave-indicator {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    color: #888;
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  .footer {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #666;
+    font-size: 11px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="piano-container">
+  <div class="piano-body">
+    <div class="keyboard" id="piano">
+      <!-- Octave 1 -->
+      <div class="black-key" data-note="c1" data-octave="1"></div>
+      <div class="white-key" data-note="c1" data-octave="1"><span class="key-label">C</span></div>
+      <div class="black-key" data-note="db1" data-octave="1"></div>
+      <div class="white-key" data-note="d1" data-octave="1"><span class="key-label">D</span></div>
+      <div class="black-key" data-note="eb1" data-octave="1"></div>
+      <div class="white-key" data-note="e1" data-octave="1"><span class="key-label">E</span></div>
+      <div class="white-key" data-note="f1" data-octave="1"><span class="key-label">F</span></div>
+      <div class="black-key" data-note="fb1" data-octave="1"></div>
+      <div class="white-key" data-note="g1" data-octave="1"><span class="key-label">G</span></div>
+      <div class="black-key" data-note="ab1" data-octave="1"></div>
+      <div class="white-key" data-note="a1" data-octave="1"><span class="key-label">A</span></div>
+      <div class="black-key" data-note="bb1" data-octave="1"></div>
+      <div class="white-key" data-note="b1" data-octave="1"><span class="key-label">B</span></div>
+      <div class="white-key" data-note="c2" data-octave="2"><span class="key-label">C</span></div>
+
+      <!-- Octave 2 -->
+      <div class="black-key" data-note="c2" data-octave="2"></div>
+      <div class="white-key" data-note="d2" data-octave="2"><span class="key-label">D</span></div>
+      <div class="black-key" data-note="db2" data-octave="2"></div>
+      <div class="white-key" data-note="e2" data-octave="2"><span class="key-label">E</span></div>
+      <div class="white-key" data-note="f2" data-octave="2"><span class="key-label">F</span></div>
+      <div class="black-key" data-note="fb2" data-octave="2"></div>
+      <div class="white-key" data-note="g2" data-octave="2"><span class="key-label">G</span></div>
+      <div class="black-key" data-note="ab2" data-octave="2"></div>
+      <div class="white-key" data-note="a2" data-octave="2"><span class="key-label">A</span></div>
+      <div class="black-key" data-note="bb2" data-octave="2"></div>
+      <div class="white-key" data-note="b2" data-octave="2"><span class="key-label">B</span></div>
+      <div class="white-key" data-note="c3" data-octave="3"><span class="key-label">C</span></div>
+      <div class="black-key" data-note="c3" data-octave="3"></div>
+      <div class="white-key" data-note="d3" data-octave="3"><span class="key-label">D</span></div>
+      <div class="black-key" data-note="db3" data-octave="3"></div>
+
+      <!-- Octave 3 -->
+      <div class="white-key" data-note="e3" data-octave="3"><span class="key-label">E</span></div>
+      <div class="white-key" data-note="f3" data-octave="3"><span class="key-label">F</span></div>
+      <div class="black-key" data-note="fb3" data-octave="3"></div>
+      <div class="white-key" data-note="g3" data-octave="3"><span class="key-label">G</span></div>
+      <div class="black-key" data-note="ab3" data-octave="3"></div>
+      <div class="white-key" data-note="a3" data-octave="3"><span class="key-label">A</span></div>
+      <div class="black-key" data-note="bb3" data-octave="3"></div>
+      <div class="white-key" data-note="b3" data-octave="3"><span class="key-label">B</span></div>
+      <div class="white-key" data-note="c4" data-octave="3"><span class="key-label">C</span></div>
+      <div class="black-key" data-note="c4" data-octave="3"></div>
+      <div class="white-key" data-note="d4" data-octave="3"><span class="key-label">D</span></div>
+      <div class="black-key" data-note="db4" data-octave="3"></div>
+      <div class="white-key" data-note="e4" data-octave="3"><span class="key-label">E</span></div>
+      <div class="white-key" data-note="f4" data-octave="3"><span class="key-label">F</span></div>
+      <div class="black-key" data-note="fb4" data-octave="3"></div>
+
+      <!-- Octave 4 -->
+      <div class="white-key" data-note="g4" data-octave="4"><span class="key-label">G</span></div>
+      <div class="black-key" data-note="ab4" data-octave="4"></div>
+      <div class="white-key" data-note="a4" data-octave="4"><span class="key-label">A</span></div>
+      <div class="black-key" data-note="bb4" data-octave="4"></div>
+      <div class="white-key" data-note="b4" data-octave="4"><span class="key-label">B</span></div>
+      <div class="white-key" data-note="c5" data-octave="4"><span class="key-label">C</span></div>
+      <div class="black-key" data-note="c5" data-octave="4"></div>
+      <div class="white-key" data-note="d5" data-octave="4"><span class="key-label">D</span></div>
+      <div class="black-key" data-note="db5" data-octave="4"></div>
+      <div class="white-key" data-note="e5" data-octave="4"><span class="key-label">E</span></div>
+      <div class="white-key" data-note="f5" data-octave="4"><span class="key-label">F</span></div>
+      <div class="black-key" data-note="fb5" data-octave="4"></div>
+      <div class="white-key" data-note="g5" data-octave="4"><span class="key-label">G</span></div>
+      <div class="black-key" data-note="ab5" data-octave="4"></div>
+      <div class="white-key" data-note="a5" data-octave="4"><span class="key-label">A</span></div>
+      <div class="black-key" data-note="bb5" data-octave="4"></div>
+      <div class="white-key" data-note="b5" data-octave="4"><span class="key-label">B</span></div>
+      <div class="white-key" data-note="c6" data-octave="4"><span class="key-label">C</span></div>
+
+      <!-- Octave 5 -->
+      <div class="black-key" data-note="c6" data-octave="4"></div>
+      <div class="white-key" data-note="d6" data-octave="4"><span class="key-label">D</span></div>
+      <div class="black-key" data-note="eb6" data-octave="4"></div>
+      <div class="white-key" data-note="e6" data-octave="4"><span class="key-label">E</span></div>
+      <div class="white-key" data-note="f6" data-octave="4"><span class="key-label">F</span></div>
+      <div class="black-key" data-note="fb6" data-octave="4"></div>
+      <div class="white-key" data-note="g6" data-octave="4"><span class="key-label">G</span></div>
+      <div class="black-key" data-note="ab6" data-octave="4"></div>
+      <div class="white-key" data-note="a6" data-octave="4"><span class="key-label">A</span></div>
+      <div class="black-key" data-note="bb6" data-octave="4"></div>
+      <div class="white-key" data-note="b6" data-octave="4"><span class="key-label">B</span></div>
+      <div class="white-key" data-note="c7" data-octave="4"><span class="key-label">C</span></div>
+      <div class="black-key" data-note="c7" data-octave="4"></div>
+
+      <!-- Octave 6 -->
+      <div class="white-key" data-note="d7" data-octave="4"><span class="key-label">D</span></div>
+      <div class="black-key" data-note="db7" data-octave="4"></div>
+      <div class="white-key" data-note="e7" data-octave="4"><span class="key-label">E</span></div>
+      <div class="white-key" data-note="f7" data-octave="4"><span class="key-label">F</span></div>
+      <div class="black-key" data-note="fb7" data-octave="4"></div>
+      <div class="white-key" data-note="g7" data-octave="4"><span class="key-label">G</span></div>
+      <div class="black-key" data-note="ab7" data-octave="4"></div>
+      <div class="white-key" data-note="a7" data-octave="4"><span class="key-label">A</span></div>
+      <div class="black-key" data-note="bb7" data-octave="4"></div>
+      <div class="white-key" data-note="b7" data-octave="4"><span class="key-label">B</span></div>
+      <div class="white-key" data-note="c8" data-octave="4"><span class="key-label">C</span></div>
+
+      <!-- Octave 7 (partial) -->
+      <div class="white-key" data-note="d8" data-octave="4"><span class="key-label">D</span></div>
+      <div class="black-key" data-note="db8" data-octave="4"></div>
+      <div class="white-key" data-note="e8" data-octave="4"><span class="key-label">E</span></div>
+      <div class="white-key" data-note="f8" data-octave="4"><span class="key-label">F</span></div>
+      <div class="black-key" data-note="fb8" data-octave="4"></div>
+      <div class="white-key" data-note="g8" data-octave="4"><span class="key-label">G</span></div>
+    </div>
+    <div class="octave-indicator" id="octave">Octave 1</div>
+    <div class="footer">Click or Touch Keys • Supports Mouse, Touch, and Keyboard</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let ctx;
+
+  function ensureCtx() {
+    if (!ctx) {
+      ctx = new AudioCtx();
+    }
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    return ctx;
+  }
+
+  // Grand piano-like impedance model:
+  // Impedance Z(s) = (s^2 + 2*alpha*omega*s + omega^2) / (s^2 + 2*beta*omega*s + omega^2)
+  // with different parameters per note for realistic inharmonicity and damping
+  function computeFilterParams(freq, noteIndex) {
+    const baseOmega = 2 * Math.PI * freq;
+
+    // Inharmonicity grows with note index
+    const inharmonicity = 1.0 + noteIndex * 0.00025;
+    const omega = baseOmega * inharmonicity;
+
+    // Damping varies smoothly across notes
+    const dampingRatio = 0.006 + (noteIndex % 12) * 0.002;
+
+    // Filter bandwidth parameters (related to alpha and beta)
+    const alpha = dampingRatio;
+    const beta = dampingRatio * 0.7;
+
+    return { omega, alpha, beta };
+  }
+
+  function createNoteNode(freq, noteIndex) {
+    const ctx = ensureCtx();
+    const { omega, alpha, beta } = computeFilterParams(freq, noteIndex);
+
+    // Create the impedance filter (biquad in feedback loop)
+    // This mimics the string's complex impedance
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = omega / (2 * Math.PI);
+    filter.Q.value = 10 + noteIndex * 0.5; // Q varies across notes
+
+    // Drive with noise burst (simulates hammer strike)
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = 0.008;
+
+    const noise = ctx.createBufferSource();
+    const bufSize = ctx.sampleRate * 0.08; // 80ms noise burst
+    const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 2);
+    }
+    noise.buffer = buffer;
+
+    // Envelope for the noise burst
+    const burstEnv = ctx.createGain();
+    burstEnv.gain.value = 0;
+    burstEnv.gain.setTargetAtTime(1, ctx.currentTime, 0.001);
+    burstEnv.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+
+    // Main envelope (sustain and release)
+    const mainEnv = ctx.createGain();
+    mainEnv.gain.value = 0;
+    const attackTime = 0.003;
+    const releaseTime = 0.8;
+
+    // Low-pass filter to simulate body resonance
+    const lpFilter = ctx.createBiquadFilter();
+    lpFilter.type = 'lowpass';
+    lpFilter.frequency.value = 2500 + freq * 1.5;
+    lpFilter.Q.value = 1.5;
+
+    // High-frequency damping filter
+    const hfFilter = ctx.createBiquadFilter();
+    hfFilter.type = 'lowpass';
+    hfFilter.frequency.value = 6000;
+
+    // Connect the network
+    noise.connect(burstEnv);
+    burstEnv.connect(filter);
+    filter.connect(hfFilter);
+    hfFilter.connect(mainEnv);
+    mainEnv.connect(lpFilter);
+    lpFilter.connect(filter); // feedback
+    filter.connect(ctx.destination);
+
+    return {
+      noteIndex,
+      burstEnv,
+      mainEnv,
+      noise,
+      releaseTime
+    };
+  }
+
+  // Note definitions: frequency and note index for inharmonicity
+  const notes = [
+    { note: 'c1',  freq: 32.70, index:  0 },
+    { note: 'db1', freq: 34.65, index:  1 },
+    { note: 'd1',  freq: 36.71, index:  2 },
+    { note: 'eb1', freq: 38.89, index:  3 },
+    { note: 'e1',  freq: 41.20, index:  4 },
+    { note: 'f1',  freq: 43.65, index:  5 },
+    { note: 'fb1', freq: 46.25, index:  6 },
+    { note: 'g1',  freq: 48.99, index:  7 },
+    { note: 'ab1', freq: 51.91, index:  8 },
+    { note: 'a1',  freq: 55.00, index:  9 },
+    { note: 'bb1', freq: 58.27, index: 10 },
+    { note: 'b1',  freq: 61.74, index: 11 },
+    { note: 'c2',  freq: 65.41, index: 12 },
+    { note: 'c2',  freq: 65.41, index: 13 },
+    { note: 'd2',  freq: 73.42, index: 14 },
+    { note: 'db2', freq: 77.78, index: 15 },
+    { note: 'e2',  freq: 82.41, index: 16 },
+    { note: 'f2',  freq: 87.31, index: 17 },
+    { note: 'fb2', freq: 92.50, index: 18 },
+    { note: 'g2',  freq: 98.00, index: 19 },
+    { note: 'ab2', freq: 103.83, index: 20 },
+    { note: 'a2',  freq: 110.00, index: 21 },
+    { note: 'bb2', freq: 116.54, index: 22 },
+    { note: 'b2',  freq: 123.47, index: 23 },
+    { note: 'c3',  freq: 130.81, index: 24 },
+    { note: 'c3',  freq: 130.81, index: 25 },
+    { note: 'd3',  freq: 146.83, index: 26 },
+    { note: 'db3', freq: 155.56, index: 27 },
+    { note: 'e3',  freq: 164.81, index: 28 },
+    { note: 'f3',  freq: 174.61, index: 29 },
+    { note: 'fb3', freq: 185.00, index: 30 },
+    { note: 'g3',  freq: 196.00, index: 31 },
+    { note: 'ab3', freq: 207.65, index: 32 },
+    { note: 'a3',  freq: 220.00, index: 33 },
+    { note: 'bb3', freq: 233.08, index: 34 },
+    { note: 'b3',  freq: 246.94, index: 35 },
+    { note: 'c4',  freq: 261.63, index: 36 },
+    { note: 'c4',  freq: 261.63, index: 37 },
+    { note: 'd4',  freq: 293.66, index: 38 },
+    { note: 'db4', freq: 311.13, index: 39 },
+    { note: 'e4',  freq: 329.63, index: 40 },
+    { note: 'f4',  freq: 349.23, index: 41 },
+    { note: 'fb4', freq: 369.99, index: 42 },
+    { note: 'g4',  freq: 392.00, index: 43 },
+    { note: 'ab4', freq: 415.30, index: 44 },
+    { note: 'a4',  freq: 440.00, index: 45 },
+    { note: 'bb4', freq: 466.16, index: 46 },
+    { note: 'b4',  freq: 493.88, index: 47 },
+    { note: 'c5',  freq: 523.25, index: 48 },
+    { note: 'c5',  freq: 523.25, index: 49 },
+    { note: 'd5',  freq: 587.33, index: 50 },
+    { note: 'db5', freq: 622.25, index: 51 },
+    { note: 'e5',  freq: 659.25, index: 52 },
+    { note: 'f5',  freq: 698.46, index: 53 },
+    { note: 'fb5', freq: 739.99, index: 54 },
+    { note: 'g5',  freq: 783.99, index: 55 },
+    { note: 'ab5', freq: 830.61, index: 56 },
+    { note: 'a5',  freq: 880.00, index: 57 },
+    { note: 'bb5', freq: 932.33, index: 58 },
+    { note: 'b5',  freq: 987.77, index: 59 },
+    { note: 'c6',  freq: 1046.50, index: 60 },
+    { note: 'c6',  freq: 1046.50, index: 61 },
+    { note: 'd6',  freq: 1174.66, index: 62 },
+    { note: 'db6', freq: 1244.51, index: 63 },
+    { note: 'e6',  freq: 1318.51, index: 64 },
+    { note: 'f6',  freq: 1396.91, index: 65 },
+    { note: 'fb6', freq: 1479.98, index: 66 },
+    { note: 'g6',  freq: 1567.98, index: 67 },
+    { note: 'ab6', freq: 1661.22, index: 68 },
+    { note: 'a6',  freq: 1760.00, index: 69 },
+    { note: 'bb6', freq: 1864.66, index: 70 },
+    { note: 'b6',  freq: 1975.53, index: 71 },
+    { note: 'c7',  freq: 2093.00, index: 72 },
+    { note: 'c7',  freq: 2093.00, index: 73 },
+    { note: 'd7',  freq: 2349.32, index: 74 },
+    { note: 'db7', freq: 2489.02, index: 75 },
+    { note: 'e7',  freq: 2637.02, index: 76 },
+    { note: 'f7',  freq: 2793.83, index: 77 },
+    { note: 'fb7', freq: 2959.96, index: 78 },
+    { note: 'g7',  freq: 3135.96, index: 79 },
+    { note: 'ab7', freq: 3322.44, index: 80 },
+    { note: 'a7',  freq: 3520.00, index: 81 },
+    { note: 'bb7', freq: 3729.31, index: 82 },
+    { note: 'b7',  freq: 3951.07, index: 83 },
+    { note: 'c8',  freq: 4186.01, index: 84 },
+  ];
+
+  const keys = document.querySelectorAll('.white-key, .black-key');
+  let activeNotes = new Map();
+
+  // Initialize all white keys
+  document.querySelectorAll('.white-key').forEach(key => {
+    key.addEventListener('mousedown', e => handleKeyDown(e, key));
+    key.addEventListener('mouseup', e => handleKeyUp(e, key));
+    key.addEventListener('touchstart', e => {
+      e.preventDefault();
+      handleKeyDown(e, key);
+    }, { passive: false });
+    key.addEventListener('touchend', e => {
+      e.preventDefault();
+      handleKeyUp(e, key);
+    }, { passive: false });
+  });
+
+  // Initialize black keys with slightly different interaction
+  document.querySelectorAll('.black-key').forEach(key => {
+    key.addEventListener('mousedown', e => {
+      e.stopPropagation();
+      handleKeyDown(e, key);
+    });
+    key.addEventListener('mouseup', e => {
+      e.stopPropagation();
+      handleKeyUp(e, key);
+    });
+    key.addEventListener('touchstart', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleKeyDown(e, key);
+    }, { passive: false });
+    key.addEventListener('touchend', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleKeyUp(e, key);
+    }, { passive: false });
+  });
+
+  function getNoteFromElement(el) {
+    return {
+      note: el.dataset.note,
+      octave: parseInt(el.dataset.octave, 10),
+      freq: parseFloat(el.dataset.freq || getComputedFreq(el.dataset.note, el.dataset.octave)),
+    };
+  }
+
+  function getComputedFreq(note, octave) {
+    const n = notes.find(nn => nn.note === note && nn.octave == octave);
+    return n ? n.freq : 440;
+  }
+
+  function handleKeyDown(e, el) {
+    e.preventDefault();
+    const keyInfo = getNoteFromElement(el);
+    const existing = activeNotes.get(keyInfo.note + keyInfo.octave);
+    if (existing) return;
+
+    const node = createNoteNode(keyInfo.freq, keyInfo.index || notes.findIndex(n => n.note === keyInfo.note && n.octave == keyInfo.octave));
+    activeNotes.set(keyInfo.note + keyInfo.octave, node);
+
+    // Animate key press
+    el.classList.add('active');
+
+    // Set main envelope
+    const now = ctx.currentTime;
+    node.mainEnv.gain.setTargetAtTime(0.7, now, 0.001);
+    node.mainEnv.gain.exponentialRampToValueAtTime(0.001, now + node.releaseTime + 0.5);
+
+    // Trigger burst
+    node.burstEnv.gain.setTargetAtTime(1, now, 0.001);
+    node.burstEnv.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+  }
+
+  function handleKeyUp(e, el) {
+    e.preventDefault();
+    const keyInfo = getNoteFromElement(el);
+    const node = activeNotes.get(keyInfo.note + keyInfo.octave);
+    if (!node) return;
+
+    // Release envelope
+    const now = ctx.currentTime;
+    node.mainEnv.gain.setTargetAtTime(node.mainEnv.gain.value, now, 0.001);
+    node.mainEnv.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+
+    // Clean up after release
+    setTimeout(() => {
+      try {
+        node.note.stop();
+        node.note.disconnect();
+      } catch (e) {}
+      activeNotes.delete(keyInfo.note + keyInfo.octave);
+    }, 1500);
+
+    // Animate key release
+    el.classList.remove('active');
+  }
+
+  // Global mouseup to release all notes when mouse leaves piano
+  document.addEventListener('mouseup', () => {
+    activeNotes.forEach((node, key) => {
+      const now = ctx.currentTime;
+      node.mainEnv.gain.setTargetAtTime(node.mainEnv.gain.value, now, 0.001);
+      node.mainEnv.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+      setTimeout(() => {
+        try { node.note.stop(); node.note.disconnect(); } catch (e) {}
+      }, 1500);
+      // Find corresponding key element and remove active class
+      const selector = `.white-key[data-note="${key.split('+')[0]}"][data-octave="${key.split('+')[1]}"]`;
+      const el = document.querySelector(selector);
+      if (el) el.classList.remove('active');
+    });
+    activeNotes.clear();
+  });
+
+  // Prevent context menu on piano
+  document.addEventListener('contextmenu', e => {
+    if (e.target.closest('.piano-container')) e.preventDefault();
+  });
+})();
+</script>
+</body>
+</html>

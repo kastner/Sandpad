@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTML Piano Keyboard</title>
+  <style>
+    :root {
+      --white-key-width: 62px;
+      --white-key-height: 280px;
+      --black-key-width: 40px;
+      --black-key-height: 175px;
+      --bg: #111318;
+      --panel: #1b1f27;
+      --white: #f4f4f4;
+      --white-pressed: #d9e4ff;
+      --black: #111;
+      --black-pressed: #4f6fb8;
+      --text: #e8ecf6;
+      --accent: #8db2ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1b2330 0%, #0d0f14 70%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(1200px, 100%);
+      background: rgba(15, 18, 24, 0.72);
+      border: 1px solid rgba(141, 178, 255, 0.15);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .title p {
+      margin: 0;
+      font-size: 14px;
+      color: rgba(232, 236, 246, 0.75);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, #2a3140, #1d2330);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    button:hover {
+      background: linear-gradient(180deg, #323b4d, #212838);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .hint {
+      font-size: 13px;
+      color: rgba(232, 236, 246, 0.7);
+    }
+
+    .keyboard-wrap {
+      overflow-x: auto;
+      padding: 10px 4px 4px;
+    }
+
+    .keyboard {
+      position: relative;
+      height: var(--white-key-height);
+      width: calc(var(--white-key-width) * 52);
+      margin: 0 auto;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .white-key,
+    .black-key {
+      position: absolute;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 0 0 10px 10px;
+      transition: transform 0.04s ease, background 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    .white-key {
+      width: var(--white-key-width);
+      height: var(--white-key-height);
+      background: linear-gradient(180deg, #ffffff 0%, #ececec 100%);
+      border: 1px solid #b7b7b7;
+      box-shadow: inset 0 -10px 24px rgba(0, 0, 0, 0.08);
+      z-index: 1;
+      color: #222;
+      padding-bottom: 10px;
+    }
+
+    .black-key {
+      width: var(--black-key-width);
+      height: var(--black-key-height);
+      background: linear-gradient(180deg, #2a2a2a 0%, #060606 100%);
+      border: 1px solid #000;
+      color: #f2f2f2;
+      z-index: 3;
+      padding-bottom: 8px;
+      box-shadow: inset 0 -8px 18px rgba(255, 255, 255, 0.05);
+    }
+
+    .white-key.pressed {
+      background: linear-gradient(180deg, #dce8ff 0%, #c8d6f2 100%);
+      box-shadow:
+        inset 0 -10px 24px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(141, 178, 255, 0.5),
+        0 0 16px rgba(141, 178, 255, 0.22);
+    }
+
+    .black-key.pressed {
+      background: linear-gradient(180deg, #587bc9 0%, #2c4274 100%);
+      box-shadow:
+        inset 0 -8px 18px rgba(255, 255, 255, 0.06),
+        0 0 0 1px rgba(141, 178, 255, 0.5),
+        0 0 16px rgba(141, 178, 255, 0.24);
+    }
+
+    .label {
+      pointer-events: none;
+      opacity: 0.9;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+    }
+
+    .black-key .label {
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.65);
+    }
+
+    .footer {
+      margin-top: 14px;
+      font-size: 13px;
+      color: rgba(232, 236, 246, 0.7);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+    }
+
+    .status {
+      color: var(--accent);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="title">
+        <h1>Grand Piano Keyboard</h1>
+        <p>Mouse, touch, and computer keyboard supported</p>
+      </div>
+      <div class="controls">
+        <button id="sustainBtn">Sustain: Off</button>
+        <button id="octaveDown">Octave -</button>
+        <button id="octaveUp">Octave +</button>
+      </div>
+    </div>
+
+    <div class="keyboard-wrap">
+      <div id="keyboard" class="keyboard" aria-label="Piano keyboard"></div>
+    </div>
+
+    <div class="footer">
+      <div>
+        Keyboard mapping: <span class="status">A W S E D F T G Y H U J K</span>
+      </div>
+      <div id="audioStatus" class="status">Click a key to start audio</div>
+    </div>
+  </div>
+
+  <script>
+    const whiteNotes = [
+      "C", "D", "E", "F", "G", "A", "B"
+    ];
+    const keyMap = {
+      a: "C",
+      w: "C#",
+      s: "D",
+      e: "D#",
+      d: "E",
+      f: "F",
+      t: "F#",
+      g: "G",
+      y: "G#",
+      h: "A",
+      u: "A#",
+      j: "B",
+      k: "C2"
+    };
+
+    const keyboardEl = document.getElementById("keyboard");
+    const audioStatus = document.getElementById("audioStatus");
+    const sustainBtn = document.getElementById("sustainBtn");
+    const octaveDown = document.getElementById("octaveDown");
+    const octaveUp = document.getElementById("octaveUp");
+
+    let audioCtx = null;
+    let masterGain = null;
+    let compressor = null;
+    let reverb = null;
+    let sustain = false;
+    let octaveShift = 0;
+    const activeVoices = new Map();
+    const sustainedVoices = new Map();
+
+    const noteOrder = [
+      "C", "C#", "D", "D#", "E", "F", "F#", "G",
+      "G#", "A", "A#", "B"
+    ];
+
+    function midiToFreq(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    function noteToMidi(note, octave) {
+      const idx = noteOrder.indexOf(note);
+      return (octave + 1) * 12 + idx;
+    }
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.value = -24;
+        compressor.knee.value = 24;
+        compressor.ratio.value = 8;
+        compressor.attack.value = 0.003;
+        compressor.release.value = 0.18;
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.75;
+
+        reverb = createReverb(audioCtx);
+
+        masterGain.connect(compressor);
+        compressor.connect(reverb.input);
+        reverb.output.connect(audioCtx.destination);
+
+        audioStatus.textContent = "Audio ready";
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+    }
+
+    function createReverb(ctx) {
+      const input = ctx.createGain();
+      const output = ctx.createGain();
+
+      const convolver = ctx.createConvolver();
+      convolver.buffer = makeImpulseResponse(ctx, 2.6, 2.2);
+
+      const wet = ctx.createGain();
+      wet.gain.value = 0.22;
+
+      const dry = ctx.createGain();
+      dry.gain.value = 0.78;
+
+      input.connect(dry);
+      input.connect(convolver);
+      convolver.connect(wet);
+
+      dry.connect(output);
+      wet.connect(output);
+
+      return { input, output };
+    }
+
+    function makeImpulseResponse(ctx, duration, decay) {
+      const rate = ctx.sampleRate;
+      const length = rate * duration;
+      const buffer = ctx.createBuffer(2, length, rate);
+
+      for (let c = 0; c < 2; c++) {
+        const data = buffer.getChannelData(c);
+        for (let i = 0; i < length; i++) {
+          const n = i / length;
+          data[i] = (Math.random() * 2 - 1) *
+            Math.pow(1 - n, decay * 2.5);
+        }
+      }
+
+      return buffer;
+    }
+
+    function createVoice(freq) {
+      ensureAudio();
+
+      const now = audioCtx.currentTime;
+      const output = audioCtx.createGain();
+      const amp = audioCtx.createGain();
+      const tone1 = audioCtx.createOscillator();
+      const tone2 = audioCtx.createOscillator();
+      const tone3 = audioCtx.createOscillator();
+      const noise = audioCtx.createBufferSource();
+      const noiseFilter = audioCtx.createBiquadFilter();
+      const lowpass = audioCtx.createBiquadFilter();
+      const highpass = audioCtx.createBiquadFilter();
+      const stringMix = audioCtx.createGain();
+      const brightness = audioCtx.createGain();
+      const transient = audioCtx.createGain();
+      const stereoDelay = audioCtx.createDelay(0.03);
+      const pan = audioCtx.createStereoPanner();
+
+      tone1.type = "triangle";
+      tone2.type = "sine";
+      tone3.type = "sine";
+
+      tone1.frequency.setValueAtTime(freq, now);
+      tone2.frequency.setValueAtTime(freq * 2.003, now);
+      tone3.frequency.setValueAtTime(freq * 3.99, now);
+
+      tone1.detune.setValueAtTime(-3.5, now);
+      tone2.detune.setValueAtTime(1.5, now);
+      tone3.detune.setValueAtTime(0.5, now);
+
+      noise.buffer = makeNoiseBuffer(audioCtx, 0.18);
+      noise.loop = false;
+
+      noiseFilter.type = "bandpass";
+      noiseFilter.frequency.value = 1800;
+      noiseFilter.Q.value = 0.9;
+
+      lowpass.type = "lowpass";
+      lowpass.frequency.value = 3200;
+      lowpass.Q.value = 0.7;
+
+      highpass.type = "highpass";
+      highpass.frequency.value = 28;
+
+      stringMix.gain.value = 0.75;
+      brightness.gain.value = 0.28;
+      transient.gain.value = 0.18;
+      amp.gain.value = 0.0001;
+      pan.pan.value = Math.max(-0.35, Math.min(0.35, (Math.random() - 0.5) * 0.7));
+      stereoDelay.delayTime.value = 0.012 + Math.random() * 0.008;
+
+      tone1.connect(stringMix);
+      tone2.connect(stringMix);
+      tone3.connect(stringMix);
+
+      noise.connect(noiseFilter);
+      noiseFilter.connect(transient);
+
+      stringMix.connect(lowpass);
+      lowpass.connect(highpass);
+      highpass.connect(amp);
+
+      transient.connect(amp);
+
+      amp.connect(pan);
+      pan.connect(stereoDelay);
+      stereoDelay.connect(output);
+      output.connect(masterGain);
+      output.connect(reverb.input);
+
+      const attack = 0.006;
+      const decay = 1.8 + Math.random() * 0.7;
+      const sustainLevel = 0.38;
+      const release = 1.8;
+
+      amp.gain.cancelScheduledValues(now);
+      amp.gain.setValueAtTime(0.0001, now);
+      amp.gain.exponentialRampToValueAtTime(1.0, now + attack);
+      amp.gain.exponentialRampToValueAtTime(sustainLevel, now + decay);
+
+      brightness.gain.setValueAtTime(0.45, now);
+      brightness.gain.exponentialRampToValueAtTime(0.08, now + 0.12);
+
+      transient.gain.setValueAtTime(0.22, now);
+      transient.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+      tone1.start(now);
+      tone2.start(now);
+      tone3.start(now);
+      noise.start(now);
+
+      return {
+        freq,
+        output,
+        amp,
+        tone1,
+        tone2,
+        tone3,
+        noise,
+        stopped: false,
+        release(releaseTime = release) {
+          if (this.stopped) return;
+          this.stopped = true;
+          const t = audioCtx.currentTime;
+          this.amp.gain.cancelScheduledValues(t);
+          this.amp.gain.setTargetAtTime(
+            Math.max(this.amp.gain.value, 0.0001),
+            t,
+            releaseTime / 5
+          );
+          this.amp.gain.exponentialRampToValueAtTime(0.0001, t + releaseTime);
+          setTimeout(() => {
+            try {
+              this.tone1.stop();
+              this.tone2.stop();
+              this.tone3.stop();
+              this.noise.stop();
+            } catch {}
+            this.output.disconnect();
+          }, releaseTime * 1000 + 60);
+        }
+      };
+    }
+
+    function makeNoiseBuffer(ctx, duration) {
+      const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
+      const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < length; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      return buffer;
+    }
+
+    function playNote(noteName, octave, id) {
+      ensureAudio();
+
+      const baseOctave = octave + octaveShift;
+      const mappedOctave = noteName === "C2" ? 5 + octaveShift : baseOctave;
+      const realNote = noteName === "C2" ? "C" : noteName;
+      const midi = noteToMidi(realNote, mappedOctave);
+      const freq = midiToFreq(midi);
+
+      if (activeVoices.has(id)) return;
+
+      const voice = createVoice(freq);
+      activeVoices.set(id, voice);
+
+      const keyEl = document.querySelector(`[data-id="${id}"]`);
+      if (keyEl) keyEl.classList.add("pressed");
+    }
+
+    function stopNote(id) {
+      const voice = activeVoices.get(id);
+      if (!voice) return;
+
+      if (sustain) {
+        sustainedVoices.set(id, voice);
+      } else {
+        voice.release();
+      }
+
+      activeVoices.delete(id);
+
+      const keyEl = document.querySelector(`[data-id="${id}"]`);
+      if (keyEl) keyEl.classList.remove("pressed");
+    }
+
+    function releaseSustained() {
+      for (const [id, voice] of sustainedVoices) {
+        voice.release();
+        sustainedVoices.delete(id);
+      }
+    }
+
+    function buildKeyboard() {
+      keyboardEl.innerHTML = "";
+
+      const whiteNotesSeq = [];
+      const blackNotesSeq = [];
+      const startMidi = 48 + octaveShift * 12;
+      const whiteKeyOrder = [
+        { note: "C", kb: "a" },
+        { note: "D", kb: "s" },
+        { note: "E", kb: "d" },
+        { note: "F", kb: "f" },
+        { note: "G", kb: "g" },
+        { note: "A", kb: "h" },
+        { note: "B", kb: "j" }
+      ];
+
+      const blackKeyOrder = [
+        { note: "C#", after: "C", kb: "w" },
+        { note: "D#", after: "D", kb: "e" },
+        { note: "F#", after: "F", kb: "t" },
+        { note: "G#", after: "G", kb: "y" },
+        { note: "A#", after: "A", kb: "u" }
+      ];
+
+      let whiteIndex = 0;
+      for (let octave = 3 + octaveShift; octave <= 6 + octaveShift; octave++) {
+        for (const item of whiteKeyOrder) {
+          if (octave === 7 + octaveShift && item.note !== "C") continue;
+          whiteNotesSeq.push({
+            note: item.note,
+            octave,
+            x: whiteIndex * 62,
+            id: `${item.note}${octave}`,
+            kb: item.kb
+          });
+          whiteIndex++;
+        }
+      }
+
+      for (let i = 0; i < whiteNotesSeq.length; i++) {
+        const k = whiteNotesSeq[i];
+        const el = document.createElement("div");
+        el.className = "white-key";
+        el.dataset.id = k.id;
+        el.style.left = `${i * 62}px`;
+        el.innerHTML = `<div class="label">${k.note}${k.octave}<br>${k.kb.toUpperCase()}</div>`;
+        attachPointerHandlers(el, k.note, k.octave, k.id);
+        keyboardEl.appendChild(el);
+      }
+
+      for (const key of blackKeyOrder) {
+        const matchIndex = whiteNotesSeq.findIndex(
+          (w) => w.note === key.after
+        );
+        if (matchIndex < 0) continue;
+        for (const w of whiteNotesSeq.filter((x) => x.note === key.after)) {
+          const el = document.createElement("div");
+          el.className = "black-key";
+          el.dataset.id = `${key.note}${w.octave}`;
+          el.style.left = `${w.x + 42}px`;
+          el.innerHTML = `<div class="label">${key.note}${w.octave}<br>${key.kb.toUpperCase()}</div>`;
+          attachPointerHandlers(el, key.note, w.octave, `${key.note}${w.octave}`);
+          keyboardEl.appendChild(el);
+        }
+      }
+    }
+
+    function attachPointerHandlers(el, note, octave, id) {
+      el.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        el.setPointerCapture(e.pointerId);
+        playNote(note, octave, id);
+      });
+      el.addEventListener("pointerup", (e) => {
+        e.preventDefault();
+        stopNote(id);
+      });
+      el.addEventListener("pointercancel", () => stopNote(id));
+      el.addEventListener("pointerleave", () => {});
+      el.addEventListener("contextmenu", (e) => e.preventDefault());
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.repeat) return;
+      const key = e.key.toLowerCase();
+      if (key === " ") {
+        e.preventDefault();
+        sustain = !sustain;
+        sustainBtn.textContent = `Sustain: ${sustain ? "On" : "Off"}`;
+        if (!sustain) releaseSustained();
+        return;
+      }
+      if (key === "z") {
+        octaveShift = Math.max(-2, octaveShift - 1);
+        buildKeyboard();
+        return;
+      }
+      if (key === "x") {
+        octaveShift = Math.min(2, octaveShift + 1);
+        buildKeyboard();
+        return;
+      }
+      const note = keyMap[key];
+      if (!note) return;
+
+      const octave = note === "C2" ? 5 + octaveShift : 4 + octaveShift;
+      const id = `${key}-${octaveShift}`;
+      playNote(note, octave, id);
+    });
+
+    document.addEventListener("keyup", (e) => {
+      const key = e.key.toLowerCase();
+      const note = keyMap[key];
+      if (!note) return;
+      const id = `${key}-${octaveShift}`;
+      stopNote(id);
+    });
+
+    sustainBtn.addEventListener("click", () => {
+      sustain = !sustain;
+      sustainBtn.textContent = `Sustain: ${sustain ? "On" : "Off"}`;
+      if (!sustain) releaseSustained();
+    });
+
+    octaveDown.addEventListener("click", () => {
+      octaveShift = Math.max(-2, octaveShift - 1);
+      buildKeyboard();
+    });
+
+    octaveUp.addEventListener("click", () => {
+      octaveShift = Math.min(2, octaveShift + 1);
+      buildKeyboard();
+    });
+
+    buildKeyboard();
+  </script>
+</body>
+</html>

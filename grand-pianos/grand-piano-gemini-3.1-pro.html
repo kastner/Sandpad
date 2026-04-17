@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Audio Piano</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #2c3e50;
+        margin: 0;
+        font-family: sans-serif;
+      }
+      .piano-container {
+        text-align: center;
+      }
+      h1 {
+        color: white;
+        margin-bottom: 20px;
+      }
+      .keyboard {
+        display: flex;
+        position: relative;
+        background: #111;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      .key {
+        cursor: pointer;
+        user-select: none;
+      }
+      .white {
+        width: 50px;
+        height: 200px;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 0 0 5px 5px;
+        margin: 0 2px;
+        box-shadow: 0 4px 5px rgba(0, 0, 0, 0.2);
+        transition: background 0.1s;
+      }
+      .white:active,
+      .white.active {
+        background: #e0e0e0;
+        box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+        transform: translateY(2px);
+      }
+      .black {
+        width: 30px;
+        height: 120px;
+        background: #222;
+        position: absolute;
+        top: 10px;
+        border-radius: 0 0 5px 5px;
+        box-shadow: 0 4px 5px rgba(0, 0, 0, 0.5);
+        z-index: 2;
+      }
+      .black:active,
+      .black.active {
+        background: #000;
+        box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);
+        transform: translateY(2px);
+      }
+      /* Positioning for the black keys relative to the white keys */
+      .cs { left: 45px; }
+      .ds { left: 99px; }
+      .fs { left: 207px; }
+      .gs { left: 261px; }
+      .as { left: 315px; }
+      .cs2 { left: 423px; }
+      .ds2 { left: 477px; }
+      .fs2 { left: 585px; }
+      .gs2 { left: 639px; }
+      .as2 { left: 693px; }
+    </style>
+  </head>
+  <body>
+    <div class="piano-container">
+      <h1>Synthesized Piano</h1>
+      <div class="keyboard" id="keyboard">
+        <!-- Octave 1 -->
+        <div class="key white" data-note="40"></div> <!-- C4 -->
+        <div class="key black cs" data-note="41"></div> <!-- C#4 -->
+        <div class="key white" data-note="42"></div> <!-- D4 -->
+        <div class="key black ds" data-note="43"></div> <!-- D#4 -->
+        <div class="key white" data-note="44"></div> <!-- E4 -->
+        <div class="key white" data-note="45"></div> <!-- F4 -->
+        <div class="key black fs" data-note="46"></div> <!-- F#4 -->
+        <div class="key white" data-note="47"></div> <!-- G4 -->
+        <div class="key black gs" data-note="48"></div> <!-- G#4 -->
+        <div class="key white" data-note="49"></div> <!-- A4 (440Hz) -->
+        <div class="key black as" data-note="50"></div> <!-- A#4 -->
+        <div class="key white" data-note="51"></div> <!-- B4 -->
+        
+        <!-- Octave 2 -->
+        <div class="key white" data-note="52"></div> <!-- C5 -->
+        <div class="key black cs2" data-note="53"></div> <!-- C#5 -->
+        <div class="key white" data-note="54"></div> <!-- D5 -->
+        <div class="key black ds2" data-note="55"></div> <!-- D#5 -->
+        <div class="key white" data-note="56"></div> <!-- E5 -->
+        <div class="key white" data-note="57"></div> <!-- F5 -->
+        <div class="key black fs2" data-note="58"></div> <!-- F#5 -->
+        <div class="key white" data-note="59"></div> <!-- G5 -->
+        <div class="key black gs2" data-note="60"></div> <!-- G#5 -->
+        <div class="key white" data-note="61"></div> <!-- A5 -->
+        <div class="key black as2" data-note="62"></div> <!-- A#5 -->
+        <div class="key white" data-note="63"></div> <!-- B5 -->
+        <div class="key white" data-note="64"></div> <!-- C6 -->
+      </div>
+    </div>
+
+    <script>
+      let audioCtx = null;
+      const activeNotes = {};
+
+      // Initialize audio context on first interaction to comply with browser autoplay policies
+      function initAudio() {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+      }
+
+      // Convert MIDI note number to frequency (A4 = 49 = 440Hz)
+      function noteToFreq(note) {
+        return 440 * Math.pow(2, (note - 49) / 12);
+      }
+
+      function playNote(noteIndex) {
+        initAudio();
+        const freq = noteToFreq(noteIndex);
+        const time = audioCtx.currentTime;
+
+        // Create main output node for this key
+        const masterGain = audioCtx.createGain();
+        masterGain.connect(audioCtx.destination);
+        masterGain.gain.value = 0;
+
+        // ADSR Envelope for volume
+        const attackTime = 0.02;
+        const decayTime = 0.3;
+        const sustainLevel = 0.2;
+        
+        masterGain.gain.setValueAtTime(0, time);
+        masterGain.gain.linearRampToValueAtTime(0.8, time + attackTime);
+        masterGain.gain.setTargetAtTime(sustainLevel, time + attackTime, decayTime);
+
+        // Lowpass filter to simulate hammer strike brightness dying down
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.Q.value = 1;
+        filter.frequency.setValueAtTime(4000, time);
+        filter.frequency.exponentialRampToValueAtTime(800, time + decayTime);
+        filter.connect(masterGain);
+
+        // Oscillator 1: Fundamental (Triangle for woody tone)
+        const osc1 = audioCtx.createOscillator();
+        osc1.type = "triangle";
+        osc1.frequency.value = freq;
+        osc1.connect(filter);
+
+        // Oscillator 2: Fundamental Body (Sine)
+        const osc2 = audioCtx.createOscillator();
+        osc2.type = "sine";
+        osc2.frequency.value = freq;
+        osc2.connect(filter);
+
+        // Oscillator 3: Harmonics (Sawtooth, low volume, slightly detuned)
+        const osc3Gain = audioCtx.createGain();
+        osc3Gain.gain.value = 0.1;
+        osc3Gain.connect(filter);
+        const osc3 = audioCtx.createOscillator();
+        osc3.type = "sawtooth";
+        osc3.frequency.value = freq;
+        osc3.detune.value = 5; // Detune slightly for warmth
+        osc3.connect(osc3Gain);
+
+        // Start all oscillators
+        osc1.start(time);
+        osc2.start(time);
+        osc3.start(time);
+
+        // Store references to stop them later
+        activeNotes[noteIndex] = {
+          gain: masterGain,
+          oscs: [osc1, osc2, osc3]
+        };
+      }
+
+      function stopNote(noteIndex) {
+        if (!activeNotes[noteIndex]) return;
+        
+        const time = audioCtx.currentTime;
+        const note = activeNotes[noteIndex];
+        const releaseTime = 0.5; // Natural piano string fade out
+
+        // Apply release envelope
+        note.gain.gain.cancelScheduledValues(time);
+        note.gain.gain.setValueAtTime(note.gain.gain.value, time);
+        note.gain.gain.exponentialRampToValueAtTime(0.001, time + releaseTime);
+
+        // Stop oscillators after release
+        note.oscs.forEach(osc => {
+          osc.stop(time + releaseTime);
+        });
+
+        delete activeNotes[noteIndex];
+      }
+
+      // Event Listeners for the DOM
+      const keys = document.querySelectorAll('.key');
+      
+      keys.forEach(key => {
+        const note = parseInt(key.getAttribute('data-note'));
+
+        // Mouse events
+        key.addEventListener('mousedown', () => {
+          key.classList.add('active');
+          playNote(note);
+        });
+        
+        key.addEventListener('mouseup', () => {
+          key.classList.remove('active');
+          stopNote(note);
+        });
+        
+        key.addEventListener('mouseleave', () => {
+          if (key.classList.contains('active')) {
+            key.classList.remove('active');
+            stopNote(note);
+          }
+        });
+
+        // Touch events for mobile
+        key.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          key.classList.add('active');
+          playNote(note);
+        });
+        
+        key.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          key.classList.remove('active');
+          stopNote(note);
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Piano</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+            user-select: none;
+        }
+
+        .piano-container {
+            position: relative;
+            background: #000;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .keys {
+            display: flex;
+            position: relative;
+        }
+
+        /* White Keys */
+        .white {
+            width: 40px;
+            height: 200px;
+            background: linear-gradient(to bottom, #eee 0%, #fff 100%);
+            border: 1px solid #999;
+            border-radius: 0 0 5px 5px;
+            cursor: pointer;
+            z-index: 1;
+            box-shadow: -1px 0 0 rgba(255,255,255,0.8) inset, 0 0 5px #ccc inset, 0 0 3px rgba(0,0,0,0.2);
+            transition: background 0.1s;
+        }
+        
+        .white:active, .white.active {
+            background: linear-gradient(to bottom, #ddd 0%, #eee 100%);
+            box-shadow: 0 0 5px rgba(0,0,0,0.2) inset;
+            transform: translateY(2px);
+            height: 198px;
+        }
+
+        /* Black Keys */
+        .black {
+            width: 24px;
+            height: 120px;
+            background: linear-gradient(to bottom, #222 0%, #000 100%);
+            position: absolute;
+            z-index: 2;
+            border-radius: 0 0 3px 3px;
+            cursor: pointer;
+            box-shadow: -1px -1px 2px rgba(255,255,255,0.2) inset, 0 -5px 2px 3px rgba(0,0,0,0.6) inset, 0 2px 5px rgba(0,0,0,0.5);
+            transition: background 0.1s;
+        }
+
+        .black:active, .black.active {
+            background: linear-gradient(to bottom, #111 0%, #333 100%);
+            box-shadow: 0 0 5px rgba(0,0,0,0.8) inset;
+            transform: translateY(2px);
+            height: 118px;
+        }
+
+        /* Positioning Black Keys */
+        /* Note: Left values are calculated based on white key width (40px) */
+        /* C# (1), D# (3), F# (6), G# (8), A# (10) */
+        
+        .key-0 { left: 28px; } /* C# */
+        .key-1 { left: 68px; } /* D# */
+        .key-2 { left: 148px; } /* F# */
+        .key-3 { left: 188px; } /* G# */
+        .key-4 { left: 228px; } /* A# */
+
+        .key-5 { left: 308px; } /* C# */
+        .key-6 { left: 348px; } /* D# */
+        .key-7 { left: 428px; } /* F# */
+        .key-8 { left: 468px; } /* G# */
+        .key-9 { left: 508px; } /* A# */
+        
+        .key-10 { left: 588px; } /* C# */
+        .key-11 { left: 628px; } /* D# */
+        
+        /* Instructions overlay */
+        .instructions {
+            position: absolute;
+            top: -40px;
+            color: #888;
+            font-size: 14px;
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="piano-container">
+    <div class="instructions">Keys: A S D F G H J K L ; ' (White) | W E T Y U O P ] (Black)</div>
+    <div class="keys" id="keyboard">
+        <!-- White Keys -->
+        <!-- C3 to E4 (2 Octaves + 1 note) -->
+        <div class="white" data-note="C3"></div>
+        <div class="white" data-note="D3"></div>
+        <div class="white" data-note="E3"></div>
+        <div class="white" data-note="F3"></div>
+        <div class="white" data-note="G3"></div>
+        <div class="white" data-note="A3"></div>
+        <div class="white" data-note="B3"></div>
+        <div class="white" data-note="C4"></div>
+        <div class="white" data-note="D4"></div>
+        <div class="white" data-note="E4"></div>
+        <div class="white" data-note="F4"></div>
+        <div class="white" data-note="G4"></div>
+        <div class="white" data-note="A4"></div>
+        <div class="white" data-note="B4"></div>
+        <div class="white" data-note="C5"></div>
+
+        <!-- Black Keys (Absolute positioned) -->
+        <div class="black key-0" data-note="C#3"></div>
+        <div class="black key-1" data-note="D#3"></div>
+        <div class="black key-2" data-note="F#3"></div>
+        <div class="black key-3" data-note="G#3"></div>
+        <div class="black key-4" data-note="A#3"></div>
+
+        <div class="black key-5" data-note="C#4"></div>
+        <div class="black key-6" data-note="D#4"></div>
+        <div class="black key-7" data-note="F#4"></div>
+        <div class="black key-8" data-note="G#4"></div>
+        <div class="black key-9" data-note="A#4"></div>
+        
+        <div class="black key-10" data-note="C#5"></div>
+        <div class="black key-11" data-note="D#5"></div>
+    </div>
+</div>
+
+<script>
+    // Audio Context Setup
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    // Ensure context is started on first interaction (browser policy)
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    // Frequency Map (Equal Temperament A4=440Hz)
+    const noteFrequencies = {
+        'C3': 130.81, 'C#3': 138.59, 'D3': 146.83, 'D#3': 155.56, 'E3': 164.81, 
+        'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'G#3': 207.65, 'A3': 220.00, 
+        'A#3': 233.08, 'B3': 246.94, 
+        
+        'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63, 
+        'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 
+        'A#4': 466.16, 'B4': 493.88, 
+        
+        'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.26
+    };
+
+    // Master Gain (Volume)
+    const masterGain = audioCtx ? audioCtx.createGain() : null;
+    if(masterGain) {
+        masterGain.gain.value = 0.5;
+        masterGain.connect(audioCtx.destination);
+    }
+
+    /**
+     * Synthesize Piano Sound
+     * Uses additive synthesis with 3 oscillators to mimic harmonics
+     * and a specific envelope (ADSR) to mimic piano attack/decay.
+     */
+    function playNote(note) {
+        if (!noteFrequencies[note]) return;
+        initAudio();
+
+        const freq = noteFrequencies[note];
+        const now = audioCtx.currentTime;
+
+        // --- Envelope ---
+        const gainNode = audioCtx.createGain();
+        gainNode.connect(masterGain || audioCtx.destination);
+
+        // Attack
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(1, now + 0.01); // Fast attack
+        
+        // Decay & Sustain
+        // Pianos have a quick initial decay, then a slower decay
+        gainNode.gain.exponentialRampToValueAtTime(0.4, now + 0.2);
+        gainNode.gain.exponentialRampToValueAtTime(0.3, now + 1.0);
+        
+        // Release (fade out)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+
+        // --- Oscillators (Additive Synthesis) ---
+        
+        // 1. Fundamental (Sine)
+        const osc1 = audioCtx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.value = freq;
+
+        // 2. 2nd Harmonic (Sine - adds body)
+        const osc2 = audioCtx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.value = freq * 2;
+        
+        // 3. Higher Harmonic (Triangle - adds 'pluck' sound)
+        const osc3 = audioCtx.createOscillator();
+        osc3.type = 'triangle';
+        osc3.frequency.value = freq * 3;
+
+        // Gain nodes for mixing harmonics
+        const gain1 = audioCtx.createGain();
+        gain1.gain.value = 1.0; // Fundamental
+        
+        const gain2 = audioCtx.createGain();
+        gain2.gain.value = 0.2; // Softer harmonic
+        
+        const gain3 = audioCtx.createGain();
+        gain3.gain.value = 0.1; // Even softer high harmonic
+
+        // Connect graph
+        osc1.connect(gain1);
+        gain1.connect(gainNode);
+        
+        osc2.connect(gain2);
+        gain2.connect(gainNode);
+        
+        osc3.connect(gain3);
+        gain3.connect(gainNode);
+
+        // Start and Stop
+        const duration = 2.5;
+        osc1.start(now);
+        osc2.start(now);
+        osc3.start(now);
+
+        osc1.stop(now + duration);
+        osc2.stop(now + duration);
+        osc3.stop(now + duration);
+    }
+
+    // --- Event Handling ---
+
+    const keys = document.querySelectorAll('.white, .black');
+
+    // Mouse interaction
+    keys.forEach(key => {
+        key.addEventListener('mousedown', (e) => {
+            const note = key.getAttribute('data-note');
+            playNote(note);
+            key.classList.add('active');
+        });
+
+        key.addEventListener('mouseup', (e) => {
+            key.classList.remove('active');
+        });
+        
+        key.addEventListener('mouseleave', (e) => {
+            key.classList.remove('active');
+        });
+    });
+
+    // Keyboard interaction
+    const keyMap = {
+        // Lower row (White keys)
+        'a': 'C3', 's': 'D3', 'd': 'E3', 'f': 'F3', 'g': 'G3', 'h': 'A3', 'j': 'B3',
+        'k': 'C4', 'l': 'D4', ';': 'E4', "'": 'F4',
+        // Upper row (Black keys)
+        'w': 'C#3', 'e': 'D#3', 't': 'F#3', 'y': 'G#3', 'u': 'A#3',
+        'o': 'C#4', 'p': 'D#4', ']': 'F#4'
+        // Note: 2 octaves fit comfortably on QWERTY. Extending further requires remapping logic.
+    };
+    
+    // Add simple mapping for second octave extension
+    const keyMap2 = {
+        'z': 'G4', 'x': 'A4', 'c': 'B4', 'v': 'C5',
+        '3': 'G#4', '4': 'A#4', '7': 'C#5', '8': 'D#5'
+    };
+
+    Object.assign(keyMap, keyMap2);
+
+    const activeKeys = {};
+
+    window.addEventListener('keydown', (e) => {
+        if (e.repeat) return;
+        const note = keyMap[e.key.toLowerCase()];
+        if (note) {
+            playNote(note);
+            const el = document.querySelector(`[data-note="${note}"]`);
+            if (el) el.classList.add('active');
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        const note = keyMap[e.key.toLowerCase()];
+        if (note) {
+            const el = document.querySelector(`[data-note="${note}"]`);
+            if (el) el.classList.remove('active');
+        }
+    });
+
+</script>
+</body>
+</html>

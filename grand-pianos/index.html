@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Grand Piano Challenge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:            #070503;
+      --bg-card:       #100d0a;
+      --gold:          #c8a055;
+      --gold-light:    #e4c070;
+      --gold-dim:      #3e2e0e;
+      --text:          #d8c8b0;
+      --text-dim:      #7a6a52;
+      --text-body:     #bfae98;
+      --text-bright:   #f0e4cc;
+      --border:        rgba(200,160,85,0.13);
+      --border-hover:  rgba(200,160,85,0.38);
+      --exemplar-bg:   #0e0c08;
+      --exemplar-bdr:  rgba(200,160,85,0.4);
+      --surprise-bg:   #090710;
+      --surprise-bdr:  rgba(110,70,200,0.3);
+      --surprise-bdr-h:rgba(110,70,200,0.65);
+      --surprise-acc:  #9a68e0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      min-height: 100vh;
+    }
+
+    /* ════════════════ HEADER ════════════════ */
+    .site-header {
+      padding: 72px 64px 60px;
+      max-width: 1300px;
+      margin: 0 auto;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-eyebrow::before {
+      content: '';
+      width: 28px; height: 1px;
+      background: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(44px, 6vw, 76px);
+      font-weight: 400;
+      line-height: 1.12;
+      color: var(--text-bright);
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+
+    .header-title em {
+      font-style: italic;
+      color: var(--gold-light);
+    }
+
+    .header-sub {
+      max-width: 520px;
+      font-size: 16px;
+      color: var(--text-dim);
+      line-height: 1.75;
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 48px;
+      margin-top: 36px;
+    }
+    .stat-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 40px;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .stat-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ════════════════ INTRO ════════════════ */
+    .intro {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 56px 64px;
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 56px;
+      border-bottom: 1px solid var(--border);
+      align-items: start;
+    }
+
+    .intro-text p {
+      font-size: 15.5px;
+      color: var(--text-body);
+      line-height: 1.8;
+      margin-bottom: 14px;
+    }
+    .intro-text p:first-child {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 18px;
+      font-style: italic;
+      color: var(--text);
+    }
+
+    .prompt-card {
+      background: rgba(200,160,85,0.04);
+      border: 1px solid rgba(200,160,85,0.22);
+      border-left: 3px solid var(--gold);
+      padding: 28px 28px 24px;
+    }
+    .prompt-card-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 14px;
+    }
+    .prompt-card-text {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 16.5px;
+      font-style: italic;
+      color: var(--text-bright);
+      line-height: 1.65;
+    }
+    .prompt-card-text::before { content: '\201C'; color: var(--gold); margin-right: 2px; }
+    .prompt-card-text::after  { content: '\201D'; color: var(--gold); margin-left: 2px; }
+    .prompt-card-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      color: var(--text-dim);
+      margin-top: 14px;
+      letter-spacing: 0.06em;
+    }
+
+    /* ════════════════ SECTION WRAPPERS ════════════════ */
+    .piano-section {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 56px 64px;
+    }
+
+    .tier-divider {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin: 48px 0 36px;
+    }
+    .tier-divider span {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+    .tier-divider::before,
+    .tier-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ════════════════ PIANO CARD ════════════════ */
+    .piano-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.5s ease, transform 0.5s ease,
+                  border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .piano-card.visible {
+      opacity: 1;
+      transform: none;
+    }
+    .piano-card:hover {
+      border-color: var(--border-hover);
+      box-shadow: 0 6px 36px rgba(200,160,85,0.06);
+    }
+
+    /* Card header row */
+    .card-header {
+      padding: 22px 32px 18px;
+      display: grid;
+      grid-template-columns: 40px 1fr auto;
+      gap: 0 18px;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-rank {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+    .card-model-name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--text-bright);
+      letter-spacing: -0.01em;
+    }
+    .card-badges {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 4px;
+    }
+    .badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 2px;
+    }
+    .badge-platform { background: rgba(200,160,85,0.08); color: var(--gold); border: 1px solid rgba(200,160,85,0.2); }
+    .badge-keys     { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+    .badge-broken   { background: rgba(200,60,60,0.08); color: #e08070; border: 1px solid rgba(200,60,60,0.2); }
+
+    /* Quality meters */
+    .card-scores {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      align-items: flex-end;
+    }
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .score-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      width: 66px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .score-dots {
+      display: flex;
+      gap: 4px;
+    }
+    .sdot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--gold-dim);
+    }
+    .sdot.on { background: var(--gold); }
+
+    /* Card body */
+    .card-body {
+      padding: 18px 32px 22px;
+    }
+    .card-summary {
+      font-size: 14.5px;
+      color: var(--text-body);
+      line-height: 1.75;
+      max-width: 740px;
+    }
+    .feature-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 12px;
+    }
+    .feat {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 2px;
+    }
+    .quirk-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin-top: 11px;
+      background: rgba(200,160,85,0.04);
+      border: 1px solid rgba(200,160,85,0.14);
+      padding: 9px 13px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11.5px;
+      color: rgba(200,160,85,0.6);
+      line-height: 1.55;
+    }
+
+    /* Embed */
+    .card-embed {
+      border-top: 1px solid var(--border);
+      background: #050403;
+      position: relative;
+    }
+    .card-embed iframe {
+      width: 100%;
+      height: 640px;
+      border: none;
+      display: block;
+      transition: height 0.35s ease;
+    }
+    .embed-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 32px;
+      background: rgba(0,0,0,0.45);
+      border-top: 1px solid var(--border);
+    }
+    .embed-hint {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+    }
+    .expand-btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      background: none;
+      border: 1px solid var(--border);
+      padding: 4px 11px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .expand-btn:hover { color: var(--gold); border-color: rgba(200,160,85,0.3); }
+
+    /* ════════════════ EXEMPLAR CARD ════════════════ */
+    .piano-card.exemplar {
+      background: var(--exemplar-bg);
+      border-color: var(--exemplar-bdr);
+      box-shadow: 0 0 0 1px rgba(200,160,85,0.08), 0 12px 56px rgba(200,160,85,0.07);
+    }
+    .piano-card.exemplar:hover {
+      border-color: rgba(200,160,85,0.65);
+      box-shadow: 0 0 0 1px rgba(200,160,85,0.15), 0 16px 64px rgba(200,160,85,0.1);
+    }
+    .piano-card.exemplar .card-header { border-bottom-color: rgba(200,160,85,0.2); }
+    .piano-card.exemplar .card-embed  { border-top-color: rgba(200,160,85,0.2); }
+    .piano-card.exemplar .embed-controls { border-top-color: rgba(200,160,85,0.15); }
+    .exemplar-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+    .exemplar-eyebrow::before {
+      content: '★';
+      font-size: 11px;
+    }
+    .piano-card.exemplar .card-model-name { font-size: 26px; color: var(--gold-light); }
+    .piano-card.exemplar .sdot.on { background: var(--gold-light); }
+
+    /* ════════════════ SURPRISE CARD ════════════════ */
+    .piano-card.surprise {
+      background: var(--surprise-bg);
+      border-color: var(--surprise-bdr);
+    }
+    .piano-card.surprise:hover {
+      border-color: var(--surprise-bdr-h);
+      box-shadow: 0 8px 48px rgba(110,70,200,0.08);
+    }
+    .piano-card.surprise .card-header  { border-bottom-color: rgba(110,70,200,0.15); }
+    .piano-card.surprise .card-embed   { border-top-color: rgba(110,70,200,0.15); }
+    .piano-card.surprise .embed-controls { border-top-color: rgba(110,70,200,0.12); }
+    .surprise-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--surprise-acc);
+      margin-bottom: 8px;
+    }
+    .surprise-eyebrow::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--surprise-acc);
+      animation: blink 2.5s ease-in-out infinite;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+    .piano-card.surprise .card-model-name { color: #e0d0ff; }
+    .piano-card.surprise .badge-platform {
+      background: rgba(110,70,200,0.1);
+      color: var(--surprise-acc);
+      border-color: rgba(110,70,200,0.3);
+    }
+    .piano-card.surprise .sdot.on { background: var(--surprise-acc); }
+    .surprise-quirk {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 13px;
+      background: rgba(110,70,200,0.06);
+      border: 1px solid rgba(110,70,200,0.2);
+      padding: 12px 16px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11.5px;
+      color: #c8a8ff;
+      line-height: 1.65;
+    }
+    .surprise-quirk .sq-icon { font-size: 15px; flex-shrink: 0; line-height: 1.5; }
+    .prompt-diff-note {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10.5px;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+    .prompt-diff-hl { color: var(--surprise-acc); }
+
+    /* ════════════════ FOOTER ════════════════ */
+    .site-footer {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 36px 64px 72px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+    }
+    .site-footer p {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    /* ════════════════ RESPONSIVE ════════════════ */
+    @media (max-width: 820px) {
+      .site-header, .intro, .piano-section { padding: 40px 24px; }
+      .intro { grid-template-columns: 1fr; gap: 28px; }
+      .card-header { grid-template-columns: 36px 1fr; padding: 18px 20px 14px; }
+      .card-scores { display: none; }
+      .card-body { padding: 14px 20px 18px; }
+      .embed-controls { padding: 9px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     HEADER
+════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-eyebrow">Experiment &middot; April 2026</div>
+  <h1 class="header-title">The <em>Grand Piano</em> Challenge</h1>
+  <p class="header-sub">One prompt. Thirteen models. Each asked to synthesize a concert grand piano entirely in HTML — no libraries, no editing.</p>
+  <div class="header-stats">
+    <div>
+      <div class="stat-num">13</div>
+      <div class="stat-label">Models</div>
+    </div>
+    <div>
+      <div class="stat-num">1</div>
+      <div class="stat-label">Prompt</div>
+    </div>
+    <div>
+      <div class="stat-num">0</div>
+      <div class="stat-label">Edits</div>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════
+     INTRO
+════════════════════════════════════════ -->
+<section class="intro">
+  <div class="intro-text">
+    <p>Twelve models received the identical brief via t3.chat. A thirteenth was tested in T3 Code (Codex) with a nearly identical prompt. None of the outputs were touched afterward.</p>
+    <p>The results were ranked across three dimensions: synthesis depth (harmonic modeling, envelope fidelity, reverb), keyboard range (octaves covered, sustain, pedal), and visual design. Each piano below is live — click the keys to play.</p>
+    <p>The range of results is remarkable: the best entry cites real acoustic physics papers and implements research-grade models. Others manage a single octave of triangle waves. And then there are the surprises.</p>
+  </div>
+  <div>
+    <div class="prompt-card">
+      <div class="prompt-card-label">The Prompt</div>
+      <div class="prompt-card-text">Create a html only file that&rsquo;s a piano keyboard. Synthesize the sound the best you can to simulate a grand piano</div>
+      <div class="prompt-card-meta">Used for 12 of 13 models &middot; via t3.chat</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     PIANO SECTION
+════════════════════════════════════════ -->
+<main class="piano-section">
+
+  <!-- ╔══════════════════════════════╗
+       ║  EXEMPLAR                    ║
+       ╚══════════════════════════════╝ -->
+  <div class="tier-divider">
+    <span>The Exemplar</span>
+  </div>
+
+  <!-- Claude Opus 4.6 (improved) -->
+  <article class="piano-card exemplar visible">
+    <div class="card-header">
+      <div class="card-rank">—</div>
+      <div>
+        <div class="exemplar-eyebrow">Research-Grade Synthesis · Extended Prompting Session</div>
+        <div class="card-model-name">Claude Opus 4.6 <span style="font-style:italic;font-weight:400;font-size:20px">(improved)</span></div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">25 keys · C3–C5</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">This one started as the same prompt as everyone else, then became a multi-turn session pushing the synthesis as far as it would go. The result cites real acoustics research — Fletcher's inharmonicity formula, Conklin's Steinway string data, Bank's 2010 modal piano model — and implements all of it: compound decay (prompt + aftersound), hammer strike-position spectrum, stochastic residual noise, per-partial detuning. Warm gold and cream aesthetic with subtle 3D key tilt. In a different tier from everything else here.</p>
+      <div class="feature-list">
+        <span class="feat">Sustain pedal</span>
+        <span class="feat">Fletcher inharmonicity</span>
+        <span class="feat">Compound decay (Bank 2010)</span>
+        <span class="feat">Conklin Steinway data</span>
+        <span class="feat">Convolution reverb</span>
+        <span class="feat">Stochastic residual</span>
+        <span class="feat">Velocity timbre</span>
+        <span class="feat">Strike-position spectrum</span>
+      </div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-opus-4.6-improved.html" loading="lazy" title="Claude Opus 4.6 (improved)"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys to play · Space = sustain pedal</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ╔══════════════════════════════╗
+       ║  THE FIELD                   ║
+       ╚══════════════════════════════╝ -->
+  <div class="tier-divider" style="margin-top:56px">
+    <span>The Competition</span>
+  </div>
+
+  <!-- Claude Opus 4.6 -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">01</div>
+      <div>
+        <div class="card-model-name">Claude Opus 4.6</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">25 keys · C3–C5</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">The baseline Opus 4.6 response — the one the improved version grew out of. Same gold-and-wood concert aesthetic, same architecture: 8 harmonics with inharmonicity, hammer noise burst, body resonance peak, convolution reverb, detuned unison pair. Uses heuristic decay curves rather than research parameters, but sounds excellent and looks polished.</p>
+      <div class="feature-list">
+        <span class="feat">Sustain pedal</span>
+        <span class="feat">8 harmonics</span>
+        <span class="feat">Convolution reverb</span>
+        <span class="feat">Hammer noise</span>
+        <span class="feat">Body resonance</span>
+        <span class="feat">Volume / reverb sliders</span>
+      </div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-opus-4.6.html" loading="lazy" title="Claude Opus 4.6"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys to play · Space = sustain pedal</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- Claude Opus 4.7 -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">02</div>
+      <div>
+        <div class="card-model-name">Claude Opus 4.7</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">29 keys · C3–E5</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">Clean minimal code with a solid master chain (compressor + convolver) and 8 sine partials with inharmonicity. Synthesis recipe is good — but a notable regression from 4.6: there's no note-off handling, so every note auto-decays after 150ms regardless of how long you hold the key. Surprising given the model version jump.</p>
+      <div class="feature-list">
+        <span class="feat">8 partials + inharmonicity</span>
+        <span class="feat">Convolution reverb</span>
+        <span class="feat">Compressor</span>
+        <span class="feat">Hammer noise</span>
+        <span class="feat">Filter envelope</span>
+      </div>
+      <div class="quirk-note">⚠ No note-off handling — notes auto-release after 150ms regardless of how long you hold</div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-opus-4.7.html" loading="lazy" title="Claude Opus 4.7"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys to play</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- Claude Sonnet 4.6 -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">03</div>
+      <div>
+        <div class="card-model-name">Claude Sonnet 4.6</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">~25 keys · octave-shiftable</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">Nine harmonics with chorus detuning on low partials, a sub-octave transient thump for attack weight, hammer bandpass noise, and a sustain pedal. Z/X octave-shift keys extend the usable range across the full keyboard. No reverb bus or filter envelope keeps the tone slightly plainer, but solid overall.</p>
+      <div class="feature-list">
+        <span class="feat">Sustain pedal</span>
+        <span class="feat">9 harmonics</span>
+        <span class="feat">Sub-octave thump</span>
+        <span class="feat">Octave shift Z/X</span>
+        <span class="feat">Chorus detuning</span>
+        <span class="feat">Hammer noise</span>
+      </div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-sonnet-4.6.html" loading="lazy" title="Claude Sonnet 4.6"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys to play · Z / X = octave shift</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- Kimi K2.5 -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">04</div>
+      <div>
+        <div class="card-model-name">Kimi K2.5</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">29 keys · C3–E5</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">Six harmonics with a sweeping lowpass filter envelope (3000→800 Hz) that gives each note a pleasing "breathing" decay. Hammer noise burst with frequency-dependent release time. Black-key positioning has CSS bugs past the first octave, and the sustain pedal hint in the UI is unimplemented — but what it does, it does musically.</p>
+      <div class="feature-list">
+        <span class="feat">6 harmonics</span>
+        <span class="feat">Filter sweep envelope</span>
+        <span class="feat">Hammer noise</span>
+        <span class="feat">Variable release time</span>
+      </div>
+      <div class="quirk-note">⚠ Black-key CSS positioning breaks across octave boundaries · sustain pedal unimplemented</div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-kimi-k2.5.html" loading="lazy" title="Kimi K2.5"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys to play</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- Gemma 4 26B-A4B -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">05</div>
+      <div>
+        <div class="card-model-name">Gemma 4 26B-A4B</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">13 keys · 1 octave</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">A real surprise — a small model punching above its weight with a genuinely attractive UI. The synthesis is minimal (one octave, four triangle harmonics, fixed 2-second decay), but the visual presentation was one of the more polished results in the set. A good reminder that synthesis depth and design quality don't always travel together.</p>
+      <div class="feature-list">
+        <span class="feat">4 harmonics (triangle)</span>
+        <span class="feat">Fixed 2s decay</span>
+        <span class="feat">Computer keyboard input</span>
+        <span class="feat">Clean UI</span>
+      </div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-gemma-4-26B-A4B.html" loading="lazy" title="Gemma 4 26B-A4B"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys or press keyboard letters to play</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ╔══════════════════════════════╗
+       ║  PLOT TWIST                  ║
+       ╚══════════════════════════════╝ -->
+  <div class="tier-divider" style="margin-top:56px">
+    <span>Plot Twist Incoming</span>
+  </div>
+
+  <!-- GPT-5.4 Codex — THE SURPRISE -->
+  <article class="piano-card surprise visible">
+    <div class="card-header">
+      <div class="card-rank" style="color:var(--surprise-acc)">??</div>
+      <div>
+        <div class="surprise-eyebrow">Different Prompt · T3 Code / Codex · The One That Started It All</div>
+        <div class="card-model-name">GPT-5.4 Codex</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">T3 Code</span>
+          <span class="badge badge-keys">88 keys · A0–C8</span>
+        </div>
+        <div class="prompt-diff-note">
+          Prompt: &ldquo;Create a <span class="prompt-diff-hl">new html only file in this project</span> that&rsquo;s a piano keyboard&hellip;&rdquo;
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label" style="color:var(--surprise-acc)">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label" style="color:var(--surprise-acc)">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label" style="color:var(--surprise-acc)">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary" style="color:var(--text)">The most technically ambitious entry in the entire set — by a wide margin. Full 88-key range (A0–C8), 36-voice polyphony management, multi-string unison detuning that scales with register, 10 partials with inharmonicity, hammer-noise burst + bass thunk, stereo panning by register, convolution reverb with early reflections, compressor, pressure-sensitive velocity, and glissando drag. Live voice and audio-state readouts. Beautiful dark-amber concert-hall aesthetic with Cormorant Garamond headings. On paper, the clear winner.</p>
+      <div class="feature-list">
+        <span class="feat" style="border-color:rgba(110,70,200,0.3);color:var(--surprise-acc)">88 keys (full range)</span>
+        <span class="feat" style="border-color:rgba(110,70,200,0.3);color:var(--surprise-acc)">36-voice polyphony</span>
+        <span class="feat" style="border-color:rgba(110,70,200,0.3);color:var(--surprise-acc)">Multi-string unison</span>
+        <span class="feat" style="border-color:rgba(110,70,200,0.3);color:var(--surprise-acc)">Stereo by register</span>
+        <span class="feat" style="border-color:rgba(110,70,200,0.3);color:var(--surprise-acc)">Convolution reverb</span>
+        <span class="feat" style="border-color:rgba(110,70,200,0.3);color:var(--surprise-acc)">Velocity + glissando</span>
+        <span class="feat" style="border-color:rgba(110,70,200,0.3);color:var(--surprise-acc)">Live voice readout</span>
+      </div>
+      <div class="surprise-quirk">
+        <span class="sq-icon">&#x1F643;</span>
+        <div>
+          <strong>The twist:</strong> The keyboard is upside-down. Black keys on the <em>bottom</em>, white keys on <em>top</em>. Despite the most sophisticated synthesis in the set and a genuinely beautiful UI, the visual orientation is inverted. This was the one that inspired the whole experiment — trying other models to see if someone else would get it right.
+        </div>
+      </div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-gpt-5.4-codex.html" loading="lazy" title="GPT-5.4 Codex (upside-down!)" style="height:1120px"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint" style="color:var(--surprise-acc)">Click keys to play · Yes, it really is upside-down</span>
+        <button class="expand-btn" onclick="toggleExpand(this)" style="border-color:rgba(110,70,200,0.3);color:var(--surprise-acc)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ╔══════════════════════════════╗
+       ║  THE REST                    ║
+       ╚══════════════════════════════╝ -->
+  <div class="tier-divider" style="margin-top:56px">
+    <span>The Incomplete &amp; Broken</span>
+  </div>
+
+  <!-- GPT-5.4 -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">06</div>
+      <div>
+        <div class="card-model-name">GPT-5.4</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">13 keys · 1 octave</span>
+          <span class="badge badge-broken">Limited Range</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">Exceptional synthesis depth — the most elaborate signal chain in the set: separate dry/wet busses, tone filter, resonance layer, convolution reverb with early-reflection tail, limiter, and compressor. Stunning dark-blue glass UI. But only one octave. The synthesis would rival the top tier if it covered more of the keyboard.</p>
+      <div class="feature-list">
+        <span class="feat">Convolution reverb</span>
+        <span class="feat">Early reflections</span>
+        <span class="feat">Sustain toggle</span>
+        <span class="feat">Compressor + limiter</span>
+        <span class="feat">Brightness slider</span>
+        <span class="feat">Resonance bus</span>
+      </div>
+      <div class="quirk-note">⚠ Range limited to one octave despite the synthesis sophistication</div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-gpt-5.4.html" loading="lazy" title="GPT-5.4"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys to play · Space = sustain</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- GPT-5.4 Mini -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">07</div>
+      <div>
+        <div class="card-model-name">GPT-5.4 Mini</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">~29 keys · 4 octaves</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">Good range with ±2 octave shift, three-oscillator synthesis with fine detuning, per-note random panning, hammer noise, and convolution reverb. Glassy blue UI. The sustain acts as a toggle (on/off) rather than a hold. Would sit higher if not for a few implementation rough edges.</p>
+      <div class="feature-list">
+        <span class="feat">Octave shift ±2</span>
+        <span class="feat">3-oscillator detuning</span>
+        <span class="feat">Stereo panning per note</span>
+        <span class="feat">Convolution reverb</span>
+        <span class="feat">Hammer noise</span>
+        <span class="feat">Compressor</span>
+      </div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-gpt-5.4-mini.html" loading="lazy" title="GPT-5.4 Mini" style="height:560px"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys to play · Octave shift buttons available</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- Minimax M2.7 -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">08</div>
+      <div>
+        <div class="card-model-name">Minimax M2.7</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">37 keys · C4–C7</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">Gold-on-dark-wood concert aesthetic, seven harmonics, convolution reverb, compressor, and a solid 3-octave range. Randomized per-note decay adds some natural variation. Sustain button semantics are slightly fragile and there's a minor CSS typo, but it works reliably.</p>
+      <div class="feature-list">
+        <span class="feat">Sustain pedal</span>
+        <span class="feat">7 harmonics</span>
+        <span class="feat">Convolution reverb</span>
+        <span class="feat">Hammer noise</span>
+        <span class="feat">Compressor</span>
+        <span class="feat">Randomized decay</span>
+      </div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-minimax-M2.7.html" loading="lazy" title="Minimax M2.7"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys to play · Space = sustain</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- Elephant Alpha -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">09</div>
+      <div>
+        <div class="card-model-name">Elephant Alpha</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">88 keys (claimed)</span>
+          <span class="badge badge-broken">Unstable</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">The most ambitious physics model on paper: a resonator driven by a noise burst through a feedback loop, simulating string impedance. The DOM has duplicate C-notes and mispositioned accidentals, the feedback network can self-oscillate, and voice cleanup is broken (voices leak). Interesting research sketch; unstable in practice.</p>
+      <div class="feature-list">
+        <span class="feat">Feedback-loop resonator</span>
+        <span class="feat">Inharmonicity per note</span>
+        <span class="feat">Body lowpass</span>
+        <span class="feat">Hammer excitation</span>
+      </div>
+      <div class="quirk-note">⚠ Feedback loop can self-oscillate · DOM key layout malformed · voice cleanup broken</div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-elephant-alpha.html" loading="lazy" title="Elephant Alpha"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys to play · May be unstable</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- Gemini 3.1 Pro -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">10</div>
+      <div>
+        <div class="card-model-name">Gemini 3.1 Pro</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">25 keys · C4–C6</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">Surprisingly correct for its size: proper full ADSR, a proper release ramp on key-up, and a filter envelope rolling off from 4000→800 Hz to simulate hammer-brightness decay. Three oscillators (triangle + sine + detuned saw). Clean dark-slate look, no frills, no bugs. No reverb or sustain, but technically accurate on what it does implement.</p>
+      <div class="feature-list">
+        <span class="feat">Full ADSR envelope</span>
+        <span class="feat">Filter brightness envelope</span>
+        <span class="feat">3 oscillators</span>
+        <span class="feat">Proper note-off</span>
+      </div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-gemini-3.1-pro.html" loading="lazy" title="Gemini 3.1 Pro"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys to play · Mouse or keyboard</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- Mimo V2 Pro -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">11</div>
+      <div>
+        <div class="card-model-name">Mimo V2 Pro</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">29 keys · C3–E5</span>
+          <span class="badge badge-broken">Broken Controls</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">Three-oscillator additive synthesis with a scripted decay envelope. Works, but holding a key has no effect on note length (fire-and-forget 2.5s ramp), the master gain node is initialized before the audio context exists so volume control is permanently inert, and the tone is thin. Functional demo at best.</p>
+      <div class="feature-list">
+        <span class="feat">3-oscillator additive</span>
+        <span class="feat">Multi-stage decay</span>
+        <span class="feat">Computer keyboard input</span>
+      </div>
+      <div class="quirk-note">⚠ Volume control inert · notes are fire-and-forget (key-hold has no effect)</div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-mimo-v2-pro.html" loading="lazy" title="Mimo V2 Pro"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys to play</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+</main>
+
+<!-- ════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+<footer class="site-footer">
+  <p>The Grand Piano Challenge &middot; April 2026</p>
+  <p>13 models &middot; 1 prompt &middot; 0 edits</p>
+</footer>
+
+<script>
+  // Scroll-reveal for cards
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.06, rootMargin: '0px 0px -32px 0px' });
+
+  document.querySelectorAll('.piano-card:not(.visible)').forEach(c => io.observe(c));
+
+  // Expand / collapse iframes
+  function toggleExpand(btn) {
+    const iframe = btn.closest('.embed-controls').previousElementSibling;
+    const isExpanded = iframe.dataset.expanded === 'true';
+    const defaultH = iframe.style.height || '440px';
+    if (isExpanded) {
+      iframe.style.height = iframe.dataset.defaultH || '440px';
+      iframe.dataset.expanded = 'false';
+      btn.textContent = 'Expand';
+    } else {
+      iframe.dataset.defaultH = iframe.style.height || '440px';
+      iframe.style.height = '760px';
+      iframe.dataset.expanded = 'true';
+      btn.textContent = 'Collapse';
+    }
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Grand Piano</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+      }
+      body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #eee;
+        padding: 20px;
+      }
+      h1 {
+        margin-bottom: 20px;
+        font-weight: 300;
+        letter-spacing: 4px;
+        color: #d4af37;
+        text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+      }
+      .info {
+        margin-bottom: 20px;
+        font-size: 14px;
+        opacity: 0.7;
+      }
+      .piano {
+        position: relative;
+        display: flex;
+        background: #111;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.8),
+          inset 0 2px 0 rgba(255, 255, 255, 0.05);
+        border: 1px solid #333;
+      }
+      .key {
+        cursor: pointer;
+        transition: all 0.05s ease;
+        position: relative;
+      }
+      .white {
+        width: 55px;
+        height: 240px;
+        background: linear-gradient(to bottom, #fafafa, #e8e8e8);
+        border: 1px solid #222;
+        border-radius: 0 0 6px 6px;
+        margin-right: 2px;
+        box-shadow:
+          inset 0 -4px 8px rgba(0, 0, 0, 0.1),
+          0 4px 4px rgba(0, 0, 0, 0.3);
+      }
+      .white.active,
+      .white:active {
+        background: linear-gradient(to bottom, #e0e0e0, #c8c8c8);
+        box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2);
+        transform: translateY(1px);
+      }
+      .black {
+        width: 34px;
+        height: 150px;
+        background: linear-gradient(to bottom, #2a2a2a, #000);
+        border-radius: 0 0 4px 4px;
+        position: absolute;
+        z-index: 2;
+        box-shadow:
+          inset 0 -4px 8px rgba(255, 255, 255, 0.15),
+          0 4px 6px rgba(0, 0, 0, 0.5);
+      }
+      .black.active,
+      .black:active {
+        background: linear-gradient(to bottom, #000, #1a1a1a);
+        box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.6);
+        transform: translateY(1px);
+      }
+      .label {
+        position: absolute;
+        bottom: 8px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 11px;
+        color: #888;
+        pointer-events: none;
+      }
+      .black .label {
+        color: #aaa;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>GRAND PIANO</h1>
+    <div class="info">Click keys or use your keyboard: A S D F G H J K ... (W E T Y U for black keys)</div>
+    <div class="piano" id="piano"></div>
+
+    <script>
+      const notes = [
+        { note: 'C3', freq: 130.81, key: 'z', type: 'white' },
+        { note: 'C#3', freq: 138.59, key: 's', type: 'black' },
+        { note: 'D3', freq: 146.83, key: 'x', type: 'white' },
+        { note: 'D#3', freq: 155.56, key: 'd', type: 'black' },
+        { note: 'E3', freq: 164.81, key: 'c', type: 'white' },
+        { note: 'F3', freq: 174.61, key: 'v', type: 'white' },
+        { note: 'F#3', freq: 185.0, key: 'g', type: 'black' },
+        { note: 'G3', freq: 196.0, key: 'b', type: 'white' },
+        { note: 'G#3', freq: 207.65, key: 'h', type: 'black' },
+        { note: 'A3', freq: 220.0, key: 'n', type: 'white' },
+        { note: 'A#3', freq: 233.08, key: 'j', type: 'black' },
+        { note: 'B3', freq: 246.94, key: 'm', type: 'white' },
+        { note: 'C4', freq: 261.63, key: 'a', type: 'white' },
+        { note: 'C#4', freq: 277.18, key: 'w', type: 'black' },
+        { note: 'D4', freq: 293.66, key: 's', type: 'white' },
+        { note: 'D#4', freq: 311.13, key: 'e', type: 'black' },
+        { note: 'E4', freq: 329.63, key: 'd', type: 'white' },
+        { note: 'F4', freq: 349.23, key: 'f', type: 'white' },
+        { note: 'F#4', freq: 369.99, key: 't', type: 'black' },
+        { note: 'G4', freq: 392.0, key: 'g', type: 'white' },
+        { note: 'G#4', freq: 415.3, key: 'y', type: 'black' },
+        { note: 'A4', freq: 440.0, key: 'h', type: 'white' },
+        { note: 'A#4', freq: 466.16, key: 'u', type: 'black' },
+        { note: 'B4', freq: 493.88, key: 'j', type: 'white' },
+        { note: 'C5', freq: 523.25, key: 'k', type: 'white' },
+        { note: 'C#5', freq: 554.37, key: 'o', type: 'black' },
+        { note: 'D5', freq: 587.33, key: 'l', type: 'white' },
+        { note: 'D#5', freq: 622.25, key: 'p', type: 'black' },
+        { note: 'E5', freq: 659.25, key: ';', type: 'white' },
+      ];
+
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // Master compressor/reverb chain for richer sound
+      const masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.7;
+
+      const compressor = audioCtx.createDynamicsCompressor();
+      compressor.threshold.value = -20;
+      compressor.knee.value = 30;
+      compressor.ratio.value = 4;
+      compressor.attack.value = 0.003;
+      compressor.release.value = 0.25;
+
+      // Simple convolution-like reverb using feedback delay
+      const convolver = audioCtx.createConvolver();
+      const reverbTime = 2;
+      const sampleRate = audioCtx.sampleRate;
+      const length = sampleRate * reverbTime;
+      const impulse = audioCtx.createBuffer(2, length, sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const data = impulse.getChannelData(ch);
+        for (let i = 0; i < length; i++) {
+          data[i] =
+            (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2.5);
+        }
+      }
+      convolver.buffer = impulse;
+
+      const dryGain = audioCtx.createGain();
+      dryGain.gain.value = 0.85;
+      const wetGain = audioCtx.createGain();
+      wetGain.gain.value = 0.15;
+
+      masterGain.connect(compressor);
+      compressor.connect(dryGain);
+      compressor.connect(convolver);
+      convolver.connect(wetGain);
+      dryGain.connect(audioCtx.destination);
+      wetGain.connect(audioCtx.destination);
+
+      function playNote(freq) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+        const noteGain = audioCtx.createGain();
+
+        // Piano-like harmonic structure using multiple sine partials
+        // Each partial has its own amplitude and slight detune for richness
+        const partials = [
+          { mult: 1, amp: 1.0, decay: 3.5 },
+          { mult: 2, amp: 0.55, decay: 2.8 },
+          { mult: 3, amp: 0.28, decay: 2.2 },
+          { mult: 4, amp: 0.18, decay: 1.8 },
+          { mult: 5, amp: 0.1, decay: 1.4 },
+          { mult: 6, amp: 0.07, decay: 1.1 },
+          { mult: 7, amp: 0.04, decay: 0.9 },
+          { mult: 8, amp: 0.03, decay: 0.7 },
+        ];
+
+        const oscillators = [];
+        partials.forEach((p) => {
+          // Slight inharmonicity like real piano strings
+          const inharmonicity = 1 + 0.0004 * p.mult * p.mult;
+          const osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = freq * p.mult * inharmonicity;
+
+          const partialGain = audioCtx.createGain();
+          partialGain.gain.setValueAtTime(0, now);
+          partialGain.gain.linearRampToValueAtTime(p.amp * 0.15, now + 0.005);
+          partialGain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            now + p.decay
+          );
+
+          osc.connect(partialGain);
+          partialGain.connect(noteGain);
+          osc.start(now);
+          osc.stop(now + p.decay + 0.1);
+          oscillators.push(osc);
+        });
+
+        // Hammer attack noise (brief burst)
+        const noiseBuffer = audioCtx.createBuffer(
+          1,
+          sampleRate * 0.05,
+          sampleRate
+        );
+        const noiseData = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < noiseData.length; i++) {
+          noiseData[i] =
+            (Math.random() * 2 - 1) * Math.pow(1 - i / noiseData.length, 2);
+        }
+        const noiseSrc = audioCtx.createBufferSource();
+        noiseSrc.buffer = noiseBuffer;
+        const noiseFilter = audioCtx.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.value = freq * 2;
+        noiseFilter.Q.value = 1;
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.08, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+        noiseSrc.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(noteGain);
+        noiseSrc.start(now);
+
+        // Low-pass filter for warmer tone
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(Math.min(freq * 10, 8000), now);
+        filter.frequency.exponentialRampToValueAtTime(
+          Math.min(freq * 4, 3000),
+          now + 2
+        );
+        filter.Q.value = 0.7;
+
+        noteGain.connect(filter);
+        filter.connect(masterGain);
+
+        noteGain.gain.setValueAtTime(1, now);
+      }
+
+      // Build the piano visually
+      const piano = document.getElementById('piano');
+      const whiteKeys = notes.filter((n) => n.type === 'white');
+      const whiteKeyWidth = 57; // 55 + 2 margin
+
+      whiteKeys.forEach((n, i) => {
+        const key = document.createElement('div');
+        key.className = 'key white';
+        key.dataset.freq = n.freq;
+        key.dataset.note = n.note;
+        key.innerHTML = `<div class="label">${n.note}</div>`;
+        piano.appendChild(key);
+      });
+
+      // Position black keys absolutely
+      notes
+        .filter((n) => n.type === 'black')
+        .forEach((n) => {
+          // find index of preceding white key
+          const prevWhiteNote = n.note.replace('#', '');
+          const idx = whiteKeys.findIndex((w) => w.note === prevWhiteNote);
+          if (idx === -1) return;
+          const key = document.createElement('div');
+          key.className = 'key black';
+          key.dataset.freq = n.freq;
+          key.dataset.note = n.note;
+          key.style.left = 20 + (idx + 1) * whiteKeyWidth - 17 + 'px';
+          piano.appendChild(key);
+        });
+
+      // Click/touch handling
+      document.querySelectorAll('.key').forEach((key) => {
+        const trigger = (e) => {
+          e.preventDefault();
+          playNote(parseFloat(key.dataset.freq));
+          key.classList.add('active');
+          setTimeout(() => key.classList.remove('active'), 150);
+        };
+        key.addEventListener('mousedown', trigger);
+        key.addEventListener('touchstart', trigger, { passive: false });
+      });
+
+      // Keyboard mapping (standard piano layout)
+      const keyMap = {
+        a: 261.63, // C4
+        w: 277.18, // C#4
+        s: 293.66, // D4
+        e: 311.13, // D#4
+        d: 329.63, // E4
+        f: 349.23, // F4
+        t: 369.99, // F#4
+        g: 392.0, // G4
+        y: 415.3, // G#4
+        h: 440.0, // A4
+        u: 466.16, // A#4
+        j: 493.88, // B4
+        k: 523.25, // C5
+        o: 554.37, // C#5
+        l: 587.33, // D5
+        p: 622.25, // D#5
+        ';': 659.25, // E5
+      };
+
+      const pressedKeys = new Set();
+      document.addEventListener('keydown', (e) => {
+        const k = e.key.toLowerCase();
+        if (keyMap[k] && !pressedKeys.has(k)) {
+          pressedKeys.add(k);
+          playNote(keyMap[k]);
+        }
+      });
+      document.addEventListener('keyup', (e) => {
+        pressedKeys.delete(e.key.toLowerCase());
+      });
+    </script>
+  </body>
+</html>
