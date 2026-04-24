@@ -524,10 +524,10 @@
 <header class="site-header">
   <div class="header-eyebrow">Experiment &middot; April 2026</div>
   <h1 class="header-title">The <em>Grand Piano</em> Challenge</h1>
-  <p class="header-sub">One prompt. Fourteen models. Each asked to synthesize a concert grand piano entirely in HTML — no libraries, no editing.</p>
+  <p class="header-sub">One prompt. Sixteen models. Each asked to synthesize a concert grand piano entirely in HTML — no libraries, no editing.</p>
   <div class="header-stats">
     <div>
-      <div class="stat-num">14</div>
+      <div class="stat-num">16</div>
       <div class="stat-label">Models</div>
     </div>
     <div>
@@ -542,6 +542,7 @@
   <aside class="changelog" aria-label="Changelog">
     <div class="changelog-label">Changelog</div>
     <ul>
+      <li><time datetime="2026-04-24">2026-04-24</time>Added Gemma 4 26B-A4B (rank 06), DeepSeek 3.2 (rank 07), and Ling 2.6 Flash (rank 14).</li>
       <li><time datetime="2026-04-23">2026-04-23</time>Added Kimi K2.6 (main competition, rank 04).</li>
     </ul>
   </aside>
@@ -552,7 +553,7 @@
 ════════════════════════════════════════ -->
 <section class="intro">
   <div class="intro-text">
-    <p>Thirteen models received the identical brief via t3.chat. A fourteenth was tested in T3 Code (Codex) with a nearly identical prompt. None of the outputs were touched afterward.</p>
+    <p>Fifteen models received the identical brief via t3.chat. A sixteenth was tested in T3 Code (Codex) with a nearly identical prompt. None of the outputs were touched afterward.</p>
     <p>The results were ranked across three dimensions: synthesis depth (harmonic modeling, envelope fidelity, reverb), keyboard range (octaves covered, sustain, pedal), and visual design. Each piano below is live — click the keys to play.</p>
     <p>The range of results is remarkable: the best entry cites real acoustic physics papers and implements research-grade models. Others manage a single octave of triangle waves. And then there are the surprises.</p>
   </div>
@@ -560,7 +561,7 @@
     <div class="prompt-card">
       <div class="prompt-card-label">The Prompt</div>
       <div class="prompt-card-text">Create a html only file that&rsquo;s a piano keyboard. Synthesize the sound the best you can to simulate a grand piano</div>
-      <div class="prompt-card-meta">Used for 13 of 14 models &middot; via t3.chat</div>
+      <div class="prompt-card-meta">Used for 15 of 16 models &middot; via t3.chat</div>
     </div>
   </div>
 </section>
@@ -949,6 +950,59 @@
     </div>
   </article>
 
+  <!-- DeepSeek 3.2 -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">07</div>
+      <div>
+        <div class="card-model-name">DeepSeek 3.2</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">14 keys · C4–D5 (missing C#5)</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">Looks better than it sounds. The keyboard is mostly laid out correctly and the synth recipe at least gestures toward a piano voice: triangle fundamental, two sine overtones, hammer-noise attack, lowpass warming, and a real key-up release. But the range is odd — 14 keys with C#5 missing — and the demo routine can push the audio into a loud broken state, which knocks it down hard on sound quality. Competent shell, brittle execution.</p>
+      <div class="feature-list">
+        <span class="feat">Triangle + 2 sine overtones</span>
+        <span class="feat">Hammer-noise attack</span>
+        <span class="feat">Proper key-up release</span>
+        <span class="feat">Sustain toggle</span>
+        <span class="feat">Play Demo button</span>
+        <span class="feat">Mobile touch support</span>
+      </div>
+      <div class="quirk-note">⚠ Missing C#5 in the visible range · demo playback can break loudly after sounding fine at first</div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-deepseek-3.2.html" loading="lazy" title="DeepSeek 3.2"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys or press keyboard letters · Sustain and demo buttons available</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
   <!-- ╔══════════════════════════════╗
        ║  PLOT TWIST                  ║
        ╚══════════════════════════════╝ -->
@@ -1029,7 +1083,7 @@
   <!-- GPT-5.4 -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">07</div>
+      <div class="card-rank">08</div>
       <div>
         <div class="card-model-name">GPT-5.4</div>
         <div class="card-badges">
@@ -1083,7 +1137,7 @@
   <!-- GPT-5.4 Mini -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">08</div>
+      <div class="card-rank">09</div>
       <div>
         <div class="card-model-name">GPT-5.4 Mini</div>
         <div class="card-badges">
@@ -1135,7 +1189,7 @@
   <!-- Minimax M2.7 -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">09</div>
+      <div class="card-rank">10</div>
       <div>
         <div class="card-model-name">Minimax M2.7</div>
         <div class="card-badges">
@@ -1187,7 +1241,7 @@
   <!-- Elephant Alpha -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">10</div>
+      <div class="card-rank">11</div>
       <div>
         <div class="card-model-name">Elephant Alpha</div>
         <div class="card-badges">
@@ -1239,7 +1293,7 @@
   <!-- Gemini 3.1 Pro -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">11</div>
+      <div class="card-rank">12</div>
       <div>
         <div class="card-model-name">Gemini 3.1 Pro</div>
         <div class="card-badges">
@@ -1289,7 +1343,7 @@
   <!-- Mimo V2 Pro -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">12</div>
+      <div class="card-rank">13</div>
       <div>
         <div class="card-model-name">Mimo V2 Pro</div>
         <div class="card-badges">
@@ -1337,6 +1391,58 @@
     </div>
   </article>
 
+  <!-- Ling 2.6 Flash -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">14</div>
+      <div>
+        <div class="card-model-name">Ling 2.6 Flash</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">91 DOM keys (broken)</span>
+          <span class="badge badge-broken">Broken Layout</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">This one reads like an ambitious piano synth on paper: eight detuned inharmonic partials, a filter-brightness envelope, and light modulation for string shimmer. In practice, the implementation collapses at the DOM layer. The on-screen keys are generated from computer-key letters rather than note names, so most clicked keys map to nonexistent frequencies and produce no sound, and in the embedded view the keyboard can disappear into a single brown slab. Even when triggered from the hardware keyboard, notes are effectively fire-and-forget 2-second events with no real note-off handling, and the modulation oscillators are never properly cleaned up. Attractive shell; broken instrument.</p>
+      <div class="feature-list">
+        <span class="feat">8 detuned partials</span>
+        <span class="feat">Inharmonicity curve</span>
+        <span class="feat">Filter brightness envelope</span>
+        <span class="feat">Keyboard input</span>
+      </div>
+      <div class="quirk-note">⚠ Embedded rendering can show no visible keyboard at all; the DOM is wired to invalid note IDs (`s0`, `w1`, etc.)</div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-ling-2.6-flash.html" loading="lazy" title="Ling 2.6 Flash"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Hardware keyboard works better than the on-screen layout, but the implementation is still rough</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
 </main>
 
 <!-- ════════════════════════════════════════
@@ -1344,7 +1450,7 @@
 ════════════════════════════════════════ -->
 <footer class="site-footer">
   <p>The Grand Piano Challenge &middot; April 2026</p>
-  <p>13 models &middot; 1 prompt &middot; 0 edits</p>
+  <p>16 models &middot; 1 prompt &middot; 0 edits</p>
 </footer>
 
 <script>
