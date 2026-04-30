@@ -367,7 +367,7 @@
     }
 
     #spectrogramCanvas {
-      height: 220px;
+      height: 340px;
     }
 
     #histogramCanvas {
@@ -416,6 +416,10 @@
       #rollCanvas {
         height: 360px;
       }
+
+      #spectrogramCanvas {
+        height: 300px;
+      }
     }
 
     @media (max-width: 560px) {
@@ -434,6 +438,10 @@
 
       #rollCanvas {
         height: 320px;
+      }
+
+      #spectrogramCanvas {
+        height: 280px;
       }
     }
   </style>
@@ -579,7 +587,7 @@
                 <div class="section-label">Detector heatmap</div>
                 <div class="canvas-title">Whistle-focus spectral energy with pitch guides</div>
               </div>
-              <div class="canvas-meta">A4-2 kHz + low shelf</div>
+              <div class="canvas-meta" id="spectrogramMeta">Auto range</div>
             </div>
             <div class="canvas-wrap">
               <canvas id="spectrogramCanvas"></canvas>
@@ -649,6 +657,7 @@
     const RMS_SILENCE_THRESHOLD = 0.0022;
     const SPECTRUM_MIN_DB = -76;
     const SPECTRUM_MIN_PROMINENCE_DB = 3.2;
+    const SETTINGS_STORAGE_KEY = 'scale-ear-trainer-settings-v1';
 
     const state = {
       audioCtx: null,
@@ -714,6 +723,7 @@
       spectrogramCanvas: document.getElementById('spectrogramCanvas'),
       histogramCanvas: document.getElementById('histogramCanvas'),
       rollMeta: document.getElementById('rollMeta'),
+      spectrogramMeta: document.getElementById('spectrogramMeta'),
       currentPitch: document.getElementById('currentPitch'),
       exportStatus: document.getElementById('exportStatus'),
     };
@@ -922,12 +932,39 @@
       const notes = state.exercise;
       const minMidi = Math.min(...notes.map((n) => n.midi));
       const maxMidi = Math.max(...notes.map((n) => n.midi));
+      const bounds = spectrogramBounds();
       els.exerciseName.textContent = `${els.rootSelect.value} ${els.modeSelect.value}`;
       els.rangeName.textContent = `${midiName(minMidi)}-${midiName(maxMidi)}`;
       els.rollMeta.textContent = `${els.matchSelect.value === 'class' ? 'Pitch-class match' : 'Exact-octave match'} · tonic ${midiName(tonicMidiFromControls())}`;
+      els.spectrogramMeta.textContent = `${formatHz(bounds.minHz)}-${formatHz(bounds.maxHz)} · guided`;
       els.degreeList.innerHTML = notes.map((note) => (
         `<span class="degree-chip ${note.isTonic ? 'tonic' : ''}" style="--degree-color:${degreeColor(note.interval)}">${note.degree}<br>${midiName(note.midi)}</span>`
       )).join('');
+    }
+
+    function formatHz(freq) {
+      return freq >= 1000 ? `${(freq / 1000).toFixed(freq >= 3000 ? 1 : 2).replace(/\.0$/, '')}k` : `${Math.round(freq)}`;
+    }
+
+    function niceFloor(freq) {
+      const steps = [180, 220, 260, 320, 390, 440, 520, 620, 740, 880, 1040, 1240];
+      return steps.reduce((best, step) => (step <= freq ? step : best), steps[0]);
+    }
+
+    function niceCeiling(freq) {
+      const steps = [1600, 2000, 2400, 3000, 3600, 4200, 5000, 6000, 8000, 10000];
+      return steps.find((step) => step >= freq) || 10000;
+    }
+
+    function spectrogramBounds() {
+      const exercise = state.exercise.length ? state.exercise : [];
+      const freqs = exercise.length ? exercise.map((note) => note.freq) : [440, 660];
+      const minTarget = Math.min(...freqs);
+      const maxTarget = Math.max(...freqs);
+      return {
+        minHz: niceFloor(Math.max(180, minTarget * 0.55)),
+        maxHz: niceCeiling(Math.min(10000, Math.max(1800, maxTarget * 2.65))),
+      };
     }
 
     function resizeCanvas(canvas) {
@@ -1144,39 +1181,24 @@
       ctx.fillStyle = '#07080b';
       ctx.fillRect(0, 0, width, height);
       const frames = state.spectrumFrames;
-      const bins = 96;
+      const bins = 132;
       const padL = 42;
       const padR = 52;
       const padT = 18;
       const padB = 18;
       const plotW = width - padL - padR;
       const plotH = height - padT - padB;
-      const minHz = 100;
-      const focusMinHz = 440;
-      const maxHz = 2000;
-      const focusH = plotH * 0.78;
-      const lowH = plotH - focusH;
+      const { minHz, maxHz } = spectrogramBounds();
       const xStep = plotW / Math.max(1, frames.length);
       const yForFreq = (freq) => {
-        if (freq >= focusMinHz) {
-          const ratio = Math.log(freq / focusMinHz) / Math.log(maxHz / focusMinHz);
-          return padT + (1 - ratio) * focusH;
-        }
-        const ratio = Math.log(freq / minHz) / Math.log(focusMinHz / minHz);
-        return padT + focusH + (1 - ratio) * lowH;
+        const ratio = Math.log(freq / minHz) / Math.log(maxHz / minHz);
+        return padT + (1 - ratio) * plotH;
       };
       const freqForY = (y) => {
         const relY = Math.max(0, Math.min(plotH, y - padT));
-        if (relY <= focusH) {
-          const ratio = 1 - relY / focusH;
-          return focusMinHz * ((maxHz / focusMinHz) ** ratio);
-        }
-        const ratio = 1 - (relY - focusH) / lowH;
-        return minHz * ((focusMinHz / minHz) ** ratio);
+        const ratio = 1 - relY / plotH;
+        return minHz * ((maxHz / minHz) ** ratio);
       };
-
-      ctx.fillStyle = 'rgba(255,255,255,0.018)';
-      ctx.fillRect(padL, padT + focusH, plotW, lowH);
 
       frames.forEach((frame, i) => {
         for (let b = 0; b < bins; b++) {
@@ -1197,7 +1219,7 @@
           const pc = (rootPc() + interval) % 12;
           const midi = (octave + 1) * 12 + pc;
           const freq = midiToFreq(midi);
-          if (freq < focusMinHz || freq > maxHz) continue;
+          if (freq < minHz || freq > maxHz) continue;
           const y = yForFreq(freq);
           const color = degreeColor(interval);
           ctx.strokeStyle = `${color}55`;
@@ -1206,7 +1228,7 @@
           ctx.moveTo(padL, y);
           ctx.lineTo(padL + plotW, y);
           ctx.stroke();
-          if (octave === 5 || (pc === rootPc() && octave === 6)) {
+          if (freq >= minHz * 1.08 && freq <= maxHz / 1.04) {
             labelCandidates.push({ y, color, label: NOTE_NAMES[pc], tonic: pc === rootPc() });
           }
         }
@@ -1230,20 +1252,19 @@
       ctx.font = '11px "IBM Plex Mono", monospace';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      [100, 200, 440, 700, 1000, 1500, 2000].forEach((freq) => {
+      const labelFreqs = [minHz, 440, 700, 1000, 1500, 2000, 3000, 4000, 6000, 8000, maxHz]
+        .filter((freq, index, arr) => freq >= minHz && freq <= maxHz && arr.indexOf(freq) === index);
+      let lastFreqLabelY = -Infinity;
+      labelFreqs.forEach((freq) => {
         const y = yForFreq(freq);
+        if (Math.abs(y - lastFreqLabelY) < 17 && freq !== minHz && freq !== maxHz) return;
         ctx.beginPath();
         ctx.moveTo(padL, y);
         ctx.lineTo(padL + plotW, y);
         ctx.stroke();
-        ctx.fillText(freq >= 1000 ? `${freq / 1000}k` : String(freq), padL + plotW + 8, y);
+        ctx.fillText(formatHz(freq), padL + plotW + 8, y);
+        lastFreqLabelY = y;
       });
-
-      ctx.strokeStyle = 'rgba(143,180,255,0.46)';
-      ctx.beginPath();
-      ctx.moveTo(padL, padT + focusH);
-      ctx.lineTo(padL + plotW, padT + focusH);
-      ctx.stroke();
 
       ctx.strokeStyle = '#2b303a';
       ctx.strokeRect(padL, padT, plotW, plotH);
@@ -1915,6 +1936,7 @@
       els.directionSelect.value = shapes[Math.floor(Math.random() * shapes.length)];
       els.noteCount.value = String(3 + Math.floor(Math.random() * 4));
       els.noteCountOut.textContent = els.noteCount.value;
+      saveSettings();
       clearTake(false);
       buildExercise();
     }
@@ -1941,6 +1963,53 @@
       renderAll();
     }
 
+    function selectHasValue(select, value) {
+      return Array.from(select.options).some((option) => option.value === value);
+    }
+
+    function saveSettings() {
+      const settings = {
+        root: els.rootSelect.value,
+        register: els.registerSelect.value,
+        mode: els.modeSelect.value,
+        material: els.materialSelect.value,
+        direction: els.directionSelect.value,
+        matching: els.matchSelect.value,
+        dampening: els.dampening.value,
+        noteCount: els.noteCount.value,
+      };
+      try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+      } catch {}
+    }
+
+    function loadSettings() {
+      let settings = null;
+      try {
+        settings = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || 'null');
+      } catch {
+        settings = null;
+      }
+      if (!settings || typeof settings !== 'object') return;
+
+      if (selectHasValue(els.rootSelect, settings.root)) els.rootSelect.value = settings.root;
+      if (selectHasValue(els.registerSelect, settings.register)) els.registerSelect.value = settings.register;
+      if (selectHasValue(els.modeSelect, settings.mode)) els.modeSelect.value = settings.mode;
+      if (selectHasValue(els.materialSelect, settings.material)) els.materialSelect.value = settings.material;
+      if (selectHasValue(els.directionSelect, settings.direction)) els.directionSelect.value = settings.direction;
+      if (selectHasValue(els.matchSelect, settings.matching)) els.matchSelect.value = settings.matching;
+      if (settings.dampening !== undefined) {
+        const value = Math.max(Number(els.dampening.min), Math.min(Number(els.dampening.max), Number(settings.dampening)));
+        if (Number.isFinite(value)) els.dampening.value = String(value);
+      }
+      if (settings.noteCount !== undefined) {
+        const value = Math.max(Number(els.noteCount.min), Math.min(Number(els.noteCount.max), Number(settings.noteCount)));
+        if (Number.isFinite(value)) els.noteCount.value = String(value);
+      }
+      els.noteCountOut.textContent = els.noteCount.value;
+      els.dampeningOut.textContent = els.dampening.value;
+    }
+
     function initControls() {
       ROOT_OPTIONS.forEach((name) => {
         const option = document.createElement('option');
@@ -1955,13 +2024,16 @@
         option.textContent = name;
         els.modeSelect.appendChild(option);
       });
+      loadSettings();
       ['rootSelect', 'registerSelect', 'modeSelect', 'materialSelect', 'directionSelect'].forEach((id) => {
         els[id].addEventListener('change', () => {
+          saveSettings();
           clearTake(false);
           buildExercise();
         });
       });
       els.matchSelect.addEventListener('change', () => {
+        saveSettings();
         if (state.pitchPoints.length && state.recordEndMs) {
           state.evaluation = evaluateTake();
           updateScoreUi(state.evaluation);
@@ -1971,11 +2043,13 @@
       });
       els.noteCount.addEventListener('input', () => {
         els.noteCountOut.textContent = els.noteCount.value;
+        saveSettings();
         clearTake(false);
         buildExercise();
       });
       els.dampening.addEventListener('input', () => {
         els.dampeningOut.textContent = els.dampening.value;
+        saveSettings();
         renderAll();
       });
       els.randomBtn.addEventListener('click', randomizeExercise);

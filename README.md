@@ -8,8 +8,9 @@ The app listens through the browser microphone, estimates the current fundamenta
 
 - `pitch-detective.html` is the full app: HTML, CSS, and JavaScript in one file.
 - `whistle-workbench.html` is the newer whistle-only tuning surface: transport, waveform, large contour, playback, and feedback-bundle export without the rest of the sketchpad UI.
+- `scale-ear-trainer.html` is a single-page musical ear trainer for short scale, mode, chromatic, and arpeggio drills. It plays a target pattern, records a whistle-back attempt, scores pitch accuracy, and shows the take on a piano roll plus a guided spectrogram.
 - `deploy-gist.sh` publishes the HTML file as a public GitHub gist and opens an `htmlpreview.github.io` URL that is easy to test on a phone.
-- `index.html` redirects to `pitch-detective.html` so the repo can also be served directly by GitHub Pages.
+- `index.html` is the GitHub Pages landing page. It links to every HTML file in the repo, including the `grand-pianos/` collection.
 
 ## How It Works
 
@@ -44,6 +45,21 @@ python3 dev_server.py --port 4173
 
 Then open `http://127.0.0.1:4173/pitch-detective.html`. When you stop a take, the browser will still let you download the recording and trace manually, but it will also auto-upload them into `captures/` if the local server is present.
 
+To keep the capture server running in the background while iterating:
+
+```bash
+tmux new-session -d -s sandpad-scale-ear 'cd /Users/erik.kastner/workspace/scratch/Sandpad && python3 dev_server.py --port 4173'
+tmux has-session -t sandpad-scale-ear && echo running
+tmux attach -t sandpad-scale-ear
+tmux kill-session -t sandpad-scale-ear
+```
+
+If the session already exists and you just want to ensure it is running:
+
+```bash
+tmux has-session -t sandpad-scale-ear 2>/dev/null || tmux new-session -d -s sandpad-scale-ear 'cd /Users/erik.kastner/workspace/scratch/Sandpad && python3 dev_server.py --port 4173'
+```
+
 For the stripped-down whistle tuning loop, open `http://127.0.0.1:4173/whistle-workbench.html`. That page keeps the same local capture server flow, but focuses on:
 
 - whistle input only
@@ -51,6 +67,19 @@ For the stripped-down whistle tuning loop, open `http://127.0.0.1:4173/whistle-w
 - relative-degree display
 - playback timbre tuning
 - one-click feedback bundles (`recording.wav`, `playback.wav`, `feedback.json`)
+
+For scale and musicality practice, open `http://127.0.0.1:4173/scale-ear-trainer.html`. That page focuses on:
+
+- manual or random tonic, register, mode, material, shape, and note-count drills
+- scales/modes plus chromatic and arpeggio material
+- repeated playback with a piano-roll playhead and colored scale-degree target notes
+- manual start/stop whistle recording
+- pitch-first scoring that ignores the initial attack window so low attacks and slide-ups do not dominate the grade
+- pitch-class matching by default, so octave/partial-biased whistle detection can still be evaluated musically
+- damped pitch display for the piano-roll trace and live pitch label
+- an exercise-aware spectrogram that expands around the selected target range and overlays pitch-class guide lanes
+- local settings persistence via `localStorage`
+- feedback-bundle export (`playback.wav`, `recording.wav`, `reconstructed.wav`, and `analysis.json`) with same-origin auto-upload into `captures/` when served by `dev_server.py`
 
 For a purely static run:
 
