@@ -100,6 +100,21 @@ def write_capture(payload: dict) -> dict:
         playback_path = CAPTURES_DIR / playback_filename
         playback_path.write_bytes(base64.b64decode(playback_base64))
 
+    reconstructed_base64 = payload.get("reconstructedBase64")
+    reconstructed_filename = None
+    reconstructed_path = None
+    if reconstructed_base64:
+        reconstructed_filename = sanitize_name(
+            guess_recording_name(
+                take_id,
+                payload.get("reconstructedFilename"),
+                payload.get("reconstructedMimeType"),
+            ),
+            f"pitch-detective-{take_id}-reconstructed.wav",
+        )
+        reconstructed_path = CAPTURES_DIR / reconstructed_filename
+        reconstructed_path.write_bytes(base64.b64decode(reconstructed_base64))
+
     result = {
         "ok": True,
         "takeId": take_id,
@@ -110,6 +125,8 @@ def write_capture(payload: dict) -> dict:
         "recordingPath": str(recording_path.relative_to(ROOT)) if recording_path else None,
         "playbackFilename": playback_filename,
         "playbackPath": str(playback_path.relative_to(ROOT)) if playback_path else None,
+        "reconstructedFilename": reconstructed_filename,
+        "reconstructedPath": str(reconstructed_path.relative_to(ROOT)) if reconstructed_path else None,
     }
 
     latest_path = CAPTURES_DIR / "latest.json"

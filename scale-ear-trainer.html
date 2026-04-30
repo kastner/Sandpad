@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#050608">
+  <title>Scale Ear Trainer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500;700&display=swap');
+
+    :root {
+      color-scheme: dark;
+      --bg: #050608;
+      --panel: #101217;
+      --panel-2: #171a21;
+      --panel-3: #0b0d11;
+      --line: #2b303a;
+      --line-strong: #444b58;
+      --text: #f3f1e8;
+      --muted: #9da3ad;
+      --faint: #646b76;
+      --lime: #d7f500;
+      --cyan: #16b7ff;
+      --orange: #ff7a18;
+      --yellow: #f3c300;
+      --green: #43d675;
+      --red: #ff4a3d;
+      --blue: #8fb4ff;
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.52);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--text);
+      font-family: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+      background:
+        linear-gradient(180deg, rgba(255, 122, 24, 0.06), transparent 280px),
+        radial-gradient(circle at 20% 0%, rgba(215, 245, 0, 0.08), transparent 320px),
+        var(--bg);
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: var(--panel-2);
+      border-radius: 8px;
+      min-height: 42px;
+      padding: 0 14px;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    button:hover,
+    button:focus-visible {
+      border-color: var(--line-strong);
+      background: #20242d;
+      outline: none;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      color: var(--faint);
+      opacity: 0.58;
+    }
+
+    .primary {
+      border-color: rgba(215, 245, 0, 0.42);
+      color: #121400;
+      background: var(--lime);
+      font-weight: 700;
+    }
+
+    .primary:hover,
+    .primary:focus-visible {
+      background: #eeff39;
+      border-color: #eeff39;
+    }
+
+    .primary.playing {
+      border-color: rgba(255, 122, 24, 0.7);
+      color: #fff2e4;
+      background: rgba(255, 122, 24, 0.22);
+    }
+
+    .recording {
+      border-color: rgba(255, 74, 61, 0.62);
+      background: rgba(255, 74, 61, 0.14);
+      color: #ffd8d3;
+    }
+
+    select,
+    input[type="range"] {
+      width: 100%;
+    }
+
+    select {
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0b0d11;
+      color: var(--text);
+      padding: 0 10px;
+    }
+
+    .page {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 18px 14px 40px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--lime);
+      font-size: clamp(28px, 5vw, 56px);
+      line-height: 0.98;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .status-pill {
+      justify-self: end;
+      min-width: 148px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 12px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .status-pill.hot {
+      color: var(--lime);
+      border-color: rgba(215, 245, 0, 0.35);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .panel {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(16, 18, 23, 0.96);
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      position: sticky;
+      top: 12px;
+      padding: 14px;
+    }
+
+    .control-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label,
+    .readout-label,
+    .section-label {
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 1fr 40px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .range-row output {
+      color: var(--lime);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      text-align: right;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .button-row.three {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .readout {
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-3);
+    }
+
+    .exercise-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 5px;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 21px;
+      color: var(--text);
+    }
+
+    .exercise-title span:last-child {
+      color: var(--orange);
+    }
+
+    .degrees {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .degree-chip {
+      min-width: 32px;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--degree-color, var(--muted));
+      background: #12151b;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .degree-chip.tonic {
+      border-color: rgba(215, 245, 0, 0.55);
+      color: var(--lime);
+    }
+
+    .score-card {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metric {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-3);
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--text);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .metric.good strong {
+      color: var(--green);
+    }
+
+    .metric.warn strong {
+      color: var(--yellow);
+    }
+
+    .metric.bad strong {
+      color: var(--red);
+    }
+
+    .main {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .roll-panel {
+      overflow: hidden;
+    }
+
+    .canvas-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 12px 0;
+    }
+
+    .canvas-title {
+      color: var(--text);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 13px;
+    }
+
+    .canvas-meta {
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 11px;
+      text-align: right;
+    }
+
+    .canvas-wrap {
+      padding: 10px 12px 12px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #07080b;
+    }
+
+    #rollCanvas {
+      height: 430px;
+    }
+
+    .debug-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(250px, 0.8fr);
+      gap: 14px;
+    }
+
+    #spectrogramCanvas {
+      height: 220px;
+    }
+
+    #histogramCanvas {
+      height: 220px;
+    }
+
+    .message {
+      min-height: 38px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .message strong {
+      color: var(--lime);
+      font-weight: 700;
+    }
+
+    .export-line {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 920px) {
+      .topbar,
+      .layout,
+      .debug-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .status-pill {
+        justify-self: stretch;
+      }
+
+      .subtitle {
+        max-width: 38ch;
+      }
+
+      .controls {
+        position: static;
+      }
+
+      #rollCanvas {
+        height: 360px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        padding: 12px 10px 28px;
+      }
+
+      .button-row,
+      .button-row.three {
+        grid-template-columns: 1fr;
+      }
+
+      .score-card {
+        grid-template-columns: 1fr;
+      }
+
+      #rollCanvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <h1>Scale Ear Trainer</h1>
+        <p class="subtitle">Play a short tonic-aware pattern, whistle it back, then inspect pitch accuracy, attack behavior, and detector energy.</p>
+      </div>
+      <div class="status-pill" id="statusPill">Ready</div>
+    </header>
+
+    <div class="layout">
+      <aside class="panel controls">
+        <div class="control-grid">
+          <div class="field">
+            <label for="rootSelect">Tonic</label>
+            <select id="rootSelect"></select>
+          </div>
+
+          <div class="field">
+            <label for="registerSelect">Target register</label>
+            <select id="registerSelect">
+              <option value="auto">Auto low, A4 floor</option>
+              <option value="4">Tonic around octave 4/5</option>
+              <option value="5">Tonic around octave 5</option>
+              <option value="6">Tonic around octave 6</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="modeSelect">Scale or mode</label>
+            <select id="modeSelect"></select>
+          </div>
+
+          <div class="field">
+            <label for="materialSelect">Material</label>
+            <select id="materialSelect">
+              <option value="scale">Scale / mode tones</option>
+              <option value="arpeggio">Arpeggio tones</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="directionSelect">Shape</label>
+            <select id="directionSelect">
+              <option value="ascending">Ascending</option>
+              <option value="descending">Descending</option>
+              <option value="updown">Up then down</option>
+              <option value="random">Tonic, then random tones</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="matchSelect">Pitch matching</label>
+            <select id="matchSelect">
+              <option value="class">Pitch class, ignore octave</option>
+              <option value="exact">Exact octave</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="dampening">Trace dampening</label>
+            <div class="range-row">
+              <input id="dampening" type="range" min="0" max="8" value="5">
+              <output id="dampeningOut">5</output>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="noteCount">Note count</label>
+            <div class="range-row">
+              <input id="noteCount" type="range" min="3" max="8" value="5">
+              <output id="noteCountOut">5</output>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button id="randomBtn">Random</button>
+            <button id="playBtn" class="primary">Play</button>
+          </div>
+
+          <div class="button-row">
+            <button id="recordBtn">Start Rec</button>
+            <button id="clearBtn">Clear Take</button>
+          </div>
+
+          <button id="exportBtn">Export WAV Bundle</button>
+        </div>
+
+        <section class="readout">
+          <div class="readout-label">Current exercise</div>
+          <div class="exercise-title">
+            <span id="exerciseName">A Major</span>
+            <span id="rangeName">A4-E5</span>
+          </div>
+          <div class="degrees" id="degreeList"></div>
+          <div class="message" id="coachMessage">Use short patterns first. The first 220 ms of each expected note is ignored in scoring so soft attacks and upward slides do not dominate the result.</div>
+        </section>
+
+        <section class="score-card">
+          <div class="metric" id="scoreMetric">
+            <span class="readout-label">Score</span>
+            <strong id="scoreValue">--</strong>
+          </div>
+          <div class="metric" id="pitchMetric">
+            <span class="readout-label">Median miss</span>
+            <strong id="pitchValue">--</strong>
+          </div>
+          <div class="metric" id="coverageMetric">
+            <span class="readout-label">Voiced notes</span>
+            <strong id="coverageValue">--</strong>
+          </div>
+          <div class="metric" id="attackMetric">
+            <span class="readout-label">Attack grace</span>
+            <strong>220 ms</strong>
+          </div>
+        </section>
+
+        <div class="export-line" id="exportStatus">Dev server exports save into captures/ when available; otherwise files download locally.</div>
+      </aside>
+
+      <section class="main">
+        <section class="panel roll-panel">
+          <div class="canvas-head">
+            <div>
+              <div class="section-label">Pitch roll</div>
+              <div class="canvas-title">Target notes, playback head, and whistled pitch trace</div>
+            </div>
+            <div class="canvas-meta" id="rollMeta">A4 floor</div>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="rollCanvas"></canvas>
+          </div>
+        </section>
+
+        <section class="debug-grid">
+          <section class="panel">
+            <div class="canvas-head">
+              <div>
+                <div class="section-label">Detector heatmap</div>
+                <div class="canvas-title">Log-frequency spectral energy</div>
+              </div>
+              <div class="canvas-meta">100 Hz to 2 kHz</div>
+            </div>
+            <div class="canvas-wrap">
+              <canvas id="spectrogramCanvas"></canvas>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="canvas-head">
+              <div>
+                <div class="section-label">Histogram</div>
+                <div class="canvas-title">Voiced pitch classes in this take</div>
+              </div>
+              <div class="canvas-meta" id="currentPitch">No pitch</div>
+            </div>
+            <div class="canvas-wrap">
+              <canvas id="histogramCanvas"></canvas>
+            </div>
+          </section>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const SCALES = {
+      'Major': [0, 2, 4, 5, 7, 9, 11],
+      'Natural Minor': [0, 2, 3, 5, 7, 8, 10],
+      'Harmonic Minor': [0, 2, 3, 5, 7, 8, 11],
+      'Dorian': [0, 2, 3, 5, 7, 9, 10],
+      'Mixolydian': [0, 2, 4, 5, 7, 9, 10],
+      'Lydian': [0, 2, 4, 6, 7, 9, 11],
+      'Phrygian': [0, 1, 3, 5, 7, 8, 10],
+      'Pentatonic Maj': [0, 2, 4, 7, 9],
+      'Pentatonic Min': [0, 3, 5, 7, 10],
+      'Chromatic': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    };
+    const SCALE_NAMES = Object.keys(SCALES);
+    const DEGREE_LABELS = {
+      0: '1', 1: 'b2', 2: '2', 3: 'b3', 4: '3', 5: '4',
+      6: 'b5', 7: '5', 8: 'b6', 9: '6', 10: 'b7', 11: '7', 12: '8',
+      14: '9', 15: 'b10', 16: '10', 17: '11', 18: '#11', 19: '12',
+      20: 'b13', 21: '13', 22: 'b14', 23: '14', 24: '15',
+    };
+    const DEGREE_COLORS = {
+      0: '#ff2d24',
+      1: '#ff6f1a',
+      2: '#ffad19',
+      3: '#ffe100',
+      4: '#15c93f',
+      5: '#11b7ff',
+      6: '#265bff',
+      7: '#6b2bff',
+      8: '#b400ff',
+      9: '#ff18c8',
+      10: '#ff4a8b',
+      11: '#c7ebff',
+    };
+    const ROOT_OPTIONS = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+    const CAPTURE_SERVER_UPLOAD_PATH = '/api/upload';
+    const CAPTURE_SERVER_HEALTH_PATH = '/api/health';
+    const PLAY_NOTE_SEC = 0.72;
+    const PLAY_GAP_SEC = 0.045;
+    const ATTACK_GRACE_MS = 220;
+    const DETECT_MIN_FREQ = 330;
+    const DETECT_MAX_FREQ = 2200;
+    const RMS_SILENCE_THRESHOLD = 0.0022;
+    const SPECTRUM_MIN_DB = -76;
+    const SPECTRUM_MIN_PROMINENCE_DB = 3.2;
+
+    const state = {
+      audioCtx: null,
+      analyser: null,
+      processor: null,
+      source: null,
+      stream: null,
+      timeBuffer: null,
+      freqBuffer: null,
+      animationId: null,
+      isPlaying: false,
+      playbackCtx: null,
+      playbackMaster: null,
+      playbackStopTimer: null,
+      playStartedAt: 0,
+      playDurationMs: 0,
+      isRecording: false,
+      recordStartMs: 0,
+      recordEndMs: 0,
+      recordSampleRate: 44100,
+      recordingChunks: [],
+      recordingSamples: null,
+      pitchPoints: [],
+      latestPitch: null,
+      smoothedMidi: null,
+      spectrumFrames: [],
+      histogram: new Array(12).fill(0),
+      evaluation: null,
+      serverReady: false,
+      exercise: [],
+    };
+
+    const els = {
+      rootSelect: document.getElementById('rootSelect'),
+      registerSelect: document.getElementById('registerSelect'),
+      modeSelect: document.getElementById('modeSelect'),
+      materialSelect: document.getElementById('materialSelect'),
+      directionSelect: document.getElementById('directionSelect'),
+      matchSelect: document.getElementById('matchSelect'),
+      dampening: document.getElementById('dampening'),
+      dampeningOut: document.getElementById('dampeningOut'),
+      noteCount: document.getElementById('noteCount'),
+      noteCountOut: document.getElementById('noteCountOut'),
+      randomBtn: document.getElementById('randomBtn'),
+      playBtn: document.getElementById('playBtn'),
+      recordBtn: document.getElementById('recordBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+      exerciseName: document.getElementById('exerciseName'),
+      rangeName: document.getElementById('rangeName'),
+      degreeList: document.getElementById('degreeList'),
+      coachMessage: document.getElementById('coachMessage'),
+      statusPill: document.getElementById('statusPill'),
+      scoreValue: document.getElementById('scoreValue'),
+      pitchValue: document.getElementById('pitchValue'),
+      coverageValue: document.getElementById('coverageValue'),
+      scoreMetric: document.getElementById('scoreMetric'),
+      pitchMetric: document.getElementById('pitchMetric'),
+      coverageMetric: document.getElementById('coverageMetric'),
+      rollCanvas: document.getElementById('rollCanvas'),
+      spectrogramCanvas: document.getElementById('spectrogramCanvas'),
+      histogramCanvas: document.getElementById('histogramCanvas'),
+      rollMeta: document.getElementById('rollMeta'),
+      currentPitch: document.getElementById('currentPitch'),
+      exportStatus: document.getElementById('exportStatus'),
+    };
+
+    function pcToMidiInWhistleRange(pc) {
+      let midi = 60 + pc;
+      while (midi < 69) midi += 12;
+      while (midi > 80) midi -= 12;
+      return midi;
+    }
+
+    function tonicMidiFromControls() {
+      const pc = rootPc();
+      if (els.registerSelect.value === 'auto') return pcToMidiInWhistleRange(pc);
+      let midi = (Number(els.registerSelect.value) + 1) * 12 + pc;
+      while (midi < 69) midi += 12;
+      return midi;
+    }
+
+    function midiToFreq(midi) {
+      return 440 * (2 ** ((midi - 69) / 12));
+    }
+
+    function freqToMidi(freq) {
+      return 69 + 12 * Math.log2(freq / 440);
+    }
+
+    function midiName(midi) {
+      const rounded = Math.round(midi);
+      return `${NOTE_NAMES[((rounded % 12) + 12) % 12]}${Math.floor(rounded / 12) - 1}`;
+    }
+
+    function rootPc() {
+      return NOTE_NAMES.indexOf(els.rootSelect.value);
+    }
+
+    function modeIntervals() {
+      return SCALES[els.modeSelect.value] || SCALES.Major;
+    }
+
+    function degreeColor(interval) {
+      return DEGREE_COLORS[((interval % 12) + 12) % 12] || '#9da3ad';
+    }
+
+    function centsBetween(freq, targetFreq) {
+      let cents = 1200 * Math.log2(freq / targetFreq);
+      if (els.matchSelect.value === 'class') {
+        while (cents > 600) cents -= 1200;
+        while (cents < -600) cents += 1200;
+      }
+      return cents;
+    }
+
+    function closestMidiToReference(rawMidi, referenceMidi) {
+      return rawMidi + 12 * Math.round((referenceMidi - rawMidi) / 12);
+    }
+
+    function dampeningLevel() {
+      return Number(els.dampening?.value || 0);
+    }
+
+    function buildDampedTrace(durationMs) {
+      const level = dampeningLevel();
+      const alpha = [0, 0.12, 0.24, 0.36, 0.48, 0.60, 0.70, 0.79, 0.86][level] ?? 0.6;
+      const gateCents = Math.max(120, 520 - level * 42);
+      let lastMidi = null;
+      let lastNoteIndex = null;
+      let lastVoicedTime = 0;
+
+      return state.pitchPoints.map((point) => {
+        if (point.midi <= 0) {
+          if (point.t - lastVoicedTime > 180) {
+            lastMidi = null;
+            lastNoteIndex = null;
+          }
+          return { ...point, displayMidi: 0, accepted: false };
+        }
+
+        const note = noteForRecordedTime(point.t, durationMs);
+        const noteIndex = note?.index ?? null;
+        const displayMidi = displayMidiForPoint(point, durationMs);
+        const targetMidi = note?.midi ?? displayMidi;
+        const targetError = Math.abs((displayMidi - targetMidi) * 100);
+        const boundary = noteIndex !== lastNoteIndex;
+        const tooFarFromTarget = note && targetError > gateCents;
+
+        if (tooFarFromTarget && lastMidi !== null && !boundary) {
+          lastVoicedTime = point.t;
+          return { ...point, displayMidi: lastMidi, accepted: false };
+        }
+
+        const continuityError = lastMidi === null ? 0 : Math.abs(displayMidi - lastMidi) * 100;
+        let nextMidi = displayMidi;
+        if (!boundary && lastMidi !== null && continuityError > gateCents * 1.25) {
+          nextMidi = lastMidi;
+        } else if (!boundary && lastMidi !== null) {
+          nextMidi = lastMidi * alpha + displayMidi * (1 - alpha);
+        }
+
+        lastMidi = nextMidi;
+        lastNoteIndex = noteIndex;
+        lastVoicedTime = point.t;
+        return { ...point, displayMidi: nextMidi, accepted: true };
+      });
+    }
+
+    function arpeggioIntervals(intervals) {
+      const third = intervals.includes(3) ? 3 : 4;
+      const seventh = intervals.includes(10) ? 10 : (intervals.includes(11) ? 11 : null);
+      const base = [0, third, 7];
+      if (seventh !== null) base.push(seventh);
+      base.push(12, third + 12, 19, seventh !== null ? seventh + 12 : 24);
+      return base;
+    }
+
+    function buildIntervalPool() {
+      const intervals = modeIntervals();
+      if (els.materialSelect.value === 'arpeggio') return arpeggioIntervals(intervals);
+      return [...intervals, 12, ...intervals.slice(1).map((value) => value + 12)];
+    }
+
+    function buildExercise() {
+      const count = Number(els.noteCount.value);
+      const tonicMidi = tonicMidiFromControls();
+      const pool = buildIntervalPool();
+      let selected = [];
+
+      if (els.directionSelect.value === 'descending') {
+        selected = pool.slice(0, count).reverse();
+      } else if (els.directionSelect.value === 'updown') {
+        const upCount = Math.ceil((count + 1) / 2);
+        const up = pool.slice(0, upCount);
+        const down = up.slice(0, -1).reverse();
+        selected = up.concat(down).slice(0, count);
+      } else if (els.directionSelect.value === 'random') {
+        selected = [0];
+        while (selected.length < count) {
+          selected.push(pool[1 + Math.floor(Math.random() * Math.max(1, Math.min(pool.length - 1, 8)))]);
+        }
+      } else {
+        selected = pool.slice(0, count);
+      }
+
+      state.exercise = selected.map((interval, index) => ({
+        index,
+        interval,
+        midi: tonicMidi + interval,
+        freq: midiToFreq(tonicMidi + interval),
+        startMs: index * PLAY_NOTE_SEC * 1000,
+        durationMs: (PLAY_NOTE_SEC - PLAY_GAP_SEC) * 1000,
+        degree: DEGREE_LABELS[interval] || `+${interval}`,
+        isTonic: interval % 12 === 0,
+      }));
+
+      updateExerciseUi();
+      renderAll();
+      return state.exercise;
+    }
+
+    function updateExerciseUi() {
+      const notes = state.exercise;
+      const minMidi = Math.min(...notes.map((n) => n.midi));
+      const maxMidi = Math.max(...notes.map((n) => n.midi));
+      els.exerciseName.textContent = `${els.rootSelect.value} ${els.modeSelect.value}`;
+      els.rangeName.textContent = `${midiName(minMidi)}-${midiName(maxMidi)}`;
+      els.rollMeta.textContent = `${els.matchSelect.value === 'class' ? 'Pitch-class match' : 'Exact-octave match'} · tonic ${midiName(tonicMidiFromControls())}`;
+      els.degreeList.innerHTML = notes.map((note) => (
+        `<span class="degree-chip ${note.isTonic ? 'tonic' : ''}" style="--degree-color:${degreeColor(note.interval)}">${note.degree}<br>${midiName(note.midi)}</span>`
+      )).join('');
+    }
+
+    function resizeCanvas(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const width = Math.max(1, Math.round(rect.width));
+      const height = Math.max(1, Math.round(rect.height));
+      if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx, width, height };
+    }
+
+    function computeRollBounds() {
+      const exercise = state.exercise.length ? state.exercise : buildExercise();
+      const exerciseMidis = exercise.map((n) => n.midi);
+      const durationMs = Math.max(1, state.recordEndMs - state.recordStartMs || state.pitchPoints.at(-1)?.t || 0);
+      const pitchMidis = buildDampedTrace(durationMs)
+        .filter((p) => p.displayMidi > 0)
+        .map((p) => p.displayMidi);
+      const min = Math.min(69, ...exerciseMidis, ...pitchMidis) - 1.2;
+      const max = Math.max(...exerciseMidis, ...pitchMidis, 81) + 1.2;
+      return { min, max };
+    }
+
+    function exerciseDurationMs() {
+      return state.exercise.length ? state.exercise.at(-1).startMs + state.exercise.at(-1).durationMs : 1;
+    }
+
+    function noteForRecordedTime(timeMs, durationMs = null) {
+      if (!state.exercise.length) return null;
+      const total = Math.max(1, durationMs ?? state.evaluation?.durationMs ?? state.recordEndMs - state.recordStartMs ?? exerciseDurationMs());
+      const sliceMs = total / state.exercise.length;
+      const index = Math.max(0, Math.min(state.exercise.length - 1, Math.floor(timeMs / sliceMs)));
+      return state.exercise[index];
+    }
+
+    function displayMidiForPoint(point, durationMs = null) {
+      if (point.midi <= 0) return 0;
+      if (els.matchSelect.value !== 'class') return point.midi;
+      const note = noteForRecordedTime(point.t, durationMs);
+      return note ? closestMidiToReference(point.midi, note.midi) : point.midi;
+    }
+
+    function renderRoll() {
+      const { ctx, width, height } = resizeCanvas(els.rollCanvas);
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#07080b';
+      ctx.fillRect(0, 0, width, height);
+
+      const padL = 52;
+      const padR = 14;
+      const padT = 18;
+      const padB = 30;
+      const plotW = width - padL - padR;
+      const plotH = height - padT - padB;
+      const exercise = state.exercise;
+      if (!exercise.length) return;
+      const totalMs = Math.max(exercise.at(-1).startMs + exercise.at(-1).durationMs + 180, state.recordEndMs - state.recordStartMs || 0);
+      const bounds = computeRollBounds();
+      const yForMidi = (midi) => padT + ((bounds.max - midi) / (bounds.max - bounds.min)) * plotH;
+      const xForTime = (ms) => padL + (ms / totalMs) * plotW;
+
+      ctx.strokeStyle = '#202630';
+      ctx.lineWidth = 1;
+      ctx.font = '11px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let midi = Math.floor(bounds.min); midi <= Math.ceil(bounds.max); midi++) {
+        const y = yForMidi(midi);
+        const pc = ((midi % 12) + 12) % 12;
+        ctx.strokeStyle = pc === rootPc() ? 'rgba(215,245,0,0.25)' : 'rgba(255,255,255,0.055)';
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(width - padR, y);
+        ctx.stroke();
+        if (midi % 2 === 0 || pc === rootPc()) {
+          ctx.fillStyle = pc === rootPc() ? '#d7f500' : '#646b76';
+          ctx.fillText(midiName(midi), padL - 8, y);
+        }
+      }
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const playbackElapsed = state.isPlaying ? performance.now() - state.playStartedAt : -1;
+      for (const note of exercise) {
+        const x = xForTime(note.startMs);
+        const w = Math.max(10, xForTime(note.startMs + note.durationMs) - x);
+        const y = yForMidi(note.midi) - 12;
+        const result = state.evaluation?.notes?.[note.index];
+        const active = playbackElapsed >= note.startMs && playbackElapsed <= note.startMs + note.durationMs;
+        const color = degreeColor(note.interval);
+        let fill = `${color}38`;
+        let stroke = active ? '#ffffff' : color;
+        if (result) {
+          if (!result.voiced) {
+            fill = 'rgba(255,74,61,0.18)';
+            stroke = 'rgba(255,74,61,0.52)';
+          } else if (result.absMedianCents <= 45) {
+            fill = 'rgba(67,214,117,0.24)';
+            stroke = 'rgba(67,214,117,0.62)';
+          } else if (result.absMedianCents <= 95) {
+            fill = 'rgba(243,195,0,0.25)';
+            stroke = 'rgba(243,195,0,0.62)';
+          } else {
+            fill = 'rgba(255,122,24,0.22)';
+            stroke = 'rgba(255,122,24,0.58)';
+          }
+        }
+        ctx.fillStyle = fill;
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = active ? 3 : 1.5;
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, 24, 5);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#f3f1e8';
+        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillText(note.degree, x + w / 2, y + 28);
+      }
+
+      if (state.pitchPoints.length) {
+        const durationMs = Math.max(1, state.recordEndMs - state.recordStartMs || state.pitchPoints.at(-1).t);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        state.pitchPoints.forEach((point, index) => {
+          const x = padL + (point.t / durationMs) * plotW;
+          const amp = Math.min(1, point.rms / 0.035);
+          const y = height - padB - amp * 40;
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        if (els.matchSelect.value === 'class') {
+          ctx.strokeStyle = 'rgba(255,122,24,0.22)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          let rawStarted = false;
+          state.pitchPoints.forEach((point) => {
+            if (point.midi <= 0) {
+              rawStarted = false;
+              return;
+            }
+            const x = padL + (point.t / durationMs) * plotW;
+            const y = yForMidi(point.midi);
+            if (!rawStarted) {
+              ctx.moveTo(x, y);
+              rawStarted = true;
+            } else {
+              ctx.lineTo(x, y);
+            }
+          });
+          ctx.stroke();
+        }
+
+        ctx.strokeStyle = '#ff7a18';
+        ctx.lineWidth = 2.25;
+        ctx.beginPath();
+        let started = false;
+        buildDampedTrace(durationMs).forEach((point) => {
+          if (point.displayMidi <= 0) {
+            started = false;
+            return;
+          }
+          const x = padL + (point.t / durationMs) * plotW;
+          const y = yForMidi(point.displayMidi);
+          if (!started) {
+            ctx.moveTo(x, y);
+            started = true;
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        ctx.stroke();
+      }
+
+      if (state.isPlaying) {
+        const elapsed = performance.now() - state.playStartedAt;
+        const x = xForTime(Math.min(totalMs, elapsed));
+        ctx.strokeStyle = '#d7f500';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, padT);
+        ctx.lineTo(x, height - padB);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#2b303a';
+      ctx.strokeRect(padL, padT, plotW, plotH);
+    }
+
+    function heatColor(value) {
+      const v = Math.max(0, Math.min(1, value));
+      if (v < 0.33) {
+        const t = v / 0.33;
+        return `rgb(${Math.round(20 + t * 185)},0,0)`;
+      }
+      if (v < 0.68) {
+        const t = (v - 0.33) / 0.35;
+        return `rgb(205,${Math.round(t * 92)},0)`;
+      }
+      const t = (v - 0.68) / 0.32;
+      return `rgb(255,${Math.round(92 + t * 163)},${Math.round(t * 130)})`;
+    }
+
+    function renderSpectrogram() {
+      const { ctx, width, height } = resizeCanvas(els.spectrogramCanvas);
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#07080b';
+      ctx.fillRect(0, 0, width, height);
+      const frames = state.spectrumFrames;
+      const bins = 72;
+      const padT = 18;
+      const padB = 18;
+      const plotH = height - padT - padB;
+      const minHz = 100;
+      const maxHz = 2000;
+      const xStep = width / Math.max(1, frames.length);
+      frames.forEach((frame, i) => {
+        for (let b = 0; b < bins; b++) {
+          const yRatio = b / (bins - 1);
+          const freq = minHz * ((maxHz / minHz) ** (1 - yRatio));
+          const db = sampleSpectrumDb(frame, freq);
+          const energy = (db + 86) / 58;
+          ctx.fillStyle = heatColor(energy);
+          const x = Math.floor(i * xStep);
+          const y = Math.floor(padT + yRatio * plotH);
+          ctx.fillRect(x, y, Math.ceil(xStep) + 1, Math.ceil(plotH / bins) + 1);
+        }
+      });
+
+      ctx.strokeStyle = 'rgba(143,180,255,0.30)';
+      ctx.fillStyle = '#8b94a8';
+      ctx.font = '11px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      [100, 200, 400, 700, 1000, 2000].forEach((freq) => {
+        const y = padT + (1 - Math.log(freq / minHz) / Math.log(maxHz / minHz)) * plotH;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+        ctx.fillText(freq >= 1000 ? `${freq / 1000}k` : String(freq), 8, y - 2);
+      });
+    }
+
+    function renderHistogram() {
+      const { ctx, width, height } = resizeCanvas(els.histogramCanvas);
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#07080b';
+      ctx.fillRect(0, 0, width, height);
+      const pad = 26;
+      const max = Math.max(1, ...state.histogram);
+      const barW = (width - pad * 2) / 12;
+      ctx.font = '11px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      for (let i = 0; i < 12; i++) {
+        const h = (height - 70) * (state.histogram[i] / max);
+        const x = pad + i * barW + 3;
+        const y = height - 34 - h;
+        const matchingInterval = modeIntervals().find((interval) => (rootPc() + interval) % 12 === i);
+        const inScale = matchingInterval !== undefined;
+        ctx.fillStyle = inScale ? degreeColor(matchingInterval) : '#39404c';
+        ctx.fillRect(x, y, Math.max(3, barW - 6), h);
+        ctx.fillStyle = inScale ? degreeColor(matchingInterval) : '#9da3ad';
+        ctx.fillText(NOTE_NAMES[i], x + barW / 2 - 3, height - 12);
+      }
+    }
+
+    function renderAll() {
+      renderRoll();
+      renderSpectrogram();
+      renderHistogram();
+    }
+
+    function sampleSpectrumDb(frame, freq) {
+      if (!frame || !frame.values.length) return -100;
+      const index = Math.max(0, Math.min(frame.values.length - 1, Math.round(freq / frame.binHz)));
+      return frame.values[index] ?? -100;
+    }
+
+    function computeRms(buffer) {
+      let sum = 0;
+      for (let i = 0; i < buffer.length; i++) sum += buffer[i] * buffer[i];
+      return Math.sqrt(sum / buffer.length);
+    }
+
+    function detectPitchFromAutocorr(buffer, sampleRate) {
+      const size = buffer.length;
+      const rms = computeRms(buffer);
+      if (rms < RMS_SILENCE_THRESHOLD) return -1;
+      const minLag = Math.max(2, Math.floor(sampleRate / DETECT_MAX_FREQ));
+      const maxLag = Math.min(size - 2, Math.ceil(sampleRate / DETECT_MIN_FREQ));
+      if (maxLag <= minLag + 2) return -1;
+
+      let bestLag = -1;
+      let bestCorr = -Infinity;
+      for (let lag = minLag; lag <= maxLag; lag++) {
+        let corr = 0;
+        let energyA = 0;
+        let energyB = 0;
+        for (let i = 0; i < size - lag; i++) {
+          const a = buffer[i];
+          const b = buffer[i + lag];
+          corr += a * b;
+          energyA += a * a;
+          energyB += b * b;
+        }
+        const norm = corr / Math.sqrt(Math.max(1e-9, energyA * energyB));
+        if (norm > bestCorr) {
+          bestCorr = norm;
+          bestLag = lag;
+        }
+      }
+      if (bestLag < 0 || bestCorr < 0.42) return -1;
+      return sampleRate / bestLag;
+    }
+
+    function interpolatePeakBin(magnitudes, index) {
+      if (index <= 0 || index >= magnitudes.length - 1) return index;
+      const prev = magnitudes[index - 1];
+      const curr = magnitudes[index];
+      const next = magnitudes[index + 1];
+      const denom = prev - 2 * curr + next;
+      if (Math.abs(denom) < 1e-6) return index;
+      return index + Math.max(-0.5, Math.min(0.5, 0.5 * (prev - next) / denom));
+    }
+
+    function scoreSpectralCandidate(freqDbBuffer, index) {
+      let score = freqDbBuffer[index];
+      for (const [factor, weight] of [[2, 0.32], [3, 0.18], [4, 0.1]]) {
+        const harmonic = index * factor;
+        if (harmonic >= freqDbBuffer.length) break;
+        score += Math.max(SPECTRUM_MIN_DB, freqDbBuffer[harmonic]) * weight;
+      }
+      return score;
+    }
+
+    function detectPitchFromSpectrum(freqDbBuffer, sampleRate) {
+      const binHz = sampleRate / (freqDbBuffer.length * 2);
+      const minBin = Math.max(2, Math.floor(DETECT_MIN_FREQ / binHz));
+      const maxBin = Math.min(freqDbBuffer.length - 3, Math.ceil(DETECT_MAX_FREQ / binHz));
+      let bestIndex = -1;
+      let bestScore = -Infinity;
+      let bestDb = -Infinity;
+      for (let i = minBin + 1; i < maxBin; i++) {
+        const db = freqDbBuffer[i];
+        if (db < SPECTRUM_MIN_DB || db < freqDbBuffer[i - 1] || db < freqDbBuffer[i + 1]) continue;
+        const prominence = db - Math.max(freqDbBuffer[i - 1], freqDbBuffer[i + 1]);
+        if (prominence < SPECTRUM_MIN_PROMINENCE_DB) continue;
+        const score = scoreSpectralCandidate(freqDbBuffer, i) + prominence * 1.7;
+        if (score > bestScore) {
+          bestScore = score;
+          bestIndex = i;
+          bestDb = db;
+        }
+      }
+      if (bestIndex < 0) return -1;
+      const halfIndex = Math.round(bestIndex / 2);
+      if (halfIndex >= minBin && freqDbBuffer[halfIndex] >= bestDb - 11) {
+        const halfScore = scoreSpectralCandidate(freqDbBuffer, halfIndex) + freqDbBuffer[halfIndex] * 0.35;
+        if (halfScore >= bestScore * 0.92) bestIndex = halfIndex;
+      }
+      const magnitudes = new Float32Array(freqDbBuffer.length);
+      for (let i = minBin; i <= maxBin; i++) magnitudes[i] = 10 ** (freqDbBuffer[i] / 20);
+      const freq = interpolatePeakBin(magnitudes, bestIndex) * binHz;
+      return freq >= DETECT_MIN_FREQ && freq <= DETECT_MAX_FREQ ? freq : -1;
+    }
+
+    function detectPitch(timeBuffer, freqBuffer, sampleRate) {
+      const rms = computeRms(timeBuffer);
+      if (rms < RMS_SILENCE_THRESHOLD) return { freq: -1, rms };
+      const spectral = detectPitchFromSpectrum(freqBuffer, sampleRate);
+      const autocorr = detectPitchFromAutocorr(timeBuffer, sampleRate);
+      let freq = -1;
+      if (spectral > 0 && autocorr > 0) {
+        const gap = Math.abs(12 * Math.log2(spectral / autocorr));
+        if (gap >= 10.6 && gap <= 13.4 && autocorr < spectral) return { freq: autocorr, rms };
+        freq = gap <= 0.9 ? spectral * 0.72 + autocorr * 0.28 : spectral;
+      } else {
+        freq = spectral > 0 ? spectral : autocorr;
+      }
+      return { freq, rms };
+    }
+
+    async function ensureMic() {
+      if (state.audioCtx && state.analyser) return;
+      state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      state.stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        },
+      });
+      state.source = state.audioCtx.createMediaStreamSource(state.stream);
+      state.analyser = state.audioCtx.createAnalyser();
+      state.analyser.fftSize = 4096;
+      state.analyser.smoothingTimeConstant = 0.12;
+      state.timeBuffer = new Float32Array(state.analyser.fftSize);
+      state.freqBuffer = new Float32Array(state.analyser.frequencyBinCount);
+      state.processor = state.audioCtx.createScriptProcessor(2048, 1, 1);
+      const zero = state.audioCtx.createGain();
+      zero.gain.value = 0;
+      state.source.connect(state.analyser);
+      state.source.connect(state.processor);
+      state.processor.connect(zero);
+      zero.connect(state.audioCtx.destination);
+      state.processor.onaudioprocess = (event) => {
+        if (!state.isRecording) return;
+        const input = event.inputBuffer.getChannelData(0);
+        state.recordingChunks.push(new Float32Array(input));
+      };
+      state.recordSampleRate = state.audioCtx.sampleRate;
+      startAnalysisLoop();
+    }
+
+    function startAnalysisLoop() {
+      if (state.animationId) return;
+      const tick = () => {
+        if (state.analyser) {
+          state.analyser.getFloatTimeDomainData(state.timeBuffer);
+          state.analyser.getFloatFrequencyData(state.freqBuffer);
+          const detected = detectPitch(state.timeBuffer, state.freqBuffer, state.audioCtx.sampleRate);
+          const freq = detected.freq;
+          let midi = freq > 0 ? freqToMidi(freq) : 0;
+          if (midi > 0) {
+            state.smoothedMidi = state.smoothedMidi == null ? midi : state.smoothedMidi * 0.68 + midi * 0.32;
+            midi = state.smoothedMidi;
+            const pc = ((Math.round(midi) % 12) + 12) % 12;
+            if (state.isRecording) state.histogram[pc] += 1;
+            els.currentPitch.textContent = `${midiName(midi)} ${Math.round((midi - Math.round(midi)) * 100)}c`;
+          } else {
+            els.currentPitch.textContent = 'No pitch';
+          }
+
+          if (state.isRecording) {
+            const binHz = state.audioCtx.sampleRate / (state.freqBuffer.length * 2);
+            state.spectrumFrames.push({ binHz, values: new Float32Array(state.freqBuffer) });
+            if (state.spectrumFrames.length > 180) state.spectrumFrames.shift();
+          }
+
+          if (state.isRecording) {
+            const t = performance.now() - state.recordStartMs;
+            state.pitchPoints.push({
+              t,
+              freq: freq > 0 ? freq : 0,
+              midi: freq > 0 ? midi : 0,
+              rms: detected.rms,
+            });
+          }
+        }
+        if (state.isPlaying && performance.now() - state.playStartedAt > state.playDurationMs + 120) {
+          stopPlayback();
+        }
+        renderAll();
+        state.animationId = requestAnimationFrame(tick);
+      };
+      state.animationId = requestAnimationFrame(tick);
+    }
+
+    function updateStatus(text, hot = false) {
+      els.statusPill.textContent = text;
+      els.statusPill.classList.toggle('hot', hot);
+    }
+
+    function scheduleTone(ctx, destination, freq, start, duration, gainScale = 1) {
+      const osc = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const env = ctx.createGain();
+      osc.type = 'triangle';
+      osc2.type = 'sine';
+      osc.frequency.setValueAtTime(freq, start);
+      osc2.frequency.setValueAtTime(freq * 2, start);
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(Math.max(1200, freq * 2.4), start);
+      filter.Q.value = 0.45;
+      env.gain.setValueAtTime(0.0001, start);
+      env.gain.linearRampToValueAtTime(0.42 * gainScale, start + 0.014);
+      env.gain.setValueAtTime(0.38 * gainScale, start + Math.max(0.02, duration - 0.08));
+      env.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      osc.connect(filter);
+      osc2.connect(filter);
+      filter.connect(env);
+      env.connect(destination);
+      osc.start(start);
+      osc2.start(start);
+      osc.stop(start + duration + 0.02);
+      osc2.stop(start + duration + 0.02);
+    }
+
+    async function playExercise() {
+      if (state.isPlaying) {
+        stopPlayback();
+        return;
+      }
+      const exercise = buildExercise();
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const master = ctx.createGain();
+      master.gain.value = 0.42;
+      master.connect(ctx.destination);
+      const start = ctx.currentTime + 0.04;
+      exercise.forEach((note) => {
+        scheduleTone(ctx, master, note.freq, start + note.startMs / 1000, note.durationMs / 1000, 1);
+      });
+      state.playbackCtx = ctx;
+      state.playbackMaster = master;
+      state.isPlaying = true;
+      state.playStartedAt = performance.now();
+      state.playDurationMs = exercise.at(-1).startMs + exercise.at(-1).durationMs;
+      updateStatus('Playing', true);
+      els.playBtn.textContent = 'Stop';
+      els.playBtn.classList.add('playing');
+      startAnalysisLoop();
+      clearTimeout(state.playbackStopTimer);
+      state.playbackStopTimer = setTimeout(stopPlayback, state.playDurationMs + 220);
+    }
+
+    function stopPlayback() {
+      if (!state.isPlaying && !state.playbackCtx) return;
+      const ctx = state.playbackCtx;
+      const master = state.playbackMaster;
+      clearTimeout(state.playbackStopTimer);
+      state.playbackStopTimer = null;
+      if (ctx && master) {
+        const now = ctx.currentTime;
+        try {
+          master.gain.cancelScheduledValues(now);
+          master.gain.setValueAtTime(master.gain.value || 0.001, now);
+          master.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+        } catch {}
+        setTimeout(() => ctx.close().catch(() => {}), 70);
+      } else if (ctx) {
+        ctx.close().catch(() => {});
+      }
+      state.isPlaying = false;
+      state.playbackCtx = null;
+      state.playbackMaster = null;
+      updateStatus(state.isRecording ? 'Recording' : 'Ready', state.isRecording);
+      els.playBtn.textContent = 'Play';
+      els.playBtn.classList.remove('playing');
+      renderAll();
+    }
+
+    async function startRecording() {
+      await ensureMic();
+      if (state.audioCtx.state === 'suspended') await state.audioCtx.resume();
+      state.isRecording = true;
+      state.recordStartMs = performance.now();
+      state.recordEndMs = 0;
+      state.recordingChunks = [];
+      state.recordingSamples = null;
+      state.pitchPoints = [];
+      state.spectrumFrames = [];
+      state.histogram = new Array(12).fill(0);
+      state.evaluation = null;
+      state.smoothedMidi = null;
+      updateScoreUi(null);
+      updateStatus('Recording', true);
+      els.recordBtn.textContent = 'Stop Rec';
+      els.recordBtn.classList.add('recording');
+      els.coachMessage.innerHTML = 'Recording. Hold each pitch after the attack; scoring will favor the settled portion of each note.';
+    }
+
+    function stopRecording() {
+      state.isRecording = false;
+      state.recordEndMs = performance.now();
+      state.recordingSamples = flattenChunks(state.recordingChunks);
+      state.evaluation = evaluateTake();
+      updateScoreUi(state.evaluation);
+      updateStatus('Ready');
+      els.recordBtn.textContent = 'Start Rec';
+      els.recordBtn.classList.remove('recording');
+      renderAll();
+    }
+
+    function flattenChunks(chunks) {
+      const length = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+      const samples = new Float32Array(length);
+      let offset = 0;
+      for (const chunk of chunks) {
+        samples.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return samples;
+    }
+
+    function median(values) {
+      if (!values.length) return null;
+      const sorted = [...values].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    function evaluateTake() {
+      const exercise = state.exercise;
+      const durationMs = Math.max(1, state.recordEndMs - state.recordStartMs, state.pitchPoints.at(-1)?.t || 0);
+      const sliceMs = durationMs / exercise.length;
+      const noteResults = exercise.map((note, index) => {
+        const start = index * sliceMs + Math.min(ATTACK_GRACE_MS, sliceMs * 0.35);
+        const end = (index + 1) * sliceMs - Math.min(55, sliceMs * 0.12);
+        const cents = state.pitchPoints
+          .filter((point) => point.t >= start && point.t <= end && point.freq > 0)
+          .map((point) => centsBetween(point.freq, note.freq))
+          .filter((value) => Number.isFinite(value) && Math.abs(value) < 900);
+        const abs = cents.map((value) => Math.abs(value));
+        const med = median(cents);
+        const absMed = median(abs);
+        const spread = med == null ? null : median(cents.map((value) => Math.abs(value - med)));
+        return {
+          index,
+          expected: note,
+          voiced: cents.length >= 2,
+          frameCount: cents.length,
+          medianCents: med,
+          absMedianCents: absMed,
+          spreadCents: spread,
+        };
+      });
+
+      const voiced = noteResults.filter((result) => result.voiced);
+      const misses = voiced.map((result) => result.absMedianCents);
+      const spreads = voiced.map((result) => result.spreadCents || 0);
+      const medianMiss = median(misses);
+      const medianSpread = median(spreads);
+      const coverage = voiced.length / exercise.length;
+      const pitchScore = medianMiss == null ? 0 : Math.max(0, 100 - medianMiss * 1.15);
+      const coverageScore = coverage * 100;
+      const stabilityScore = medianSpread == null ? 0 : Math.max(0, 100 - medianSpread * 1.4);
+      const score = Math.round(pitchScore * 0.75 + coverageScore * 0.15 + stabilityScore * 0.10);
+      return {
+        durationMs: Math.round(durationMs),
+        sliceMs: Math.round(sliceMs),
+        score,
+        coverage,
+        medianMiss,
+        medianSpread,
+        notes: noteResults,
+      };
+    }
+
+    function classifyMetric(el, value, good, warn) {
+      el.classList.remove('good', 'warn', 'bad');
+      if (value == null) return;
+      el.classList.add(value >= good ? 'good' : (value >= warn ? 'warn' : 'bad'));
+    }
+
+    function updateScoreUi(result) {
+      if (!result) {
+        els.scoreValue.textContent = '--';
+        els.pitchValue.textContent = '--';
+        els.coverageValue.textContent = '--';
+        [els.scoreMetric, els.pitchMetric, els.coverageMetric].forEach((el) => el.classList.remove('good', 'warn', 'bad'));
+        return;
+      }
+      els.scoreValue.textContent = String(result.score);
+      els.pitchValue.textContent = result.medianMiss == null ? '--' : `${Math.round(result.medianMiss)}c`;
+      els.coverageValue.textContent = `${Math.round(result.coverage * 100)}%`;
+      classifyMetric(els.scoreMetric, result.score, 82, 62);
+      const invertedPitch = result.medianMiss == null ? null : Math.max(0, 100 - result.medianMiss);
+      classifyMetric(els.pitchMetric, invertedPitch, 55, 20);
+      classifyMetric(els.coverageMetric, result.coverage * 100, 85, 55);
+      const missed = result.notes.filter((note) => !note.voiced).length;
+      const sharpFlat = result.notes
+        .filter((note) => note.voiced && Math.abs(note.medianCents) > 35)
+        .map((note) => `${note.expected.degree} ${note.medianCents > 0 ? 'sharp' : 'flat'} by ${Math.abs(Math.round(note.medianCents))}c`);
+      els.coachMessage.innerHTML = missed
+        ? `<strong>${missed}</strong> note windows had too little stable pitch after attack. Try fewer notes or hold each tone longer.`
+        : (sharpFlat.length ? sharpFlat.slice(0, 2).join('. ') : '<strong>Good pitch lock.</strong> Increase note count or randomize when this feels easy.');
+    }
+
+    function audioBufferToWavBlobFromSamples(samples, sampleRate) {
+      const dataLength = samples.length * 2;
+      const totalLength = 44 + dataLength;
+      const wav = new ArrayBuffer(totalLength);
+      const view = new DataView(wav);
+      function writeString(offset, value) {
+        for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i));
+      }
+      writeString(0, 'RIFF');
+      view.setUint32(4, totalLength - 8, true);
+      writeString(8, 'WAVE');
+      writeString(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeString(36, 'data');
+      view.setUint32(40, dataLength, true);
+      let offset = 44;
+      for (let i = 0; i < samples.length; i++) {
+        const sample = Math.max(-1, Math.min(1, samples[i]));
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+        offset += 2;
+      }
+      return new Blob([wav], { type: 'audio/wav' });
+    }
+
+    function makeRecordingWav() {
+      if (!state.recordingSamples?.length) return null;
+      return audioBufferToWavBlobFromSamples(state.recordingSamples, state.recordSampleRate);
+    }
+
+    async function renderPlaybackWav() {
+      const exercise = state.exercise;
+      const totalSec = (exercise.at(-1).startMs + exercise.at(-1).durationMs) / 1000 + 0.35;
+      const sampleRate = 44100;
+      const offCtx = new OfflineAudioContext(1, Math.ceil(totalSec * sampleRate), sampleRate);
+      const master = offCtx.createGain();
+      master.gain.value = 0.46;
+      master.connect(offCtx.destination);
+      exercise.forEach((note) => {
+        scheduleTone(offCtx, master, note.freq, note.startMs / 1000, note.durationMs / 1000, 1);
+      });
+      const rendered = await offCtx.startRendering();
+      return audioBufferToWavBlobFromSamples(rendered.getChannelData(0), rendered.sampleRate);
+    }
+
+    function renderReconstructedWav() {
+      if (!state.pitchPoints.length) return null;
+      const durationMs = Math.max(state.recordEndMs - state.recordStartMs, state.pitchPoints.at(-1).t || 0);
+      const sampleRate = 44100;
+      const length = Math.ceil((durationMs / 1000 + 0.08) * sampleRate);
+      const samples = new Float32Array(length);
+      const dampedTrace = buildDampedTrace(durationMs);
+      let pointIndex = 0;
+      let phase = 0;
+      for (let i = 0; i < length; i++) {
+        const tMs = (i / sampleRate) * 1000;
+        while (pointIndex < dampedTrace.length - 1 && dampedTrace[pointIndex + 1].t <= tMs) pointIndex++;
+        const point = dampedTrace[pointIndex];
+        if (point?.displayMidi > 0) {
+          phase += (2 * Math.PI * midiToFreq(point.displayMidi)) / sampleRate;
+          const env = Math.min(1, Math.max(0, point.rms / 0.025));
+          samples[i] = Math.sin(phase) * 0.24 * env;
+        }
+      }
+      return audioBufferToWavBlobFromSamples(samples, sampleRate);
+    }
+
+    function downloadBlob(filename, blob) {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function buildTakeId() {
+      return new Date().toISOString().replace(/[:.]/g, '-');
+    }
+
+    function buildAnalysis(takeId, files) {
+      return {
+        app: 'scale-ear-trainer',
+        takeId,
+        createdAt: new Date().toISOString(),
+        exercise: {
+          root: els.rootSelect.value,
+          tonicMidi: tonicMidiFromControls(),
+          targetRegister: els.registerSelect.value,
+          mode: els.modeSelect.value,
+          material: els.materialSelect.value,
+          direction: els.directionSelect.value,
+          pitchMatching: els.matchSelect.value,
+          noteCount: Number(els.noteCount.value),
+          notes: state.exercise.map((note) => ({
+            index: note.index,
+            degree: note.degree,
+            midi: note.midi,
+            note: midiName(note.midi),
+            freq: Math.round(note.freq * 100) / 100,
+            startMs: Math.round(note.startMs),
+            durationMs: Math.round(note.durationMs),
+          })),
+        },
+        evaluation: state.evaluation,
+        detector: {
+          detectMinFreq: DETECT_MIN_FREQ,
+          detectMaxFreq: DETECT_MAX_FREQ,
+          rmsSilenceThreshold: RMS_SILENCE_THRESHOLD,
+          attackGraceMs: ATTACK_GRACE_MS,
+          sampleRate: state.recordSampleRate,
+          traceDampening: dampeningLevel(),
+        },
+        pitchTrace: state.pitchPoints.map((point) => ({
+          t: Math.round(point.t),
+          freq: Math.round(point.freq * 100) / 100,
+          midi: Math.round(point.midi * 100) / 100,
+          displayMidi: Math.round(displayMidiForPoint(point, state.evaluation?.durationMs || null) * 100) / 100,
+          rms: Math.round(point.rms * 100000) / 100000,
+        })),
+        dampedPitchTrace: buildDampedTrace(state.evaluation?.durationMs || null).map((point) => ({
+          t: Math.round(point.t),
+          displayMidi: Math.round(point.displayMidi * 100) / 100,
+          accepted: point.accepted,
+        })),
+        histogram: NOTE_NAMES.map((name, index) => ({ name, count: state.histogram[index] })),
+        files,
+      };
+    }
+
+    async function probeServer() {
+      try {
+        const response = await fetch(CAPTURE_SERVER_HEALTH_PATH, { cache: 'no-store' });
+        state.serverReady = response.ok;
+      } catch {
+        state.serverReady = false;
+      }
+      return state.serverReady;
+    }
+
+    async function exportBundle() {
+      buildExercise();
+      els.exportBtn.disabled = true;
+      els.exportStatus.textContent = 'Rendering WAV bundle...';
+      const takeId = buildTakeId();
+      const playbackName = `scale-ear-trainer-${takeId}-playback.wav`;
+      const recordingName = `scale-ear-trainer-${takeId}-recording.wav`;
+      const reconstructedName = `scale-ear-trainer-${takeId}-reconstructed.wav`;
+      const analysisName = `scale-ear-trainer-${takeId}-analysis.json`;
+      try {
+        const [playbackBlob, recordingBlob, reconstructedBlob] = await Promise.all([
+          renderPlaybackWav(),
+          Promise.resolve(makeRecordingWav()),
+          Promise.resolve(renderReconstructedWav()),
+        ]);
+        const files = {
+          playback: playbackName,
+          recording: recordingBlob ? recordingName : null,
+          reconstructed: reconstructedBlob ? reconstructedName : null,
+        };
+        const analysis = buildAnalysis(takeId, files);
+        const analysisBlob = new Blob([JSON.stringify(analysis, null, 2)], { type: 'application/json' });
+
+        downloadBlob(playbackName, playbackBlob);
+        if (recordingBlob) downloadBlob(recordingName, recordingBlob);
+        if (reconstructedBlob) downloadBlob(reconstructedName, reconstructedBlob);
+        downloadBlob(analysisName, analysisBlob);
+
+        if (await probeServer()) {
+          const payload = {
+            takeId,
+            uploadedAt: new Date().toISOString(),
+            analysisFilename: analysisName,
+            analysis,
+            playbackFilename: playbackName,
+            playbackMimeType: 'audio/wav',
+            playbackBase64: await blobToBase64(playbackBlob),
+            recordingFilename: recordingBlob ? recordingName : null,
+            recordingMimeType: recordingBlob ? 'audio/wav' : null,
+            recordingBase64: recordingBlob ? await blobToBase64(recordingBlob) : null,
+            reconstructedFilename: reconstructedBlob ? reconstructedName : null,
+            reconstructedMimeType: reconstructedBlob ? 'audio/wav' : null,
+            reconstructedBase64: reconstructedBlob ? await blobToBase64(reconstructedBlob) : null,
+          };
+          const response = await fetch(CAPTURE_SERVER_UPLOAD_PATH, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const result = await response.json();
+          const saved = [result.playbackPath, result.recordingPath, result.reconstructedPath, result.analysisPath].filter(Boolean).join(', ');
+          els.exportStatus.textContent = `Downloaded and saved: ${saved}`;
+        } else {
+          els.exportStatus.textContent = 'Downloaded bundle. Start dev_server.py to auto-save into captures/.';
+        }
+      } catch (error) {
+        console.error(error);
+        els.exportStatus.textContent = `Export failed: ${error.message}`;
+      } finally {
+        els.exportBtn.disabled = false;
+      }
+    }
+
+    function randomizeExercise() {
+      const safeRoots = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E'];
+      els.rootSelect.value = safeRoots[Math.floor(Math.random() * safeRoots.length)];
+      els.registerSelect.value = 'auto';
+      els.matchSelect.value = 'class';
+      els.modeSelect.value = SCALE_NAMES[Math.floor(Math.random() * SCALE_NAMES.length)];
+      els.materialSelect.value = Math.random() < 0.34 ? 'arpeggio' : 'scale';
+      const shapes = ['ascending', 'descending', 'updown', 'random'];
+      els.directionSelect.value = shapes[Math.floor(Math.random() * shapes.length)];
+      els.noteCount.value = String(3 + Math.floor(Math.random() * 4));
+      els.noteCountOut.textContent = els.noteCount.value;
+      clearTake(false);
+      buildExercise();
+    }
+
+    function clearTake(updateMessage = true) {
+      stopPlayback();
+      state.isRecording = false;
+      state.recordingChunks = [];
+      state.recordingSamples = null;
+      state.pitchPoints = [];
+      state.spectrumFrames = [];
+      state.histogram = new Array(12).fill(0);
+      state.evaluation = null;
+      state.smoothedMidi = null;
+      state.recordStartMs = 0;
+      state.recordEndMs = 0;
+      updateScoreUi(null);
+      els.recordBtn.textContent = 'Start Rec';
+      els.recordBtn.classList.remove('recording');
+      updateStatus('Ready');
+      if (updateMessage) els.coachMessage.textContent = 'Take cleared. Play the pattern as many times as needed, then record your whistle.';
+      renderAll();
+    }
+
+    function initControls() {
+      ROOT_OPTIONS.forEach((name) => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = `${name} tonic`;
+        els.rootSelect.appendChild(option);
+      });
+      els.rootSelect.value = 'A';
+      SCALE_NAMES.forEach((name) => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        els.modeSelect.appendChild(option);
+      });
+      ['rootSelect', 'registerSelect', 'modeSelect', 'materialSelect', 'directionSelect'].forEach((id) => {
+        els[id].addEventListener('change', () => {
+          clearTake(false);
+          buildExercise();
+        });
+      });
+      els.matchSelect.addEventListener('change', () => {
+        if (state.pitchPoints.length && state.recordEndMs) {
+          state.evaluation = evaluateTake();
+          updateScoreUi(state.evaluation);
+        }
+        updateExerciseUi();
+        renderAll();
+      });
+      els.noteCount.addEventListener('input', () => {
+        els.noteCountOut.textContent = els.noteCount.value;
+        clearTake(false);
+        buildExercise();
+      });
+      els.dampening.addEventListener('input', () => {
+        els.dampeningOut.textContent = els.dampening.value;
+        renderAll();
+      });
+      els.randomBtn.addEventListener('click', randomizeExercise);
+      els.playBtn.addEventListener('click', playExercise);
+      els.recordBtn.addEventListener('click', async () => {
+        if (state.isRecording) stopRecording();
+        else await startRecording();
+      });
+      els.clearBtn.addEventListener('click', () => clearTake(true));
+      els.exportBtn.addEventListener('click', exportBundle);
+      window.addEventListener('resize', renderAll);
+    }
+
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function roundRect(x, y, w, h, r) {
+        const radius = Math.min(r, w / 2, h / 2);
+        this.moveTo(x + radius, y);
+        this.arcTo(x + w, y, x + w, y + h, radius);
+        this.arcTo(x + w, y + h, x, y + h, radius);
+        this.arcTo(x, y + h, x, y, radius);
+        this.arcTo(x, y, x + w, y, radius);
+        return this;
+      };
+    }
+
+    initControls();
+    buildExercise();
+    probeServer().then((ready) => {
+      els.exportStatus.textContent = ready
+        ? 'Local dev server connected. Exports will save into captures/.'
+        : 'Dev server not detected yet. Exports will download locally.';
+    });
+  </script>
+</body>
+</html>
