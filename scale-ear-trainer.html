@@ -3,34 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#050608">
+  <meta name="theme-color" content="#090807">
   <title>Scale Ear Trainer</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
 
     :root {
       color-scheme: dark;
-      --bg: #050608;
-      --panel: #101217;
-      --panel-2: #171a21;
-      --panel-3: #0b0d11;
-      --line: #2b303a;
-      --line-strong: #444b58;
-      --text: #f3f1e8;
-      --muted: #9da3ad;
-      --faint: #646b76;
-      --lime: #d7f500;
+      --bg: #090807;
+      --panel: #11100f;
+      --panel-2: #171513;
+      --panel-3: #0c0b0a;
+      --control: #0b0b0a;
+      --control-hover: #1c1916;
+      --line: rgba(220, 214, 204, 0.14);
+      --line-soft: rgba(220, 214, 204, 0.08);
+      --line-strong: rgba(220, 214, 204, 0.28);
+      --text: #ebe5dc;
+      --muted: #a49c91;
+      --faint: #6f675f;
+      --lime: #cce600;
       --cyan: #16b7ff;
-      --orange: #ff7a18;
+      --orange: #ea6f16;
       --yellow: #f3c300;
       --green: #43d675;
       --red: #ff4a3d;
       --blue: #8fb4ff;
-      --shadow: 0 28px 80px rgba(0, 0, 0, 0.52);
+      --focus-ring: rgba(234, 111, 22, 0.32);
+      --shadow: 0 1px 0 rgba(255, 255, 255, 0.025);
+      --radius-panel: 4px;
+      --radius-control: 3px;
+      --radius-canvas: 4px;
     }
 
     * {
       box-sizing: border-box;
+    }
+
+    html {
+      width: 100%;
+      background: var(--bg);
     }
 
     body {
@@ -38,10 +50,11 @@
       min-height: 100vh;
       overflow-x: hidden;
       color: var(--text);
-      font-family: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+      font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.65;
       background:
-        linear-gradient(180deg, rgba(255, 122, 24, 0.06), transparent 280px),
-        radial-gradient(circle at 20% 0%, rgba(215, 245, 0, 0.08), transparent 320px),
+        linear-gradient(180deg, rgba(234, 111, 22, 0.035), transparent 260px),
         var(--bg);
     }
 
@@ -49,24 +62,30 @@
     select,
     input {
       font: inherit;
+      min-width: 0;
     }
 
     button {
       border: 1px solid var(--line);
       color: var(--text);
       background: var(--panel-2);
-      border-radius: 8px;
-      min-height: 42px;
-      padding: 0 14px;
+      border-radius: var(--radius-control);
+      min-height: 38px;
+      padding: 0 13px;
       cursor: pointer;
+      font-weight: 500;
       transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
     }
 
     button:hover,
     button:focus-visible {
       border-color: var(--line-strong);
-      background: #20242d;
+      background: var(--control-hover);
       outline: none;
+    }
+
+    button:focus-visible {
+      box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
     button:active {
@@ -80,16 +99,17 @@
     }
 
     .primary {
-      border-color: rgba(215, 245, 0, 0.42);
-      color: #121400;
-      background: var(--lime);
-      font-weight: 700;
+      border-color: rgba(204, 230, 0, 0.46);
+      color: var(--lime);
+      background: rgba(204, 230, 0, 0.08);
+      font-weight: 600;
     }
 
     .primary:hover,
     .primary:focus-visible {
-      background: #eeff39;
-      border-color: #eeff39;
+      color: #f0ff8c;
+      background: rgba(204, 230, 0, 0.14);
+      border-color: rgba(204, 230, 0, 0.74);
     }
 
     .primary.playing {
@@ -109,62 +129,106 @@
       width: 100%;
     }
 
+    input[type="range"] {
+      appearance: none;
+      min-width: 0;
+      height: 18px;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      border: 1px solid var(--line-strong);
+      border-radius: 1px;
+      background: #24211d;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 10px;
+      height: 14px;
+      margin-top: -6px;
+      border: 1px solid rgba(235, 229, 220, 0.7);
+      border-radius: 2px;
+      background: var(--text);
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 4px;
+      border: 1px solid var(--line-strong);
+      border-radius: 1px;
+      background: #24211d;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 10px;
+      height: 14px;
+      border: 1px solid rgba(235, 229, 220, 0.7);
+      border-radius: 2px;
+      background: var(--text);
+    }
+
     select {
-      height: 42px;
+      height: 38px;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #0b0d11;
+      border-radius: var(--radius-control);
+      background: var(--control);
       color: var(--text);
       padding: 0 10px;
+      font-weight: 500;
+    }
+
+    select:focus-visible,
+    input[type="range"]:focus-visible {
+      border-color: var(--line-strong);
+      box-shadow: 0 0 0 2px var(--focus-ring);
+      outline: none;
     }
 
     .page {
-      width: min(1440px, 100%);
+      width: 100%;
+      max-width: 1440px;
       margin: 0 auto;
-      padding: 18px 14px 40px;
+      padding: 24px 16px 40px;
     }
 
     .topbar {
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 16px;
-      align-items: end;
-      margin-bottom: 14px;
+      align-items: center;
+      margin-bottom: 16px;
+      min-width: 0;
     }
 
     h1 {
       margin: 0;
-      color: var(--lime);
-      font-size: clamp(28px, 5vw, 56px);
-      line-height: 0.98;
-      font-weight: 400;
+      color: var(--text);
+      font-size: clamp(24px, 2.2vw, 30px);
+      line-height: 1.15;
+      font-weight: 600;
       letter-spacing: 0;
-    }
-
-    .subtitle {
-      margin: 7px 0 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.45;
     }
 
     .status-pill {
       justify-self: end;
       min-width: 148px;
-      padding: 10px 12px;
+      padding: 8px 12px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: var(--radius-control);
       background: var(--panel);
       color: var(--muted);
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
-      font-size: 12px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px;
+      font-weight: 600;
       text-align: center;
       text-transform: uppercase;
     }
 
     .status-pill.hot {
       color: var(--lime);
-      border-color: rgba(215, 245, 0, 0.35);
+      border-color: rgba(204, 230, 0, 0.35);
     }
 
     .layout {
@@ -178,8 +242,8 @@
     .panel {
       min-width: 0;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(16, 18, 23, 0.96);
+      border-radius: var(--radius-panel);
+      background: rgba(17, 16, 15, 0.97);
       box-shadow: var(--shadow);
     }
 
@@ -192,33 +256,37 @@
     .control-grid {
       display: grid;
       gap: 12px;
+      min-width: 0;
     }
 
     .field {
       display: grid;
       gap: 6px;
+      min-width: 0;
     }
 
     .field label,
     .readout-label,
     .section-label {
       color: var(--muted);
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
-      font-size: 11px;
-      letter-spacing: 0.08em;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
     }
 
-    .range-row {
-      display: grid;
-      grid-template-columns: 1fr 40px;
-      gap: 10px;
-      align-items: center;
+    .range-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
     }
 
-    .range-row output {
+    .range-label output {
       color: var(--lime);
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 12px;
+      letter-spacing: 0;
       text-align: right;
     }
 
@@ -236,7 +304,7 @@
       margin-top: 14px;
       padding: 12px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: var(--radius-panel);
       background: var(--panel-3);
     }
 
@@ -245,8 +313,9 @@
       justify-content: space-between;
       gap: 10px;
       margin-top: 5px;
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
-      font-size: 21px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 18px;
+      font-weight: 600;
       color: var(--text);
     }
 
@@ -265,11 +334,12 @@
       min-width: 32px;
       padding: 6px 8px;
       border: 1px solid var(--line);
-      border-radius: 7px;
+      border-radius: var(--radius-control);
       color: var(--degree-color, var(--muted));
-      background: #12151b;
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
-      font-size: 12px;
+      background: #11100f;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px;
+      font-weight: 600;
       text-align: center;
     }
 
@@ -288,7 +358,7 @@
     .metric {
       padding: 10px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: var(--radius-panel);
       background: var(--panel-3);
     }
 
@@ -296,9 +366,9 @@
       display: block;
       margin-top: 4px;
       color: var(--text);
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
-      font-size: 20px;
-      font-weight: 700;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 18px;
+      font-weight: 600;
     }
 
     .metric.good strong {
@@ -333,13 +403,14 @@
 
     .canvas-title {
       color: var(--text);
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
       font-size: 13px;
+      font-weight: 600;
     }
 
     .canvas-meta {
       color: var(--muted);
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
       font-size: 11px;
       text-align: right;
     }
@@ -352,8 +423,8 @@
       display: block;
       width: 100%;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #07080b;
+      border-radius: var(--radius-canvas);
+      background: #060605;
     }
 
     #rollCanvas {
@@ -379,7 +450,7 @@
       margin-top: 10px;
       color: var(--muted);
       font-size: 13px;
-      line-height: 1.45;
+      line-height: 1.55;
     }
 
     .message strong {
@@ -391,7 +462,7 @@
       margin-top: 10px;
       color: var(--muted);
       font-size: 12px;
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
     @media (max-width: 920px) {
@@ -403,10 +474,6 @@
 
       .status-pill {
         justify-self: stretch;
-      }
-
-      .subtitle {
-        max-width: 38ch;
       }
 
       .controls {
@@ -451,7 +518,6 @@
     <header class="topbar">
       <div>
         <h1>Scale Ear Trainer</h1>
-        <p class="subtitle">Play a short tonic-aware pattern, whistle it back, then inspect pitch accuracy, attack behavior, and detector energy.</p>
       </div>
       <div class="status-pill" id="statusPill">Ready</div>
     </header>
@@ -506,18 +572,16 @@
           </div>
 
           <div class="field">
-            <label for="dampening">Trace dampening</label>
+            <label for="dampening" class="range-label">Trace dampening <output id="dampeningOut">5</output></label>
             <div class="range-row">
               <input id="dampening" type="range" min="0" max="10" value="5">
-              <output id="dampeningOut">5</output>
             </div>
           </div>
 
           <div class="field">
-            <label for="noteCount">Note count</label>
+            <label for="noteCount" class="range-label">Note count <output id="noteCountOut">5</output></label>
             <div class="range-row">
               <input id="noteCount" type="range" min="3" max="8" value="5">
-              <output id="noteCountOut">5</output>
             </div>
           </div>
 
@@ -765,7 +829,7 @@
     }
 
     function degreeColor(interval) {
-      return DEGREE_COLORS[((interval % 12) + 12) % 12] || '#9da3ad';
+      return DEGREE_COLORS[((interval % 12) + 12) % 12] || '#a49c91';
     }
 
     function centsBetween(freq, targetFreq) {
@@ -1015,7 +1079,7 @@
     function renderRoll() {
       const { ctx, width, height } = resizeCanvas(els.rollCanvas);
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = '#07080b';
+      ctx.fillStyle = '#060605';
       ctx.fillRect(0, 0, width, height);
 
       const padL = 52;
@@ -1031,21 +1095,21 @@
       const yForMidi = (midi) => padT + ((bounds.max - midi) / (bounds.max - bounds.min)) * plotH;
       const xForTime = (ms) => padL + (ms / totalMs) * plotW;
 
-      ctx.strokeStyle = '#202630';
+      ctx.strokeStyle = 'rgba(220,214,204,0.12)';
       ctx.lineWidth = 1;
-      ctx.font = '11px "IBM Plex Mono", monospace';
+      ctx.font = '11px "JetBrains Mono", monospace';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
       for (let midi = Math.floor(bounds.min); midi <= Math.ceil(bounds.max); midi++) {
         const y = yForMidi(midi);
         const pc = ((midi % 12) + 12) % 12;
-        ctx.strokeStyle = pc === rootPc() ? 'rgba(215,245,0,0.25)' : 'rgba(255,255,255,0.055)';
+        ctx.strokeStyle = pc === rootPc() ? 'rgba(204,230,0,0.23)' : 'rgba(220,214,204,0.065)';
         ctx.beginPath();
         ctx.moveTo(padL, y);
         ctx.lineTo(width - padR, y);
         ctx.stroke();
         if (midi % 2 === 0 || pc === rootPc()) {
-          ctx.fillStyle = pc === rootPc() ? '#d7f500' : '#646b76';
+          ctx.fillStyle = pc === rootPc() ? '#cce600' : '#6f675f';
           ctx.fillText(midiName(midi), padL - 8, y);
         }
       }
@@ -1073,19 +1137,19 @@
             fill = 'rgba(243,195,0,0.25)';
             stroke = 'rgba(243,195,0,0.62)';
           } else {
-            fill = 'rgba(255,122,24,0.22)';
-            stroke = 'rgba(255,122,24,0.58)';
+            fill = 'rgba(234,111,22,0.2)';
+            stroke = 'rgba(234,111,22,0.56)';
           }
         }
         ctx.fillStyle = fill;
         ctx.strokeStyle = stroke;
         ctx.lineWidth = active ? 3 : 1.5;
         ctx.beginPath();
-        ctx.roundRect(x, y, w, 24, 5);
+        ctx.roundRect(x, y, w, 24, 3);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = '#f3f1e8';
-        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#ebe5dc';
+        ctx.font = '11px "JetBrains Mono", monospace';
         ctx.fillText(note.degree, x + w / 2, y + 28);
       }
 
@@ -1104,7 +1168,7 @@
         ctx.stroke();
 
         if (els.matchSelect.value === 'class') {
-          ctx.strokeStyle = 'rgba(255,122,24,0.22)';
+          ctx.strokeStyle = 'rgba(234,111,22,0.22)';
           ctx.lineWidth = 1.2;
           ctx.beginPath();
           let rawStarted = false;
@@ -1125,7 +1189,7 @@
           ctx.stroke();
         }
 
-        ctx.strokeStyle = '#ff7a18';
+        ctx.strokeStyle = '#ea6f16';
         ctx.lineWidth = 2.25;
         ctx.beginPath();
         let started = false;
@@ -1149,7 +1213,7 @@
       if (state.isPlaying) {
         const elapsed = performance.now() - state.playStartedAt;
         const x = xForTime(Math.min(totalMs, elapsed));
-        ctx.strokeStyle = '#d7f500';
+        ctx.strokeStyle = '#cce600';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(x, padT);
@@ -1157,7 +1221,7 @@
         ctx.stroke();
       }
 
-      ctx.strokeStyle = '#2b303a';
+      ctx.strokeStyle = 'rgba(220,214,204,0.18)';
       ctx.strokeRect(padL, padT, plotW, plotH);
     }
 
@@ -1178,7 +1242,7 @@
     function renderSpectrogram() {
       const { ctx, width, height } = resizeCanvas(els.spectrogramCanvas);
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = '#07080b';
+      ctx.fillStyle = '#060605';
       ctx.fillRect(0, 0, width, height);
       const frames = state.spectrumFrames;
       const bins = 132;
@@ -1234,7 +1298,7 @@
         }
       }
 
-      ctx.font = '10px "IBM Plex Mono", monospace';
+      ctx.font = '10px "JetBrains Mono", monospace';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
       let lastLabelY = -Infinity;
@@ -1248,8 +1312,8 @@
         });
 
       ctx.strokeStyle = 'rgba(143,180,255,0.34)';
-      ctx.fillStyle = '#8b94a8';
-      ctx.font = '11px "IBM Plex Mono", monospace';
+      ctx.fillStyle = '#a49c91';
+      ctx.font = '11px "JetBrains Mono", monospace';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       const labelFreqs = [minHz, 440, 700, 1000, 1500, 2000, 3000, 4000, 6000, 8000, maxHz]
@@ -1266,19 +1330,19 @@
         lastFreqLabelY = y;
       });
 
-      ctx.strokeStyle = '#2b303a';
+      ctx.strokeStyle = 'rgba(220,214,204,0.18)';
       ctx.strokeRect(padL, padT, plotW, plotH);
     }
 
     function renderHistogram() {
       const { ctx, width, height } = resizeCanvas(els.histogramCanvas);
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = '#07080b';
+      ctx.fillStyle = '#060605';
       ctx.fillRect(0, 0, width, height);
       const pad = 26;
       const max = Math.max(1, ...state.histogram);
       const barW = (width - pad * 2) / 12;
-      ctx.font = '11px "IBM Plex Mono", monospace';
+      ctx.font = '11px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       for (let i = 0; i < 12; i++) {
@@ -1287,9 +1351,9 @@
         const y = height - 34 - h;
         const matchingInterval = modeIntervals().find((interval) => (rootPc() + interval) % 12 === i);
         const inScale = matchingInterval !== undefined;
-        ctx.fillStyle = inScale ? degreeColor(matchingInterval) : '#39404c';
+        ctx.fillStyle = inScale ? degreeColor(matchingInterval) : '#3f3a34';
         ctx.fillRect(x, y, Math.max(3, barW - 6), h);
-        ctx.fillStyle = inScale ? degreeColor(matchingInterval) : '#9da3ad';
+        ctx.fillStyle = inScale ? degreeColor(matchingInterval) : '#a49c91';
         ctx.fillText(NOTE_NAMES[i], x + barW / 2 - 3, height - 12);
       }
     }
