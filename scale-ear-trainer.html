@@ -500,7 +500,7 @@
           <div class="field">
             <label for="dampening">Trace dampening</label>
             <div class="range-row">
-              <input id="dampening" type="range" min="0" max="8" value="5">
+              <input id="dampening" type="range" min="0" max="10" value="5">
               <output id="dampeningOut">5</output>
             </div>
           </div>
@@ -577,9 +577,9 @@
             <div class="canvas-head">
               <div>
                 <div class="section-label">Detector heatmap</div>
-                <div class="canvas-title">Log-frequency spectral energy</div>
+                <div class="canvas-title">Whistle-focus spectral energy with pitch guides</div>
               </div>
-              <div class="canvas-meta">100 Hz to 2 kHz</div>
+              <div class="canvas-meta">A4-2 kHz + low shelf</div>
             </div>
             <div class="canvas-wrap">
               <canvas id="spectrogramCanvas"></canvas>
@@ -674,6 +674,8 @@
       pitchPoints: [],
       latestPitch: null,
       smoothedMidi: null,
+      liveDisplayMidi: null,
+      liveDisplayAt: 0,
       spectrumFrames: [],
       histogram: new Array(12).fill(0),
       evaluation: null,
@@ -773,10 +775,55 @@
       return Number(els.dampening?.value || 0);
     }
 
+    function dampeningAlpha() {
+      return [0, 0.12, 0.24, 0.36, 0.48, 0.60, 0.70, 0.79, 0.86, 0.91, 0.94][dampeningLevel()] ?? 0.6;
+    }
+
+    function dampeningGateCents() {
+      return Math.max(80, 520 - dampeningLevel() * 44);
+    }
+
+    function displayMidiForLive(rawMidi) {
+      if (rawMidi <= 0) return 0;
+      if (els.matchSelect.value !== 'class') return rawMidi;
+      const exercise = state.exercise.length ? state.exercise : buildExercise();
+      let best = rawMidi;
+      let bestDistance = Infinity;
+      for (const note of exercise) {
+        const candidate = closestMidiToReference(rawMidi, note.midi);
+        const distance = Math.abs(candidate - note.midi);
+        if (distance < bestDistance) {
+          best = candidate;
+          bestDistance = distance;
+        }
+      }
+      return best;
+    }
+
+    function dampLiveMidi(rawMidi, now = performance.now()) {
+      if (rawMidi <= 0) {
+        if (now - state.liveDisplayAt > 180) state.liveDisplayMidi = null;
+        return 0;
+      }
+
+      const displayMidi = displayMidiForLive(rawMidi);
+      const alpha = dampeningAlpha();
+      const gateSemitones = dampeningGateCents() / 100;
+      let nextMidi = displayMidi;
+      if (state.liveDisplayMidi !== null) {
+        const jump = Math.abs(displayMidi - state.liveDisplayMidi);
+        nextMidi = jump > gateSemitones * 1.25
+          ? state.liveDisplayMidi
+          : state.liveDisplayMidi * alpha + displayMidi * (1 - alpha);
+      }
+      state.liveDisplayMidi = nextMidi;
+      state.liveDisplayAt = now;
+      return nextMidi;
+    }
+
     function buildDampedTrace(durationMs) {
-      const level = dampeningLevel();
-      const alpha = [0, 0.12, 0.24, 0.36, 0.48, 0.60, 0.70, 0.79, 0.86][level] ?? 0.6;
-      const gateCents = Math.max(120, 520 - level * 42);
+      const alpha = dampeningAlpha();
+      const gateCents = dampeningGateCents();
       let lastMidi = null;
       let lastNoteIndex = null;
       let lastVoicedTime = 0;
@@ -1097,39 +1144,109 @@
       ctx.fillStyle = '#07080b';
       ctx.fillRect(0, 0, width, height);
       const frames = state.spectrumFrames;
-      const bins = 72;
+      const bins = 96;
+      const padL = 42;
+      const padR = 52;
       const padT = 18;
       const padB = 18;
+      const plotW = width - padL - padR;
       const plotH = height - padT - padB;
       const minHz = 100;
+      const focusMinHz = 440;
       const maxHz = 2000;
-      const xStep = width / Math.max(1, frames.length);
+      const focusH = plotH * 0.78;
+      const lowH = plotH - focusH;
+      const xStep = plotW / Math.max(1, frames.length);
+      const yForFreq = (freq) => {
+        if (freq >= focusMinHz) {
+          const ratio = Math.log(freq / focusMinHz) / Math.log(maxHz / focusMinHz);
+          return padT + (1 - ratio) * focusH;
+        }
+        const ratio = Math.log(freq / minHz) / Math.log(focusMinHz / minHz);
+        return padT + focusH + (1 - ratio) * lowH;
+      };
+      const freqForY = (y) => {
+        const relY = Math.max(0, Math.min(plotH, y - padT));
+        if (relY <= focusH) {
+          const ratio = 1 - relY / focusH;
+          return focusMinHz * ((maxHz / focusMinHz) ** ratio);
+        }
+        const ratio = 1 - (relY - focusH) / lowH;
+        return minHz * ((focusMinHz / minHz) ** ratio);
+      };
+
+      ctx.fillStyle = 'rgba(255,255,255,0.018)';
+      ctx.fillRect(padL, padT + focusH, plotW, lowH);
+
       frames.forEach((frame, i) => {
         for (let b = 0; b < bins; b++) {
-          const yRatio = b / (bins - 1);
-          const freq = minHz * ((maxHz / minHz) ** (1 - yRatio));
+          const y = padT + (b / (bins - 1)) * plotH;
+          const freq = freqForY(y);
           const db = sampleSpectrumDb(frame, freq);
           const energy = (db + 86) / 58;
           ctx.fillStyle = heatColor(energy);
-          const x = Math.floor(i * xStep);
-          const y = Math.floor(padT + yRatio * plotH);
-          ctx.fillRect(x, y, Math.ceil(xStep) + 1, Math.ceil(plotH / bins) + 1);
+          const x = Math.floor(padL + i * xStep);
+          ctx.fillRect(x, Math.floor(y), Math.ceil(xStep) + 1, Math.ceil(plotH / bins) + 1);
         }
       });
 
-      ctx.strokeStyle = 'rgba(143,180,255,0.30)';
+      const guideOctaves = [4, 5, 6, 7];
+      const labelCandidates = [];
+      for (const octave of guideOctaves) {
+        for (const interval of modeIntervals()) {
+          const pc = (rootPc() + interval) % 12;
+          const midi = (octave + 1) * 12 + pc;
+          const freq = midiToFreq(midi);
+          if (freq < focusMinHz || freq > maxHz) continue;
+          const y = yForFreq(freq);
+          const color = degreeColor(interval);
+          ctx.strokeStyle = `${color}55`;
+          ctx.lineWidth = pc === rootPc() ? 1.5 : 0.8;
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL + plotW, y);
+          ctx.stroke();
+          if (octave === 5 || (pc === rootPc() && octave === 6)) {
+            labelCandidates.push({ y, color, label: NOTE_NAMES[pc], tonic: pc === rootPc() });
+          }
+        }
+      }
+
+      ctx.font = '10px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      let lastLabelY = -Infinity;
+      labelCandidates
+        .sort((a, b) => a.y - b.y)
+        .forEach((candidate) => {
+          if (!candidate.tonic && candidate.y - lastLabelY < 13) return;
+          ctx.fillStyle = candidate.color;
+          ctx.fillText(candidate.label, padL - 7, candidate.y);
+          lastLabelY = candidate.y;
+        });
+
+      ctx.strokeStyle = 'rgba(143,180,255,0.34)';
       ctx.fillStyle = '#8b94a8';
       ctx.font = '11px "IBM Plex Mono", monospace';
       ctx.textAlign = 'left';
-      ctx.textBaseline = 'bottom';
-      [100, 200, 400, 700, 1000, 2000].forEach((freq) => {
-        const y = padT + (1 - Math.log(freq / minHz) / Math.log(maxHz / minHz)) * plotH;
+      ctx.textBaseline = 'middle';
+      [100, 200, 440, 700, 1000, 1500, 2000].forEach((freq) => {
+        const y = yForFreq(freq);
         ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
+        ctx.moveTo(padL, y);
+        ctx.lineTo(padL + plotW, y);
         ctx.stroke();
-        ctx.fillText(freq >= 1000 ? `${freq / 1000}k` : String(freq), 8, y - 2);
+        ctx.fillText(freq >= 1000 ? `${freq / 1000}k` : String(freq), padL + plotW + 8, y);
       });
+
+      ctx.strokeStyle = 'rgba(143,180,255,0.46)';
+      ctx.beginPath();
+      ctx.moveTo(padL, padT + focusH);
+      ctx.lineTo(padL + plotW, padT + focusH);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#2b303a';
+      ctx.strokeRect(padL, padT, plotW, plotH);
     }
 
     function renderHistogram() {
@@ -1316,10 +1433,15 @@
           if (midi > 0) {
             state.smoothedMidi = state.smoothedMidi == null ? midi : state.smoothedMidi * 0.68 + midi * 0.32;
             midi = state.smoothedMidi;
-            const pc = ((Math.round(midi) % 12) + 12) % 12;
+            const displayMidi = dampLiveMidi(midi);
+            const pc = ((Math.round(displayMidi || midi) % 12) + 12) % 12;
             if (state.isRecording) state.histogram[pc] += 1;
-            els.currentPitch.textContent = `${midiName(midi)} ${Math.round((midi - Math.round(midi)) * 100)}c`;
+            const cents = displayMidi ? Math.round((displayMidi - Math.round(displayMidi)) * 100) : 0;
+            els.currentPitch.textContent = displayMidi
+              ? `${midiName(displayMidi)} ${cents}c`
+              : 'No pitch';
           } else {
+            dampLiveMidi(0);
             els.currentPitch.textContent = 'No pitch';
           }
 
@@ -1445,6 +1567,8 @@
       state.histogram = new Array(12).fill(0);
       state.evaluation = null;
       state.smoothedMidi = null;
+      state.liveDisplayMidi = null;
+      state.liveDisplayAt = 0;
       updateScoreUi(null);
       updateStatus('Recording', true);
       els.recordBtn.textContent = 'Stop Rec';
@@ -1805,6 +1929,8 @@
       state.histogram = new Array(12).fill(0);
       state.evaluation = null;
       state.smoothedMidi = null;
+      state.liveDisplayMidi = null;
+      state.liveDisplayAt = 0;
       state.recordStartMs = 0;
       state.recordEndMs = 0;
       updateScoreUi(null);
