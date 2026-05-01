@@ -3,390 +3,585 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0b1020">
-  <title>Sandpad Pages</title>
+  <meta name="theme-color" content="#090807">
+  <title>Sandpad</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
     :root {
       color-scheme: dark;
-      --bg: #070b14;
-      --bg-2: #0d1427;
-      --panel: rgba(14, 20, 38, 0.88);
-      --panel-2: rgba(11, 16, 31, 0.72);
-      --border: rgba(169, 186, 255, 0.16);
-      --border-strong: rgba(169, 186, 255, 0.3);
-      --text: #e9eefc;
-      --muted: #9aa7c7;
-      --accent: #7aa2ff;
-      --accent-2: #8cf1cc;
-      --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+      --bg: #090807;
+      --panel: #11100f;
+      --panel-2: #171513;
+      --panel-3: #0c0b0a;
+      --line: rgba(220, 214, 204, 0.14);
+      --line-soft: rgba(220, 214, 204, 0.07);
+      --line-strong: rgba(220, 214, 204, 0.28);
+      --text: #ebe5dc;
+      --muted: #a49c91;
+      --faint: #6f675f;
+      --lime: #cce600;
+      --orange: #ea6f16;
+      --radius: 4px;
+      --radius-sm: 3px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
-    html {
-      scroll-behavior: smooth;
-    }
+    html { background: var(--bg); }
 
     body {
       margin: 0;
       min-height: 100vh;
       color: var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
       background:
-        radial-gradient(circle at top left, rgba(122, 162, 255, 0.18), transparent 28%),
-        radial-gradient(circle at top right, rgba(140, 241, 204, 0.14), transparent 24%),
-        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+        linear-gradient(180deg, rgba(234, 111, 22, 0.04) 0%, transparent 260px),
+        var(--bg);
     }
 
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
+    a { color: inherit; text-decoration: none; }
 
     .page {
-      max-width: 1180px;
+      max-width: 1060px;
       margin: 0 auto;
-      padding: 48px 20px 72px;
+      padding: 52px 20px 80px;
     }
 
-    .hero {
-      display: grid;
-      gap: 18px;
-      padding: 34px 28px;
-      border: 1px solid var(--border);
-      border-radius: 28px;
-      background: linear-gradient(180deg, rgba(15, 23, 45, 0.92), rgba(10, 16, 31, 0.82));
-      box-shadow: var(--shadow);
+    /* ── Header ── */
+
+    .header {
+      margin-bottom: 48px;
     }
 
     .eyebrow {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 10px;
-      color: var(--accent-2);
-      font-size: 12px;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      font-weight: 700;
+      gap: 7px;
+      margin-bottom: 16px;
     }
 
-    .eyebrow::before {
-      content: "";
-      width: 28px;
-      height: 1px;
-      background: currentColor;
-      opacity: 0.9;
+    .eyebrow-pip {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--orange);
+      flex-shrink: 0;
+    }
+
+    .eyebrow-text {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--faint);
     }
 
     h1 {
-      margin: 0;
-      font-size: clamp(38px, 6vw, 66px);
+      margin: 0 0 14px;
+      font-size: clamp(40px, 5.5vw, 62px);
+      font-weight: 800;
       line-height: 1.02;
-      letter-spacing: -0.04em;
+      letter-spacing: -0.035em;
+      color: var(--text);
     }
 
     .lede {
-      max-width: 72ch;
+      max-width: 58ch;
       margin: 0;
+      font-size: 15px;
+      line-height: 1.72;
       color: var(--muted);
-      font-size: 16px;
-      line-height: 1.7;
     }
 
-    .meta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 4px;
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 12px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.03);
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .chip strong {
-      color: var(--text);
-      font-weight: 650;
-    }
-
-    .sections {
-      display: grid;
-      gap: 26px;
-      margin-top: 30px;
-    }
+    /* ── Section shell ── */
 
     .section {
-      padding: 22px 22px 26px;
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      background: var(--panel);
-      backdrop-filter: blur(10px);
+      margin-bottom: 44px;
     }
 
     .section-head {
       display: flex;
       align-items: baseline;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 18px;
+      gap: 10px;
+      margin-bottom: 12px;
     }
 
-    .section-head h2 {
-      margin: 0;
-      font-size: 18px;
-      letter-spacing: -0.02em;
-    }
-
-    .section-head p {
-      margin: 0;
+    .section-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
       color: var(--muted);
-      font-size: 13px;
     }
 
-    .grid {
+    .section-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: var(--faint);
+    }
+
+    /* ── Tool cards ── */
+
+    .tools-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 6px;
     }
 
-    .card {
-      display: block;
-      padding: 16px 16px 15px;
-      border: 1px solid var(--border);
-      border-radius: 18px;
+    .tool-card {
+      display: flex;
+      flex-direction: column;
+      padding: 15px 16px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      transition: border-color 110ms ease, background 110ms ease;
+      cursor: pointer;
+    }
+
+    .tool-card:hover,
+    .tool-card:focus-visible {
+      border-color: var(--line-strong);
       background: var(--panel-2);
-      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
-    }
-
-    .card:hover,
-    .card:focus-visible {
-      transform: translateY(-2px);
-      border-color: var(--border-strong);
-      background: rgba(18, 26, 48, 0.92);
       outline: none;
     }
 
-    .card .title {
+    .tool-card.is-main {
+      border-color: rgba(234, 111, 22, 0.26);
+    }
+
+    .tool-card.is-main:hover {
+      border-color: rgba(234, 111, 22, 0.5);
+    }
+
+    .tool-card.is-new {
+      border-color: rgba(204, 230, 0, 0.24);
+    }
+
+    .tool-card.is-new:hover {
+      border-color: rgba(204, 230, 0, 0.48);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+
+    .card-name {
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.015em;
+      color: var(--text);
+    }
+
+    .badge {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 2px;
+      border: 1px solid;
+      flex-shrink: 0;
+    }
+
+    .badge-main {
+      color: var(--orange);
+      border-color: rgba(234, 111, 22, 0.34);
+      background: rgba(234, 111, 22, 0.08);
+    }
+
+    .badge-new {
+      color: var(--lime);
+      border-color: rgba(204, 230, 0, 0.38);
+      background: rgba(204, 230, 0, 0.07);
+    }
+
+    .badge-tool {
+      color: var(--faint);
+      border-color: var(--line);
+      background: transparent;
+    }
+
+    .card-desc {
+      margin: 0;
+      font-size: 12.5px;
+      line-height: 1.58;
+      color: var(--muted);
+    }
+
+    /* ── Piano list ── */
+
+    .piano-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+
+    .piano-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 8px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
+      padding: 8px 11px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      transition: background 90ms ease, border-color 90ms ease;
     }
 
-    .card .title span:last-child {
-      color: var(--accent);
+    .piano-row:hover,
+    .piano-row:focus-visible {
+      background: var(--panel);
+      border-color: var(--line);
+      outline: none;
+    }
+
+    .piano-name {
+      font-family: "JetBrains Mono", monospace;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .piano-row.piano-index .piano-name {
+      color: var(--orange);
+    }
+
+    .piano-tag {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px;
+      font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+      color: var(--faint);
+      flex-shrink: 0;
     }
 
-    .card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.55;
+    /* ── Version timeline ── */
+
+    .version-rail {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 2px;
+      row-gap: 8px;
     }
 
-    .footer {
-      margin-top: 24px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
-      text-align: center;
+    .ver-link {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 10px 9px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      transition: background 90ms, border-color 90ms;
+      cursor: pointer;
     }
 
-    .footer code {
-      color: var(--text);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    .ver-link:hover,
+    .ver-link:focus-visible {
+      background: var(--panel);
+      border-color: var(--line);
+      outline: none;
     }
+
+    .ver-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1.5px solid var(--faint);
+      background: transparent;
+      flex-shrink: 0;
+      transition: border-color 90ms;
+    }
+
+    .ver-link:hover .ver-dot {
+      border-color: var(--muted);
+    }
+
+    .ver-link.ver-best .ver-dot {
+      background: var(--lime);
+      border-color: var(--lime);
+      box-shadow: 0 0 6px rgba(204, 230, 0, 0.35);
+    }
+
+    .ver-num {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--faint);
+    }
+
+    .ver-link.ver-best .ver-num {
+      color: var(--lime);
+    }
+
+    .ver-sub {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px;
+      color: var(--faint);
+      opacity: 0.75;
+      white-space: nowrap;
+    }
+
+    .ver-link.ver-best .ver-sub {
+      color: var(--lime);
+      opacity: 0.65;
+    }
+
+    .ver-sep {
+      width: 16px;
+      height: 1px;
+      background: var(--line);
+      flex-shrink: 0;
+      align-self: flex-start;
+      margin-top: 11px;
+    }
+
+    /* ── Footer ── */
+
+    footer {
+      margin-top: 8px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line-soft);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: var(--faint);
+      line-height: 1.8;
+    }
+
+    /* ── Responsive ── */
 
     @media (max-width: 640px) {
       .page {
-        padding: 18px 12px 44px;
+        padding: 28px 14px 52px;
       }
 
-      .hero,
-      .section {
-        border-radius: 20px;
-        padding: 18px 16px;
+      .tools-grid,
+      .piano-grid {
+        grid-template-columns: 1fr;
       }
 
-      .section-head {
-        flex-direction: column;
-        align-items: flex-start;
+      .version-rail {
+        gap: 0;
+        row-gap: 6px;
+      }
+
+      .ver-sep {
+        width: 8px;
       }
     }
   </style>
 </head>
 <body>
   <main class="page">
-    <section class="hero">
-      <div class="eyebrow">GitHub Pages Hub</div>
+
+    <header class="header">
+      <div class="eyebrow">
+        <span class="eyebrow-pip"></span>
+        <span class="eyebrow-text">GitHub Pages · Static</span>
+      </div>
       <h1>Sandpad</h1>
-      <p class="lede">
-        This repo is a static Pages site. The hub below links to the main entry points, the <code>grand-pianos/</code> collection, and the whistle detection experiments, and every HTML file in the repository remains directly reachable from the published site.
-      </p>
-      <div class="meta-row">
-        <div class="chip"><strong>Static</strong> no build step</div>
-        <div class="chip"><strong>GitHub Pages</strong> root publish target</div>
-        <div class="chip"><strong>All pages</strong> directly linked</div>
+      <p class="lede">Pitch detection, scale inference, and audio analysis experiments. Each tool runs fully in the browser — no build step.</p>
+    </header>
+
+    <section class="section">
+      <div class="section-head">
+        <span class="section-label">Tools</span>
+        <span class="section-meta">5 pages</span>
+      </div>
+      <div class="tools-grid">
+
+        <a class="tool-card is-main" href="./pitch-detective.html">
+          <div class="card-top">
+            <span class="card-name">Pitch Detective</span>
+            <span class="badge badge-main">Main</span>
+          </div>
+          <p class="card-desc">Mobile-friendly melodic sketchpad with pitch detection, scale inference, piano roll, and export.</p>
+        </a>
+
+        <a class="tool-card is-main" href="./whistle-workbench.html">
+          <div class="card-top">
+            <span class="card-name">Whistle Workbench</span>
+            <span class="badge badge-main">Main</span>
+          </div>
+          <p class="card-desc">Whistle-focused tuning surface with waveform, contour, playback, and feedback-bundle export.</p>
+        </a>
+
+        <a class="tool-card is-new" href="./scale-ear-trainer.html">
+          <div class="card-top">
+            <span class="card-name">Scale Ear Trainer</span>
+            <span class="badge badge-new">New</span>
+          </div>
+          <p class="card-desc">Scale and arpeggio drills with playback, whistle-back scoring, pitch roll, spectral debug view, and WAV bundle export.</p>
+        </a>
+
+        <a class="tool-card" href="./whistle-relative.html">
+          <div class="card-top">
+            <span class="card-name">Whistle Relative</span>
+            <span class="badge badge-tool">Tool</span>
+          </div>
+          <p class="card-desc">Relative-degree view for whistle analysis and pitch sketching.</p>
+        </a>
+
+        <a class="tool-card" href="./claude.html">
+          <div class="card-top">
+            <span class="card-name">Claude</span>
+            <span class="badge badge-tool">Tool</span>
+          </div>
+          <p class="card-desc">Auxiliary HTML page in the repo root.</p>
+        </a>
+
       </div>
     </section>
 
-    <div class="sections">
-      <section class="section">
-        <div class="section-head">
-          <h2>Main entry points</h2>
-          <p>These are the pages most people will want first.</p>
-        </div>
-        <div class="grid">
-          <a class="card" href="./pitch-detective.html">
-            <div class="title"><span>Pitch Detective</span><span>Main</span></div>
-            <p>Mobile-friendly melodic sketchpad with pitch detection, scale inference, piano roll, and export.</p>
-          </a>
-          <a class="card" href="./whistle-workbench.html">
-            <div class="title"><span>Whistle Workbench</span><span>Main</span></div>
-            <p>Whistle-focused tuning surface with waveform, contour, playback, and feedback-bundle export.</p>
-          </a>
-          <a class="card" href="./scale-ear-trainer.html">
-            <div class="title"><span>Scale Ear Trainer</span><span>New</span></div>
-            <p>Short scale and arpeggio drills with playback, whistle-back scoring, pitch roll, spectral debug view, and WAV bundle export.</p>
-          </a>
-          <a class="card" href="./whistle-relative.html">
-            <div class="title"><span>Whistle Relative</span><span>Tool</span></div>
-            <p>Relative-degree view for whistle analysis and pitch sketching.</p>
-          </a>
-          <a class="card" href="./claude.html">
-            <div class="title"><span>Claude</span><span>Tool</span></div>
-            <p>Auxiliary HTML page in the repo root.</p>
-          </a>
-        </div>
-      </section>
+    <section class="section">
+      <div class="section-head">
+        <span class="section-label">Grand Pianos</span>
+        <span class="section-meta">14 variants · model comparison</span>
+      </div>
+      <div class="piano-grid">
 
-      <section class="section">
-        <div class="section-head">
-          <h2>Grand Pianos</h2>
-          <p>Direct folder access plus every variant in the collection.</p>
-        </div>
-        <div class="grid">
-          <a class="card" href="./grand-pianos/">
-            <div class="title"><span>grand-pianos/</span><span>Index</span></div>
-            <p>Folder landing page for the piano challenge pages.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-gpt-5.4.html">
-            <div class="title"><span>GPT-5.4</span><span>Variant</span></div>
-            <p>Grand Piano Challenge page generated by GPT-5.4.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-gpt-5.4-codex.html">
-            <div class="title"><span>GPT-5.4 Codex</span><span>Variant</span></div>
-            <p>Codex-tuned Grand Piano Challenge page.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-gpt-5.4-mini.html">
-            <div class="title"><span>GPT-5.4 Mini</span><span>Variant</span></div>
-            <p>Compact GPT-5.4 piano challenge build.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-opus-4.7.html">
-            <div class="title"><span>Opus 4.7</span><span>Variant</span></div>
-            <p>Grand Piano Challenge variant from Opus 4.7.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-opus-4.6.html">
-            <div class="title"><span>Opus 4.6</span><span>Variant</span></div>
-            <p>Earlier Opus build of the grand piano page.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-opus-4.6-improved.html">
-            <div class="title"><span>Opus 4.6 Improved</span><span>Variant</span></div>
-            <p>Refined Opus 4.6 grand piano page.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-sonnet-4.6.html">
-            <div class="title"><span>Sonnet 4.6</span><span>Variant</span></div>
-            <p>Sonnet 4.6 interpretation of the challenge.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-gemini-3.1-pro.html">
-            <div class="title"><span>Gemini 3.1 Pro</span><span>Variant</span></div>
-            <p>Gemini-generated grand piano page.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-gemma-4-26B-A4B.html">
-            <div class="title"><span>Gemma 4</span><span>Variant</span></div>
-            <p>Gemma 4 26B A4B grand piano page.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-kimi-k2.5.html">
-            <div class="title"><span>Kimi K2.5</span><span>Variant</span></div>
-            <p>Kimi K2.5 grand piano interpretation.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-minimax-M2.7.html">
-            <div class="title"><span>Minimax M2.7</span><span>Variant</span></div>
-            <p>Minimax M2.7 page from the challenge set.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-mimo-v2-pro.html">
-            <div class="title"><span>Mimo v2 Pro</span><span>Variant</span></div>
-            <p>Mimo v2 Pro grand piano page.</p>
-          </a>
-          <a class="card" href="./grand-pianos/grand-piano-elephant-alpha.html">
-            <div class="title"><span>Elephant Alpha</span><span>Variant</span></div>
-            <p>Elephant Alpha grand piano page.</p>
-          </a>
-        </div>
-      </section>
+        <a class="piano-row piano-index" href="./grand-pianos/">
+          <span class="piano-name">grand-pianos/</span>
+          <span class="piano-tag">Folder</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-gpt-5.4.html">
+          <span class="piano-name">GPT-5.4</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-gpt-5.4-codex.html">
+          <span class="piano-name">GPT-5.4 Codex</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-gpt-5.4-mini.html">
+          <span class="piano-name">GPT-5.4 Mini</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-opus-4.7.html">
+          <span class="piano-name">Opus 4.7</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-opus-4.6.html">
+          <span class="piano-name">Opus 4.6</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-opus-4.6-improved.html">
+          <span class="piano-name">Opus 4.6 Improved</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-sonnet-4.6.html">
+          <span class="piano-name">Sonnet 4.6</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-gemini-3.1-pro.html">
+          <span class="piano-name">Gemini 3.1 Pro</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-gemma-4-26B-A4B.html">
+          <span class="piano-name">Gemma 4 26B</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-kimi-k2.5.html">
+          <span class="piano-name">Kimi K2.5</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-minimax-M2.7.html">
+          <span class="piano-name">Minimax M2.7</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-mimo-v2-pro.html">
+          <span class="piano-name">Mimo v2 Pro</span>
+          <span class="piano-tag">Variant</span>
+        </a>
+        <a class="piano-row" href="./grand-pianos/grand-piano-elephant-alpha.html">
+          <span class="piano-name">Elephant Alpha</span>
+          <span class="piano-tag">Variant</span>
+        </a>
 
-      <section class="section">
-        <div class="section-head">
-          <h2>Whistle reader history</h2>
-          <p>Earlier iterations that informed the current detector.</p>
-        </div>
-        <div class="grid">
-          <a class="card" href="./claude-opus/whistle-reader.html">
-            <div class="title"><span>Whistle Reader</span><span>v0</span></div>
-            <p>Base opus prototype for pitch display.</p>
-          </a>
-          <a class="card" href="./claude-opus/whistle-reader_1.html">
-            <div class="title"><span>Whistle Reader 1</span><span>v1</span></div>
-            <p>Added scale-degree detection.</p>
-          </a>
-          <a class="card" href="./claude-opus/whistle-reader_2.html">
-            <div class="title"><span>Whistle Reader 2</span><span>v2</span></div>
-            <p>Contour canvas and chroma grid.</p>
-          </a>
-          <a class="card" href="./claude-opus/whistle-reader_3.html">
-            <div class="title"><span>Whistle Reader 3</span><span>v3</span></div>
-            <p>Clustering refinements.</p>
-          </a>
-          <a class="card" href="./claude-opus/whistle-reader_4.html">
-            <div class="title"><span>Whistle Reader 4</span><span>v4</span></div>
-            <p>Mode naming improvements.</p>
-          </a>
-          <a class="card" href="./claude-opus/whistle-reader_5.html">
-            <div class="title"><span>Whistle Reader 5</span><span>v5</span></div>
-            <p>Confidence tuning pass.</p>
-          </a>
-          <a class="card" href="./claude-opus/whistle-reader_6.html">
-            <div class="title"><span>Whistle Reader 6</span><span>v6</span></div>
-            <p>Tonic heuristic iteration.</p>
-          </a>
-          <a class="card" href="./claude-opus/whistle-reader_7.html">
-            <div class="title"><span>Whistle Reader 7</span><span>Best</span></div>
-            <p>Best-known contour and scale-line version.</p>
-          </a>
-        </div>
-      </section>
-    </div>
+      </div>
+    </section>
 
-    <p class="footer">
-      If GitHub Pages is pointed at the repository root, this page becomes the site entry point and all linked HTML files remain directly reachable.
-    </p>
+    <section class="section">
+      <div class="section-head">
+        <span class="section-label">Whistle Reader History</span>
+        <span class="section-meta">v0 → v7</span>
+      </div>
+      <div class="version-rail">
+
+        <a class="ver-link" href="./claude-opus/whistle-reader.html" title="Base opus prototype for pitch display">
+          <span class="ver-dot"></span>
+          <span class="ver-num">v0</span>
+          <span class="ver-sub">base</span>
+        </a>
+        <span class="ver-sep" aria-hidden="true"></span>
+
+        <a class="ver-link" href="./claude-opus/whistle-reader_1.html" title="Added scale-degree detection">
+          <span class="ver-dot"></span>
+          <span class="ver-num">v1</span>
+          <span class="ver-sub">scale-deg</span>
+        </a>
+        <span class="ver-sep" aria-hidden="true"></span>
+
+        <a class="ver-link" href="./claude-opus/whistle-reader_2.html" title="Contour canvas and chroma grid">
+          <span class="ver-dot"></span>
+          <span class="ver-num">v2</span>
+          <span class="ver-sub">contour</span>
+        </a>
+        <span class="ver-sep" aria-hidden="true"></span>
+
+        <a class="ver-link" href="./claude-opus/whistle-reader_3.html" title="Clustering refinements">
+          <span class="ver-dot"></span>
+          <span class="ver-num">v3</span>
+          <span class="ver-sub">cluster</span>
+        </a>
+        <span class="ver-sep" aria-hidden="true"></span>
+
+        <a class="ver-link" href="./claude-opus/whistle-reader_4.html" title="Mode naming improvements">
+          <span class="ver-dot"></span>
+          <span class="ver-num">v4</span>
+          <span class="ver-sub">mode names</span>
+        </a>
+        <span class="ver-sep" aria-hidden="true"></span>
+
+        <a class="ver-link" href="./claude-opus/whistle-reader_5.html" title="Confidence tuning pass">
+          <span class="ver-dot"></span>
+          <span class="ver-num">v5</span>
+          <span class="ver-sub">confidence</span>
+        </a>
+        <span class="ver-sep" aria-hidden="true"></span>
+
+        <a class="ver-link" href="./claude-opus/whistle-reader_6.html" title="Tonic heuristic iteration">
+          <span class="ver-dot"></span>
+          <span class="ver-num">v6</span>
+          <span class="ver-sub">tonic heuristic</span>
+        </a>
+        <span class="ver-sep" aria-hidden="true"></span>
+
+        <a class="ver-link ver-best" href="./claude-opus/whistle-reader_7.html" title="Best-known contour and scale-line version">
+          <span class="ver-dot"></span>
+          <span class="ver-num">v7 ✦</span>
+          <span class="ver-sub">best known</span>
+        </a>
+
+      </div>
+    </section>
+
+    <footer>
+      GitHub Pages root publish target · all linked HTML files remain directly reachable
+    </footer>
+
   </main>
 </body>
 </html>
