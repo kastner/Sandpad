@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Audio Piano</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        #piano {
+            display: flex;
+            gap: 5px;
+            padding: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        key {
+            width: 80px;
+            height: 200px;
+            background-color: white;
+            border: 1px solid #333;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.1s;
+            user-select: none;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        white {
+            background-color: #f9f9f9;
+            border: 1px solid #aaa;
+            z-index: 1;
+        }
+
+        black {
+            background-color: #333;
+            border: 1px solid #111;
+            z-index: 2;
+        }
+
+        key-top {
+            height: 150px;
+            border-bottom: none;
+        }
+
+        key-bottom {
+            height: 250px;
+        }
+
+        key:active {
+            background-color: #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        black:active {
+            background-color: #555;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+        }
+
+        label {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #333;
+            font-size: 14px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Web Audio Piano</h1>
+    <p>Click or tap the keys to play notes.</p>
+    <div id="piano">
+        <!-- White Keys -->
+        <div class="key white" data-note="C4"><label>C4</label></div>
+        <div class="key white" data-note="D4"><label>D4</label></div>
+        <div class="key white" data-note="E4"><label>E4</label></div>
+        <div class="key white" data-note="F4"><label>F4</label></div>
+        <div class="key white" data-note="G4"><label>G4</label></div>
+        <div class="key white" data-note="A4"><label>A4</label></div>
+        <div class="key white" data-note="B4"><label>B4</label></div>
+        <div class="key white" data-note="C5"><label>C5</label></div>
+
+        <!-- Black Keys -->
+        <div class="key black" data-note="C#4"><label>C#4</label></div>
+        <div class="key black" data-note="D#4"><label>D#4</label></div>
+        <div class="key black" data-note="F#4"><label>F#4</label></div>
+        <div class="key black" data-note="G#4"><label>G#4</label></div>
+        <div class="key black" data-note="A#4"><label>A#4</label></div>
+    </div>
+
+    <script>
+        // --- Web Audio API Setup ---
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Map of musical notes to their corresponding frequency (in Hz)
+        const noteFrequencies = {
+            'C4': 261.63,
+            'D4': 293.66,
+            'E4': 329.63,
+            'F4': 349.23,
+            'G4': 392.00,
+            'A4': 440.00,
+            'B4': 493.88,
+            'C5': 523.25,
+            'C#4': 277.18,
+            'D#4': 311.13,
+            'F#4': 369.99,
+            'G#4': 415.30,
+            'A#4': 466.16
+        };
+
+        // --- Sound Generation Function ---
+        function playNote(noteName) {
+            const frequency = noteFrequencies[noteName];
+            if (!frequency) return;
+
+            // Create an oscillator and gain node
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = sine'; // A smooth, pure tone
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+            // Envelope for a quick attack and decay (to simulate a piano pluck)
+            const now = audioContext.currentTime;
+            
+            // Attack: Quick ramp up
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.5, now + 0.01); // Quick attack to volume 0.5
+
+            // Release: Slow ramp down
+            gainNode.gain.linearRampToValueAtTime(0, now + 1.5); // Release over 1.5 seconds
+            
+            // Connect nodes and start
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.start(now);
+            oscillator.stop(now + 1.5); // Ensure the oscillator stops after the release time
+        }
+
+        // --- Event Listeners ---
+        const keys = document.querySelectorAll('.key');
+
+        keys.forEach(key => {
+            const note = key.getAttribute('data-note');
+
+            // Play on mouse/touch down
+            const startHandler = (e) => {
+                e.preventDefault(); // Prevent default behavior like scrolling on touch
+                playNote(note);
+                key.
+

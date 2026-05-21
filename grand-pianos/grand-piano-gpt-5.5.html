@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTML Grand Piano</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at top, #333 0%, #111 45%, #050505 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      color: white;
+      overflow: hidden;
+    }
+
+    .app {
+      width: min(1200px, 96vw);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 0.35rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hint {
+      margin-bottom: 1.25rem;
+      opacity: 0.75;
+      font-size: 0.95rem;
+    }
+
+    .piano-shell {
+      position: relative;
+      padding: 32px 26px 42px;
+      border-radius: 24px;
+      background:
+        linear-gradient(145deg, #1a0f08, #050302 55%, #180b05),
+        radial-gradient(circle at 50% 0%, rgba(255, 215, 150, 0.18), transparent);
+      box-shadow:
+        0 30px 90px rgba(0, 0, 0, 0.8),
+        inset 0 2px 10px rgba(255, 255, 255, 0.12),
+        inset 0 -12px 30px rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand {
+      margin-bottom: 22px;
+      color: #d4af37;
+      font-family: Georgia, serif;
+      font-size: 1.25rem;
+      letter-spacing: 0.25em;
+      text-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+    }
+
+    .keyboard {
+      position: relative;
+      height: 300px;
+      user-select: none;
+      display: flex;
+      justify-content: center;
+      filter: drop-shadow(0 18px 20px rgba(0, 0, 0, 0.65));
+    }
+
+    .white-keys {
+      display: flex;
+      position: relative;
+      z-index: 1;
+    }
+
+    .key {
+      cursor: pointer;
+      position: relative;
+      border: none;
+      outline: none;
+      font: inherit;
+    }
+
+    .white {
+      width: 56px;
+      height: 300px;
+      margin: 0 1px;
+      border-radius: 0 0 9px 9px;
+      background:
+        linear-gradient(to bottom, #fff 0%, #f6f6f6 52%, #d9d9d9 100%);
+      border: 1px solid #aaa;
+      box-shadow:
+        inset 0 -8px 18px rgba(0, 0, 0, 0.18),
+        inset 0 3px 6px rgba(255, 255, 255, 0.9);
+      color: #333;
+    }
+
+    .white.active {
+      background:
+        linear-gradient(to bottom, #e7e7e7 0%, #d4d4d4 55%, #bfbfbf 100%);
+      transform: translateY(3px);
+      box-shadow:
+        inset 0 5px 18px rgba(0, 0, 0, 0.25),
+        inset 0 -4px 10px rgba(255, 255, 255, 0.45);
+    }
+
+    .black-keys {
+      position: absolute;
+      top: 0;
+      height: 185px;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .black {
+      position: absolute;
+      width: 36px;
+      height: 185px;
+      border-radius: 0 0 7px 7px;
+      background:
+        linear-gradient(90deg, #0b0b0b, #222 44%, #050505 100%);
+      border: 1px solid #000;
+      box-shadow:
+        inset 0 -10px 15px rgba(255, 255, 255, 0.08),
+        inset 0 3px 4px rgba(255, 255, 255, 0.18),
+        0 7px 10px rgba(0, 0, 0, 0.65);
+      pointer-events: auto;
+      color: #eee;
+    }
+
+    .black.active {
+      transform: translateY(3px);
+      background:
+        linear-gradient(90deg, #050505, #111 50%, #000 100%);
+      box-shadow:
+        inset 0 5px 12px rgba(0, 0, 0, 0.9),
+        0 4px 7px rgba(0, 0, 0, 0.75);
+    }
+
+    .label {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      font-size: 0.72rem;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    .black .label {
+      bottom: 15px;
+      color: #fff;
+      opacity: 0.65;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 22px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .control {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 8px 12px;
+      border-radius: 999px;
+    }
+
+    input[type="range"] {
+      accent-color: #d4af37;
+    }
+
+    @media (max-width: 800px) {
+      .keyboard {
+        transform: scale(0.72);
+        transform-origin: top center;
+        margin-bottom: -82px;
+      }
+
+      .piano-shell {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Grand Piano</h1>
+    <div class="hint">
+      Click/tap the keys or use your computer keyboard:
+      A W S E D F T G Y H U J K
+    </div>
+
+    <section class="piano-shell">
+      <div class="brand">AURORA</div>
+
+      <div class="keyboard" id="keyboard">
+        <div class="white-keys" id="whiteKeys"></div>
+        <div class="black-keys" id="blackKeys"></div>
+      </div>
+
+      <div class="controls">
+        <label class="control">
+          Volume
+          <input id="volume" type="range" min="0" max="1" step="0.01" value="0.72" />
+        </label>
+
+        <label class="control">
+          Reverb
+          <input id="reverb" type="range" min="0" max="1" step="0.01" value="0.32" />
+        </label>
+
+        <label class="control">
+          Brightness
+          <input id="brightness" type="range" min="0.3" max="1.5" step="0.01" value="1" />
+        </label>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const whiteKeysEl = document.getElementById("whiteKeys");
+    const blackKeysEl = document.getElementById("blackKeys");
+    const volumeEl = document.getElementById("volume");
+    const reverbEl = document.getElementById("reverb");
+    const brightnessEl = document.getElementById("brightness");
+
+    const whiteWidth = 58;
+    const blackWidth = 36;
+
+    const notes = [
+      { note: "C4", freq: 261.63, type: "white", key: "a" },
+      { note: "C#4", freq: 277.18, type: "black", key: "w", afterWhite: 0 },
+      { note: "D4", freq: 293.66, type: "white", key: "s" },
+      { note: "D#4", freq: 311.13, type: "black", key: "e", afterWhite: 1 },
+      { note: "E4", freq: 329.63, type: "white", key: "d" },
+      { note: "F4", freq: 349.23, type: "white", key: "f" },
+      { note: "F#4", freq: 369.99, type: "black", key: "t", afterWhite: 3 },
+      { note: "G4", freq: 392.0, type: "white", key: "g" },
+      { note: "G#4", freq: 415.3, type: "black", key: "y", afterWhite: 4 },
+      { note: "A4", freq: 440.0, type: "white", key: "h" },
+      { note: "A#4", freq: 466.16, type: "black", key: "u", afterWhite: 5 },
+      { note: "B4", freq: 493.88, type: "white", key: "j" },
+      { note: "C5", freq: 523.25, type: "white", key: "k" },
+    ];
+
+    let audioContext;
+    let masterGain;
+    let dryGain;
+    let wetGain;
+    let convolver;
+    const activeComputerKeys = new Set();
+
+    const noteElements = new Map();
+
+    function createAudioContext() {
+      if (audioContext) return;
+
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+      masterGain = audioContext.createGain();
+      dryGain = audioContext.createGain();
+      wetGain = audioContext.createGain();
+      convolver = audioContext.createConvolver();
+
+      masterGain.gain.value = Number(volumeEl.value);
+      dryGain.gain.value = 0.95;
+      wetGain.gain.value = Number(reverbEl.value);
+
+      convolver.buffer = createImpulseResponse(audioContext, 2.8, 2.4);
+
+      dryGain.connect(masterGain);
+      dryGain.connect(convolver);
+      convolver.connect(wetGain);
+      wetGain.connect(masterGain);
+      masterGain.connect(audioContext.destination);
+    }
+
+    function createImpulseResponse(ctx, duration, decay) {
+      const rate = ctx.sampleRate;
+      const length = rate * duration;
+      const impulse = ctx.createBuffer(2, length, rate);
+
+      for (let channel = 0; channel < 2; channel++) {
+        const data = impulse.getChannelData(channel);
+
+        for (let i = 0; i < length; i++) {
+          const t = i / length;
+          const earlyReflection =
+            Math.sin(i * 0.013 + channel) * Math.exp(-t * 16);
+          const tail = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+          data[i] = tail * 0.42 + earlyReflection * 0.035;
+        }
+      }
+
+      return impulse;
+    }
+
+    function midiToFrequency(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    function playPianoNote(freq, velocity = 1) {
+      createAudioContext();
+
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+
+      const now = audioContext.currentTime;
+      const brightness = Number(brightnessEl.value);
+
+      const output = audioContext.createGain();
+      output.gain.setValueAtTime(0.0001, now);
+      output.gain.exponentialRampToValueAtTime(0.9 * velocity, now + 0.006);
+      output.gain.exponentialRampToValueAtTime(0.42 * velocity, now + 0.09);
+      output.gain.exponentialRampToValueAtTime(0.18 * velocity, now + 0.9);
+      output.gain.exponentialRampToValueAtTime(0.0001, now + 4.2);
+
+      const bodyFilter = audioContext.createBiquadFilter();
+      bodyFilter.type = "lowpass";
+      bodyFilter.frequency.setValueAtTime(7800 * brightness, now);
+      bodyFilter.frequency.exponentialRampToValueAtTime(
+        2600 * brightness,
+        now + 1.6
+      );
+      bodyFilter.Q.value = 0.7;
+
+      const soundboard = audioContext.createBiquadFilter();
+      soundboard.type = "peaking";
+      soundboard.frequency.value = 520;
+      soundboard.Q.value = 0.75;
+      soundboard.gain.value = 4;
+
+      const bassWarmth = audioContext.createBiquadFilter();
+      bassWarmth.type = "lowshelf";
+      bassWarmth.frequency.value = 260;
+      bassWarmth.gain.value = freq < 330 ? 4 : 1.5;
+
+      output.connect(bodyFilter);
+      bodyFilter.connect(soundboard);
+      soundboard.connect(bassWarmth);
+      bassWarmth.connect(dryGain);
+
+      const partials = [
+        { ratio: 1, gain: 0.62, detune: 0 },
+        { ratio: 2.01, gain: 0.26, detune: 3 },
+        { ratio: 3.02, gain: 0.14, detune: -4 },
+        { ratio: 4.04, gain: 0.075, detune: 6 },
+        { ratio: 5.08, gain: 0.042, detune: -7 },
+        { ratio: 6.12, gain: 0.026, detune: 9 },
+      ];
+
+      partials.forEach((partial, index) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        osc.type = index === 0 ? "triangle" : "sine";
+        osc.frequency.value = freq * partial.ratio;
+        osc.detune.value = partial.detune;
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(
+          partial.gain * velocity,
+          now + 0.004 + index * 0.002
+        );
+        gain.gain.exponentialRampToValueAtTime(
+          partial.gain * 0.45 * velocity,
+          now + 0.07 + index * 0.01
+        );
+        gain.gain.exponentialRampToValueAtTime(
+          0.0001,
+          now + 1.8 + index * 0.34
+        );
+
+        osc.connect(gain);
+        gain.connect(output);
+
+        osc.start(now);
+        osc.stop(now + 4.4);
+      });
+
+      addStringSympatheticResonance(freq, velocity, output, now);
+      addHammerNoise(freq, velocity, output, now);
+      addKeyThump(freq, velocity, output, now);
+    }
+
+    function addStringSympatheticResonance(freq, velocity, output, now) {
+      const resonances = [1.005, 1.498, 2.002];
+
+      resonances.forEach((ratio, i) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        osc.type = "sine";
+        osc.frequency.value = freq * ratio;
+        osc.detune.value = i % 2 === 0 ? 1.5 : -1.5;
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(
+          0.035 * velocity / (i + 1),
+          now + 0.08
+        );
+        gain.gain.exponentialRampToValueAtTime(
+          0.0001,
+          now + 3.8 + i * 0.4
+        );
+
+        osc.connect(gain);
+        gain.connect(output);
+
+        osc.start(now);
+        osc.stop(now + 4.5);
+      });
+    }
+
+    function addHammerNoise(freq, velocity, output, now) {
+      const bufferSize = audioContext.sampleRate * 0.045;
+      const buffer = audioContext.createBuffer(
+        1,
+        bufferSize,
+        audioContext.sampleRate
+      );
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        const decay = Math.pow(1 - i / bufferSize, 3.2);
+        data[i] = (Math.random() * 2 - 1) * decay;
+      }
+
+      const noise = audioContext.createBufferSource();
+      const noiseGain = audioContext.createGain();
+      const highpass = audioContext.createBiquadFilter();
+      const bandpass = audioContext.createBiquadFilter();
+
+      highpass.type = "highpass";
+      highpass.frequency.value = Math.max(700, freq * 1.4);
+
+      bandpass.type = "bandpass";
+      bandpass.frequency.value = Math.min(5500, freq * 5);
+      bandpass.Q.value = 1.2;
+
+      noise.buffer = buffer;
+      noiseGain.gain.setValueAtTime(0.13 * velocity, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+
+      noise.connect(highpass);
+      highpass.connect(bandpass);
+      bandpass.connect(noiseGain);
+      noiseGain.connect(output);
+
+      noise.start(now);
+      noise.stop(now + 0.055);
+    }
+
+    function addKeyThump(freq, velocity, output, now) {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+
+      osc.type = "sine";
+      osc.frequency.value = freq < 330 ? 58 : 74;
+
+      filter.type = "lowpass";
+      filter.frequency.value = 180;
+
+      gain.gain.setValueAtTime(0.05 * velocity, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(output);
+
+      osc.start(now);
+      osc.stop(now + 0.11);
+    }
+
+    function buildKeyboard() {
+      let whiteIndex = 0;
+      const totalWhite = notes.filter((n) => n.type === "white").length;
+      const keyboardWidth = totalWhite * whiteWidth;
+
+      blackKeysEl.style.width = `${keyboardWidth}px`;
+
+      notes.forEach((note) => {
+        const key = document.createElement("button");
+        key.className = `key ${note.type}`;
+        key.dataset.note = note.note;
+        key.dataset.freq = note.freq;
+
+        const label = document.createElement("span");
+        label.className = "label";
+        label.textContent = note.key.toUpperCase();
+        key.appendChild(label);
+
+        if (note.type === "white") {
+          whiteKeysEl.appendChild(key);
+          whiteIndex++;
+        } else {
+          const left =
+            (note.afterWhite + 1) * whiteWidth - blackWidth / 2 - 1;
+          key.style.left = `${left}px`;
+          blackKeysEl.appendChild(key);
+        }
+
+        noteElements.set(note.note, key);
+
+        key.addEventListener("pointerdown", (event) => {
+          event.preventDefault();
+          triggerNote(note);
+        });
+
+        key.addEventListener("pointerenter", (event) => {
+          if (event.buttons === 1) {
+            triggerNote(note, 0.85);
+          }
+        });
+      });
+    }
+
+    function triggerNote(note, velocity = 1) {
+      const element = noteElements.get(note.note);
+
+      playPianoNote(note.freq, velocity);
+
+      if (element) {
+        element.classList.add("active");
+
+        window.setTimeout(() => {
+          element.classList.remove("active");
+        }, 130);
+      }
+    }
+
+    window.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+      if (activeComputerKeys.has(key)) return;
+
+      const note = notes.find((item) => item.key === key);
+      if (!note) return;
+
+      activeComputerKeys.add(key);
+      triggerNote(note, 1);
+    });
+
+    window.addEventListener("keyup", (event) => {
+      activeComputerKeys.delete(event.key.toLowerCase());
+    });
+
+    volumeEl.addEventListener("input", () => {
+      if (masterGain) {
+        masterGain.gain.value = Number(volumeEl.value);
+      }
+    });
+
+    reverbEl.addEventListener("input", () => {
+      if (wetGain) {
+        wetGain.gain.value = Number(reverbEl.value);
+      }
+    });
+
+    buildKeyboard();
+  </script>
+</body>
+</html>

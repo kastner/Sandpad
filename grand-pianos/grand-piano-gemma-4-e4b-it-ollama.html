@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Audio Piano Synthesizer</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #1a1a1a; /* Dark background for mood */
+            font-family: sans-serif;
+        }
+
+        #piano-container {
+            display: flex;
+            border: 1px solid #333;
+            padding: 10px;
+            background-color: #000;
+            border-radius: 10px;
+            user-select: none; /* Prevent text selection when clicking fast */
+        }
+
+        /* --- White Key Styling --- */
+        .white-key {
+            width: 60px;
+            height: 250px;
+            background-color: #ffffff;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: background-color 0.05s, box-shadow 0.1s;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+            margin-right: -1px; /* Overlap the border */
+            box-sizing: border-box;
+        }
+
+        .white-key:active {
+            background-color: #cccccc;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            transform: translateY(3px);
+        }
+
+        /* --- Black Key Styling --- */
+        .black-key {
+            width: 40px;
+            height: 150px;
+            background-color: #000000;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: background-color 0.05s, box-shadow 0.1s;
+            position: absolute;
+            z-index: 2; /* Ensure black keys appear over white keys */
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.5);
+            margin-left(-20px); /* Half the width of the key + overlap */
+            box-sizing: border-box;
+        }
+
+        .black-key:active {
+            background-color: #222222;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            transform: translateY(3px);
+        }
+
+        /* Positioning the Black Keys relative to the White Keys */
+        /* Key Black Keys are placed over the gaps (e.g., between white-key 1 and 2) */
+        /* This requires specific placement in the HTML structure. */
+
+        .controls {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #222;
+            border-radius: 5px;
+            color: #ddd;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎹 Web Audio Piano Synthesizer</h1>
+    <div class="controls">
+        <p>Click the keys or use the QWERTY keyboard keys <code>A</code> through <code>L</code>.</p>
+    </div>
+
+    <div id="piano-container">
+        <!--
+            The structure must precisely match the keyboard layout:
+            (C-C#-D) (E-F-G) (A-A#-B) (C-D-E)
+        -->
+
+        <!-- White Key C3 -->
+        <div class="white-key" data-note="C" data-freq="130.81" id="white-C"></div>
+        <!-- Black Key C#3 -->
+        <div class="black-key" data-note="C#" data-freq="138.59" id="black-Cs"></div>
+        <!-- White Key D3 -->
+        <div class="white-key" data-note="D" data-freq="146.83" id="white-D"></div>
+        <!-- Black Key D#3 -->
+        <div class="black-key" data-note="D#" data-freq="155.56" id="black-Ds"></div>
+        <!-- White Key E3 -->
+        <div class="white-key" data-note="E" data-freq="164.81" id="white-E"></div>
+        <!-- White Key F3 -->
+        <div class="white-key" data-note="F" data-freq="174.61" id="white-F"></div>
+        <!-- Black Key F#3 -->
+        <div class="black-key" data-note="F#" data-freq="184.99" id="black-Fs"></div>
+        <!-- White Key G3 -->
+        <div class="white-key" data-note="G" data-freq="196.00" id="white-G"></div>
+        <!-- Black Key G#3 -->
+        <div class="black-key" data-note="G#" data-freq="207.65" id="black-Gs"></div>
+        <!-- White Key A3 -->
+        <div class="white-key" data-note="A" data-freq="220.00" id="white-A"></div>
+        <!-- Black Key A#3 -->
+        <div class="black-key" data-note="A#" data-freq="233.13" id="black-As"></div>
+        <!-- White Key B3 -->
+        <div class="white-key" data-note="B" data-freq="246.94" id="white-B"></div>
+        <!-- White Key C4 -->
+        <div class="white-key" data-note="C" data-freq="261.63" id="white-C2"></div>
+
+    </div>
+
+    <script>
+        // =================================================
+        // WEB AUDIO API CORE LOGIC
+        // =================================================
+
+        // Check for browser compatibility and initialize the context
+        let audioContext;
+        const KEY_MAP = {
+            // QWERTY Keys mapped to the piano notes
+            'a': 'white-C',
+            'w': 'black-Cs',
+            's': 'white-D',
+            'e': 'black-Ds',
+            'd': 'white-E',
+            'f': 'white-F',
+            't': 'black-Fs',
+            'g': 'white-G',
+            'y': 'black-Gs',
+            'h': 'white-A',
+            'u': 'black-As',
+            'j': 'white-B',
+            'k': 'white-C2'
+        };
+
+        // Initialize the AudioContext when the first interaction happens
+        function getAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+
+        /**
+         * Synthesizes a piano tone using oscillators and an envelope.
+         * @param {number} frequency - The pitch frequency (in Hz).
+         * @param {HTMLElement} element - The DOM element that was pressed.
+         */
+        function playNote(frequency, element) {
+            const context = getAudioContext();
+
+            // --- 1. Set up the Oscillator (The sound wave) ---
+            const oscillator = context.createOscillator();
+            oscillator.type = 'sawtooth'; // Sawtooth simulates richness better than sine
+            oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+
+            // --- 2. Set up the Gain (Volume control) ---
+            const gainNode = context.createGain();
+
+            // --- 3. The Envelope (Controls the sound's shape) ---
+            // Attack (Fast rise to full volume)
+            gainNode.gain.setValueAtTime(0.0001, context.currentTime); // Start near silent
+            gainNode.gain.linearRampToValueAtTime(0.5, context.currentTime + 0.01); // Attack (0.01s)
+
+            // Decay (Quick drop from full volume)
+            gainNode.gain.exponentialRampToValueAtTime(0.4, context.currentTime + 0.15); // Decay (0.15s)
+
+            // Release (Slow fade to silence)
+            gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5); // Release (0.5s)
+
+            // --- 4. Connections and Playback ---
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+
+            oscillator.start(context.currentTime);
+            oscillator.stop(context.currentTime + 0.5); // Stop the sound after the release phase
+        }
+
+        /**
+         * Handles key press (both click and physical keyboard)
+         */
+        function handlePress(element) {
+            if (!element) return;
+
+            // Visual Feedback
+            element.style.transition = 'none'; // Remove smooth transition on press
+            element.classList.add('active');
+            setTimeout(() => {
+                element.classList.remove('active');
+                element.style.transition = 'background-color 0.05s, box-shadow 0.1s'; // Restore transition
+            }, 50);
+
+            // Sound Synthesis
+            const freq = parseFloat(element.getAttribute('data-freq'));
+            playNote(freq, element);
+        }
+
+        /**
+         * Attaches event listeners to the entire keyboard.
+         */
+        function initializePiano() {
+            const whiteKeys = document.querySelectorAll('.white-key');
+            const blackKeys = document.querySelectorAll('.black-key');
+            const allKeys = [...whiteKeys, ...blackKeys];
+
+            // 1. Mouse/Touch Click Handlers
+            allKeys.forEach(key => {
+                key.addEventListener('mousedown', (e) => {
+                    handlePress(e.currentTarget);
+                });
+                // Handle touch devices
+                key.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    handlePress(e.currentTarget);
+                });
+            });
+
+            // 2. Keyboard Event Listeners
+            document.addEventListener('keydown', (e) => {
+                // Ignore non-alphanumeric keys
+                if (!KEY_MAP[e.key.toLowerCase()]) return;
+
+                // Prevent rapid fire from activating multiple sounds for one key press
+                if (e.repeat) return;
+                e.preventDefault();
+
+                const keyElement = document.getElementById(KEY_MAP[e.key.toLowerCase()]);
+                if (keyElement) {
+                    handlePress(keyElement);
+                }
+            });
+        }
+
+        // Start the piano when the script loads
+        initializePiano();
+    </script>
+
+</body>
+</html>

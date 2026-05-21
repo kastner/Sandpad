@@ -524,10 +524,10 @@
 <header class="site-header">
   <div class="header-eyebrow">Experiment &middot; April 2026</div>
   <h1 class="header-title">The <em>Grand Piano</em> Challenge</h1>
-  <p class="header-sub">One prompt. Sixteen models. Each asked to synthesize a concert grand piano entirely in HTML — no libraries, no editing.</p>
+  <p class="header-sub">One prompt. Seventeen models. Each asked to synthesize a concert grand piano entirely in HTML — no libraries, no editing.</p>
   <div class="header-stats">
     <div>
-      <div class="stat-num">16</div>
+      <div class="stat-num">17</div>
       <div class="stat-label">Models</div>
     </div>
     <div>
@@ -542,6 +542,7 @@
   <aside class="changelog" aria-label="Changelog">
     <div class="changelog-label">Changelog</div>
     <ul>
+      <li><time datetime="2026-05-21">2026-05-21</time>Added GPT-5.5 (main competition, rank 02).</li>
       <li><time datetime="2026-04-24">2026-04-24</time>Added Gemma 4 26B-A4B (rank 06), DeepSeek 3.2 (rank 07), and Ling 2.6 Flash (rank 14).</li>
       <li><time datetime="2026-04-23">2026-04-23</time>Added Kimi K2.6 (main competition, rank 04).</li>
     </ul>
@@ -553,7 +554,7 @@
 ════════════════════════════════════════ -->
 <section class="intro">
   <div class="intro-text">
-    <p>Fifteen models received the identical brief via t3.chat. A sixteenth was tested in T3 Code (Codex) with a nearly identical prompt. None of the outputs were touched afterward.</p>
+    <p>Sixteen models received the identical brief via t3.chat. A seventeenth was tested in T3 Code (Codex) with a nearly identical prompt. None of the outputs were touched afterward.</p>
     <p>The results were ranked across three dimensions: synthesis depth (harmonic modeling, envelope fidelity, reverb), keyboard range (octaves covered, sustain, pedal), and visual design. Each piano below is live — click the keys to play.</p>
     <p>The range of results is remarkable: the best entry cites real acoustic physics papers and implements research-grade models. Others manage a single octave of triangle waves. And then there are the surprises.</p>
   </div>
@@ -561,7 +562,7 @@
     <div class="prompt-card">
       <div class="prompt-card-label">The Prompt</div>
       <div class="prompt-card-text">Create a html only file that&rsquo;s a piano keyboard. Synthesize the sound the best you can to simulate a grand piano</div>
-      <div class="prompt-card-meta">Used for 15 of 16 models &middot; via t3.chat</div>
+      <div class="prompt-card-meta">Used for 16 of 17 models &middot; via t3.chat</div>
     </div>
   </div>
 </section>
@@ -692,10 +693,66 @@
     </div>
   </article>
 
-  <!-- Claude Opus 4.7 -->
+  <!-- GPT-5.5 -->
   <article class="piano-card">
     <div class="card-header">
       <div class="card-rank">02</div>
+      <div>
+        <div class="card-model-name">GPT-5.5</div>
+        <div class="card-badges">
+          <span class="badge badge-platform">t3.chat</span>
+          <span class="badge badge-keys">13 keys · C4–C5</span>
+          <span class="badge badge-broken">Limited Range</span>
+        </div>
+      </div>
+      <div class="card-scores">
+        <div class="score-row">
+          <span class="score-label">Sound</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">KB Layout</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Design</span>
+          <div class="score-dots">
+            <div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot on"></div><div class="sdot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-summary">The most elaborate synthesis chain in the set. Six harmonics with per-partial detune and independent decay envelopes, three separate noise layers (dual-filtered hammer noise, a key thump oscillator at 58/74 Hz simulating the key mechanism, and string sympathetic resonance at near-octave ratios), plus a 2.8s stereo convolution reverb with modeled early reflections. A sweeping brightness lowpass, soundboard peaking EQ, and bass warmth shelf round out the signal path. The "AURORA" mahogany shell is elegant — but range is limited to one octave with no shift.</p>
+      <div class="feature-list">
+        <span class="feat">6-partial harmonic series</span>
+        <span class="feat">Per-partial detune</span>
+        <span class="feat">Hammer noise ★</span>
+        <span class="feat">Key thump oscillator ★</span>
+        <span class="feat">Sympathetic resonance ★</span>
+        <span class="feat">Convolution reverb</span>
+        <span class="feat">Brightness + EQ chain</span>
+        <span class="feat">Velocity sensitivity</span>
+      </div>
+      <div class="quirk-note">⚠ One octave only — no octave shift available</div>
+    </div>
+    <div class="card-embed">
+      <iframe src="grand-piano-gpt-5.5.html" loading="lazy" title="GPT-5.5"></iframe>
+      <div class="embed-controls">
+        <span class="embed-hint">Click keys · A W S E D F T G Y H U J K</span>
+        <button class="expand-btn" onclick="toggleExpand(this)">Expand</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- Claude Opus 4.7 -->
+  <article class="piano-card">
+    <div class="card-header">
+      <div class="card-rank">03</div>
       <div>
         <div class="card-model-name">Claude Opus 4.7</div>
         <div class="card-badges">
@@ -747,7 +804,7 @@
   <!-- Claude Sonnet 4.6 -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">03</div>
+      <div class="card-rank">04</div>
       <div>
         <div class="card-model-name">Claude Sonnet 4.6</div>
         <div class="card-badges">
@@ -799,7 +856,7 @@
   <!-- Kimi K2.6 -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">04</div>
+      <div class="card-rank">05</div>
       <div>
         <div class="card-model-name">Kimi K2.6</div>
         <div class="card-badges">
@@ -852,7 +909,7 @@
   <!-- Kimi K2.5 -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">05</div>
+      <div class="card-rank">06</div>
       <div>
         <div class="card-model-name">Kimi K2.5</div>
         <div class="card-badges">
@@ -903,7 +960,7 @@
   <!-- Gemma 4 26B-A4B -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">06</div>
+      <div class="card-rank">07</div>
       <div>
         <div class="card-model-name">Gemma 4 26B-A4B</div>
         <div class="card-badges">
@@ -953,7 +1010,7 @@
   <!-- DeepSeek 3.2 -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">07</div>
+      <div class="card-rank">08</div>
       <div>
         <div class="card-model-name">DeepSeek 3.2</div>
         <div class="card-badges">
@@ -1083,7 +1140,7 @@
   <!-- GPT-5.4 -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">08</div>
+      <div class="card-rank">09</div>
       <div>
         <div class="card-model-name">GPT-5.4</div>
         <div class="card-badges">
@@ -1137,7 +1194,7 @@
   <!-- GPT-5.4 Mini -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">09</div>
+      <div class="card-rank">10</div>
       <div>
         <div class="card-model-name">GPT-5.4 Mini</div>
         <div class="card-badges">
@@ -1189,7 +1246,7 @@
   <!-- Minimax M2.7 -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">10</div>
+      <div class="card-rank">11</div>
       <div>
         <div class="card-model-name">Minimax M2.7</div>
         <div class="card-badges">
@@ -1241,7 +1298,7 @@
   <!-- Elephant Alpha -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">11</div>
+      <div class="card-rank">12</div>
       <div>
         <div class="card-model-name">Elephant Alpha</div>
         <div class="card-badges">
@@ -1293,7 +1350,7 @@
   <!-- Gemini 3.1 Pro -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">12</div>
+      <div class="card-rank">13</div>
       <div>
         <div class="card-model-name">Gemini 3.1 Pro</div>
         <div class="card-badges">
@@ -1343,7 +1400,7 @@
   <!-- Mimo V2 Pro -->
   <article class="piano-card">
     <div class="card-header">
-      <div class="card-rank">13</div>
+      <div class="card-rank">14</div>
       <div>
         <div class="card-model-name">Mimo V2 Pro</div>
         <div class="card-badges">
